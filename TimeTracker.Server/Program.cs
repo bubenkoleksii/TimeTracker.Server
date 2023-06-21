@@ -8,8 +8,7 @@ public class Program
 
         var app = builder.Build();
 
-        app.MapGet("/", () => "Hello from Bob!");
-
+        app.MapGet("/", () => $"Hello from Ukrainian Hubka Bob! {app.Configuration["ConnectionStrings:DefaultConnectionString"]}");
         app.Run();
     }
 }
