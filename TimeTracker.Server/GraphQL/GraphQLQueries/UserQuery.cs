@@ -1,5 +1,6 @@
 ﻿using GraphQL;
 using GraphQL.Types;
+using Microsoft.AspNetCore.Authentication;
 using TimeTracker.Server.GraphQL.GraphQLTypes;
 using TimeTracker.Server.Repository.Interfaces;
 
@@ -19,9 +20,8 @@ namespace TimeTracker.Server.GraphQL.GraphQLQueries
                 {
                     int id = context.GetArgument<int>("id");
                     var user = await _repo.GetUserAsync(id);
-                    Console.WriteLine(user.id);
                     return await _repo.GetUserAsync(id);
-                });
+                }).AuthorizeWithPolicy("Authenticated"); ;
         }
     }
 }

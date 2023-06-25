@@ -10,5 +10,6 @@ namespace TimeTracker.Server.Models
         public string login { get; set; }
         [Required]
         public string password { get; set; }
+        public string refreshToken { get; set; }
     }
 }

@@ -1,21 +1,16 @@
-﻿{
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:32361",
-      "sslPort": 44348
-    }
-  },
+{
   "profiles": {
     "TimeTracker.Server": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:7145;http://localhost:5145",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "JwtTokenIssuer": "someSecret1",
+        "JwtTokenAudience": "someSecret2",
+        "JwtSecretKey": "secretKeysecretKeysecretKeysecretKeysecretKeysecretKey"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7145;http://localhost:5145"
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -23,6 +18,14 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:32361",
+      "sslPort": 44348
     }
   }
 }

@@ -1,4 +1,5 @@
 ﻿using GraphQL.Types;
+using TimeTracker.Server.GraphQL.GraphQLMutations;
 using TimeTracker.Server.GraphQL.GraphQLQueries;
 
 namespace TimeTracker.Server.GraphQL.GrpahQLSchema
@@ -8,6 +9,7 @@ namespace TimeTracker.Server.GraphQL.GrpahQLSchema
         public GraphQLSchema(IServiceProvider provider) : base(provider) 
         {
             Query = provider.GetRequiredService<UserQuery>();
+            Mutation = provider.GetRequiredService<UserMutations>();
         }
     }
 }
