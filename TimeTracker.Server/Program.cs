@@ -1,10 +1,13 @@
 using GraphQL;
-using TimeTracker.Server.Business.Abstractions;
-using TimeTracker.Server.Business.Services;
-using TimeTracker.Server.Data;
-using TimeTracker.Server.Data.Abstractions;
-using TimeTracker.Server.Data.Repositories;
-using TimeTracker.Server.GraphQl;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using TimeTracker.Server.Context;
+using TimeTracker.Server.GraphQL.GrpahQLSchema;
+using TimeTracker.Server.Repository;
+using TimeTracker.Server.Repository.Interfaces;
+
 
 namespace TimeTracker.Server;
 
@@ -14,25 +17,47 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Adding AutoMapper
-        builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-        // DI
         builder.Services.AddSingleton<DapperContext>();
+        builder.Services.AddSingleton<IUserRepository, UserRepository>();
 
-        builder.Services.AddScoped<IUserService, UserService>();
-        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddAuthentication(options => {
+            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidIssuer = Environment.GetEnvironmentVariable("JwtTokenIssuer"),
+                ValidAudience = Environment.GetEnvironmentVariable("JwtTokenAudience"),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JwtSecretKey"))),
+                ClockSkew = TimeSpan.Zero
+            };
+        });
 
-        // Adding GraphQL
-        builder.Services.AddGraphQL(graphQlBuilder => graphQlBuilder
+        builder.Services.AddGraphQL(builder => builder
             .AddSystemTextJson()
-            .AddSchema<RootSchema>()
-            .AddGraphTypes(typeof(RootSchema).Assembly));
+            .AddSchema<GraphQLSchema>()
+            .AddGraphTypes(typeof(GraphQLSchema).Assembly)
+            .AddAuthorization(settings => settings.AddPolicy("Authenticated", p => p.RequireAuthenticatedUser()))
+        );
 
         var app = builder.Build();
 
-        app.UseGraphQL();
+        app.UseAuthentication();
+        //app.UseAuthorization();
+
+        app.UseGraphQL<GraphQLSchema>();
         app.UseGraphQLAltair();
+
+        app.MapGet("/", () => $"Hello from Ukrainian Hubka Bob! {app.Configuration["ConnectionStrings:DefaultConnectionString"]}");
 
         app.Run();
     }
