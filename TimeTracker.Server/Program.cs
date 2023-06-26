@@ -8,6 +8,7 @@ using TimeTracker.Server.GraphQL.GrpahQLSchema;
 using TimeTracker.Server.Repository;
 using TimeTracker.Server.Repository.Interfaces;
 
+
 namespace TimeTracker.Server;
 
 public class Program
@@ -57,6 +58,7 @@ public class Program
         app.UseGraphQLAltair();
 
         app.MapGet("/", () => $"Hello from Ukrainian Hubka Bob! {app.Configuration["ConnectionStrings:DefaultConnectionString"]}");
+
         app.Run();
     }
 }
