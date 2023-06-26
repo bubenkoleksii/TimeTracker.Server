@@ -7,19 +7,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.5.0" />
-    <PackageReference Include="Dapper" Version="2.0.143" />
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="GraphQL" Version="7.5.0" />
-    <PackageReference Include="GraphQL.Authorization" Version="7.0.0" />
-
     <PackageReference Include="GraphQL.NewtonsoftJson" Version="7.5.0" />
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.4.0" />
     <PackageReference Include="GraphQL.Server.Ui.Altair" Version="7.4.0" />
     <PackageReference Include="GraphQL.SystemTextJson" Version="7.5.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.19" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="3.1.24" />
+  </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TimeTracker.Server.Business\TimeTracker.Server.Business.csproj" />
+    <ProjectReference Include="..\TimeTracker.Server.Data\TimeTracker.Server.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="GraphQl\User\Types\" />
   </ItemGroup>
 
 </Project>
