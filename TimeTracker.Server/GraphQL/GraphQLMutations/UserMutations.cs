@@ -25,6 +25,14 @@ namespace TimeTracker.Server.GraphQL.GraphQLMutations
                     string password = context.GetArgument<string>("password");
                     return await _authService.Login(email, password);
                 });
+
+            Field<AuthenticationResponseType>("logout")
+                .Argument<NonNullGraphType<IntGraphType>>("id")
+                .ResolveAsync(async context =>
+                {
+                    int userId = context.GetArgument<int>("id");
+                    return await _authService.Logout(userId);
+                }).AuthorizeWithPolicy("Authenticated");
         }
     }
 }

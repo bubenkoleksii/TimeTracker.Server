@@ -2,7 +2,6 @@ using GraphQL;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
 using System.Text;
 using TimeTracker.Server.Context;
 using TimeTracker.Server.GraphQL.GrpahQLSchema;
@@ -52,7 +51,7 @@ public class Program
         var app = builder.Build();
 
         app.UseAuthentication();
-        app.UseAuthorization();
+        //app.UseAuthorization();
 
         app.UseGraphQL<GraphQLSchema>();
         app.UseGraphQLAltair();
