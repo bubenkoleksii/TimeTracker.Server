@@ -2,6 +2,6 @@
 
 namespace TimeTracker.Server.Business.Services;
 
-public class UserService : IUserService
+public class AuthService : IAuthService
 {
 }

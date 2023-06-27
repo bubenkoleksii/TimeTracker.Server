@@ -1,5 +1,5 @@
 ﻿namespace TimeTracker.Server.Business.Abstractions;
 
-public interface IUserService
+public interface IAuthService
 {
 }

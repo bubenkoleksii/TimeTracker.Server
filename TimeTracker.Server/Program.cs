@@ -4,7 +4,10 @@ using TimeTracker.Server.Business.Services;
 using TimeTracker.Server.Data;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Repositories;
+using TimeTracker.Server.Data.Migrations;
 using TimeTracker.Server.GraphQl;
+using FluentMigrator.Runner;
+using TimeTracker.Server.Middleware;
 
 namespace TimeTracker.Server;
 
@@ -14,25 +17,39 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Adding AutoMapper
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-        // DI
-        builder.Services.AddSingleton<DapperContext>();
-
-        builder.Services.AddScoped<IUserService, UserService>();
-        builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-        // Adding GraphQL
         builder.Services.AddGraphQL(graphQlBuilder => graphQlBuilder
             .AddSystemTextJson()
             .AddSchema<RootSchema>()
             .AddGraphTypes(typeof(RootSchema).Assembly));
 
+        builder.Services.AddFluentMigratorCore()
+            .ConfigureRunner(runnerBuilder => runnerBuilder
+                .AddSqlServer()
+                .WithGlobalConnectionString(builder.Configuration["ConnectionStrings:DefaultConnectionString"])
+                .ScanIn(typeof(Migration_20230627112400).Assembly).For.Migrations())
+            .AddLogging(loggingBuilder => loggingBuilder
+                .ClearProviders()
+                .AddFluentMigratorConsole());
+
+        // DI
+        builder.Services.AddSingleton<DapperContext>();
+
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+
         var app = builder.Build();
 
         app.UseGraphQL();
         app.UseGraphQLAltair();
+
+        Database.EnsureDatabase(
+            app.Configuration["ConnectionStrings:EnsureDatabaseConnectionString"], 
+            app.Configuration["Database:Name"]
+            );
+
+        app.UseMigrations();
 
         app.Run();
     }

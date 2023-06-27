@@ -7,8 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="GraphQl\User\Types\**" />
+    <Content Remove="GraphQl\User\Types\**" />
+    <EmbeddedResource Remove="GraphQl\User\Types\**" />
+    <None Remove="GraphQl\User\Types\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="FluentMigrator" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Extensions.SqlServer" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Runner" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Runner.Core" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Runner.SqlServer" Version="3.3.2" />
     <PackageReference Include="GraphQL" Version="7.5.0" />
     <PackageReference Include="GraphQL.NewtonsoftJson" Version="7.5.0" />
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.4.0" />
@@ -19,10 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TimeTracker.Server.Business\TimeTracker.Server.Business.csproj" />
     <ProjectReference Include="..\TimeTracker.Server.Data\TimeTracker.Server.Data.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="GraphQl\User\Types\" />
+    <ProjectReference Include="..\TimeTracker.Server.Shared\TimeTracker.Server.Shared.csproj" />
   </ItemGroup>
 
 </Project>
