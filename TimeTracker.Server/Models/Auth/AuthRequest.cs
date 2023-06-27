@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TimeTracker.Server.Models.User;
+namespace TimeTracker.Server.Models.Auth;
 
-public record UserRequest
+public record AuthRequest
 {
     [Required]
     [MaxLength(255)]

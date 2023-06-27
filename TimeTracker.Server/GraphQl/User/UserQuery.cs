@@ -2,9 +2,14 @@
 
 namespace TimeTracker.Server.GraphQl.User;
 
-public sealed class UserQuery : ObjectGraphType
+public class UserQuery : ObjectGraphType
 {
     public UserQuery()
     {
+        Field<StringGraphType>("test")
+            .Resolve(context =>
+            {
+                return "some";
+            });
     }
 }

@@ -34,9 +34,11 @@ public class Program
                 .AddFluentMigratorConsole());
 
         // DI
-        builder.Services.AddSingleton<DapperContext>();
-
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IJwtService, JwtService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+
+        builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
 
         var app = builder.Build();

@@ -1,17 +1,11 @@
 ﻿using AutoMapper;
-using GraphQL;
 using GraphQL.Types;
-using GraphQL.MicrosoftDI;
-using TimeTracker.Server.Business.Abstractions;
-using TimeTracker.Server.Business.Models.User;
-using TimeTracker.Server.GraphQl.User.Types;
-using TimeTracker.Server.Models.User;
 
-namespace TimeTracker.Server.GraphQl.User;
+namespace TimeTracker.Server.GraphQl.Auth;
 
-public sealed class UserMutation : ObjectGraphType
+public class AuthMutation : ObjectGraphType
 {
-    public UserMutation(IMapper mapper)
+    public AuthMutation(IMapper mapper)
     {
         Field<UserType>("create")
             .Argument<NonNullGraphType<UserInputType>>("user")

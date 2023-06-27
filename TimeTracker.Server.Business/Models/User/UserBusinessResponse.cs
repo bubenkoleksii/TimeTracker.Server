@@ -1,6 +1,6 @@
-﻿namespace TimeTracker.Server.Data.Models.User;
+﻿namespace TimeTracker.Server.Business.Models.User;
 
-public class UserDataResponse
+public record UserBusinessResponse
 {
     public Guid Id { get; set; }
 

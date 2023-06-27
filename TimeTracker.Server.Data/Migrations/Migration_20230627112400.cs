@@ -11,7 +11,7 @@ public class Migration_20230627112400 : Migration
         Create.Table("User")
             .WithColumn(nameof(UserDataResponse.Id)).AsGuid().PrimaryKey()
             .WithColumn(nameof(UserDataResponse.Email)).AsString(255).Unique().NotNullable()
-            .WithColumn(nameof(UserDataResponse.Password)).AsString(255).NotNullable()
+            .WithColumn(nameof(UserDataResponse.HashPassword)).AsString(255).NotNullable()
             .WithColumn(nameof(UserDataResponse.RefreshToken)).AsString(255).Nullable();
     }
 

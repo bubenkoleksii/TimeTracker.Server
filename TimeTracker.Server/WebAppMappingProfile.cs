@@ -9,5 +9,6 @@ public class WebAppMappingProfile : Profile
     public WebAppMappingProfile()
     {
         CreateMap<UserRequest, UserBusinessRequest>();
+        CreateMap<UserBusinessResponse, UserResponse>();
     }
 }
