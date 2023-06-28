@@ -24,6 +24,8 @@ public class Program
             .AddSchema<RootSchema>()
             .AddGraphTypes(typeof(RootSchema).Assembly));
 
+        builder.Services.AddHttpContextAccessor();
+
         builder.Services.AddFluentMigratorCore()
             .ConfigureRunner(runnerBuilder => runnerBuilder
                 .AddSqlServer()
@@ -46,6 +48,8 @@ public class Program
         app.UseGraphQL();
         app.UseGraphQLAltair();
 
+        app.UseAuthentication();
+        
         Database.EnsureDatabase(
             app.Configuration["ConnectionStrings:EnsureDatabaseConnectionString"], 
             app.Configuration["Database:Name"]

@@ -1,27 +1,65 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
+using GraphQL;
 using GraphQL.Types;
+using GraphQL.MicrosoftDI;
+using TimeTracker.Server.Business.Abstractions;
+using TimeTracker.Server.Business.Models.Auth;
+using TimeTracker.Server.GraphQl.Auth.Types;
+using TimeTracker.Server.Models.Auth;
 
 namespace TimeTracker.Server.GraphQl.Auth;
 
-public class AuthMutation : ObjectGraphType
+public sealed class AuthMutation : ObjectGraphType
 {
-    public AuthMutation(IMapper mapper)
+    public AuthMutation(IMapper mapper, IHttpContextAccessor contextAccessor)
     {
-        Field<UserType>("create")
-            .Argument<NonNullGraphType<UserInputType>>("user")
+        Field<AuthType>("login")
+            .Argument<NonNullGraphType<AuthInputType>>("auth")
             .Resolve()
             .WithScope()
-            .WithService<IUserService>()
+            .WithService<IAuthService>()
             .ResolveAsync(async (context, service) =>
             {
-                var user = context.GetArgument<UserRequest>("user");
+                var auth = context.GetArgument<AuthRequest>("auth");
 
-                var userBusinessRequest = mapper.Map<UserBusinessRequest>(user);
+                var authBusinessRequest = mapper.Map<AuthBusinessRequest>(auth);
 
-                var userBusinessResponse = await service.CreateUser(userBusinessRequest);
+                var authBusinessResponse = await service.Login(authBusinessRequest);
 
-                var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
-                return userResponse;
+                var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
+                return authResponse;
+            });
+
+        Field<BooleanGraphType>("logout")
+            .Argument<NonNullGraphType<IdGraphType>>("id")
+            .Resolve()
+            .WithScope()
+            .WithService<IAuthService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var id = context.GetArgument<Guid>("id");
+
+                await service.Logout(id);
+
+                return true;
+            });
+
+        Field<AuthType>("refresh")
+            .Argument<NonNullGraphType<StringGraphType>>("refreshToken")
+            .Resolve()
+            .WithScope()
+            .WithService<IAuthService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var refreshToken = context.GetArgument<string>("refreshToken");
+                //var email = contextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.Email);
+                var email = "john@example8.com";
+
+                var authBusinessResponse = await service.RefreshTokens(email, refreshToken);
+
+                var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
+                return authResponse;
             });
     }
 }
