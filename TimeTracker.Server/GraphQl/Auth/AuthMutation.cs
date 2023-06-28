@@ -39,11 +39,11 @@ public sealed class AuthMutation : ObjectGraphType
             .ResolveAsync(async (context, service) =>
             {
                 var id = context.GetArgument<Guid>("id");
-
+                //var h = contextAccessor.HttpContext!.User.FindFirst(ClaimTypes.Email);
                 await service.Logout(id);
 
                 return true;
-            });
+            }).AuthorizeWithPolicy($"{PolicyType.Authenticated}");
 
         Field<AuthType>("refresh")
             .Argument<NonNullGraphType<StringGraphType>>("refreshToken")
