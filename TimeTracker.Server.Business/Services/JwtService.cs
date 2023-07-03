@@ -37,13 +37,14 @@ public class JwtService : IJwtService
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Email, authClaims.Email)
+            new Claim("Id", authClaims.Id.ToString()),
+            new Claim("Email", authClaims.Email)
         };
 
         var tokenKey = tokenType == JwtTokenType.Refresh ? _refreshTokenKey : _accessTokenKey;
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey));
 
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512Signature);
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var tokenLifeTimeSeconds = tokenType == JwtTokenType.Refresh ? _refreshTokenLifeTimeSeconds : _accessTokenLifeTimeSeconds;
         var token = new JwtSecurityToken(

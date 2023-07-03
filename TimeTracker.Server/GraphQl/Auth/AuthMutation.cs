@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using AutoMapper;
+﻿using AutoMapper;
 using GraphQL;
 using GraphQL.Types;
 using GraphQL.MicrosoftDI;
@@ -25,25 +24,26 @@ public sealed class AuthMutation : ObjectGraphType
 
                 var authBusinessRequest = mapper.Map<AuthBusinessRequest>(auth);
 
-                var authBusinessResponse = await service.Login(authBusinessRequest);
+                var authBusinessResponse = await service.LoginAsync(authBusinessRequest);
 
                 var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
                 return authResponse;
-            });
+            }).AllowAnonymous();
 
         Field<BooleanGraphType>("logout")
-            .Argument<NonNullGraphType<IdGraphType>>("id")
             .Resolve()
             .WithScope()
             .WithService<IAuthService>()
             .ResolveAsync(async (context, service) =>
             {
-                var id = context.GetArgument<Guid>("id");
-                //var h = contextAccessor.HttpContext!.User.FindFirst(ClaimTypes.Email);
-                await service.Logout(id);
+                var jwt = service.GetAccessToken();
+                var claims = service.GetUserClaims(jwt);
+                await service.CheckUserAuthorizationAsync(claims);
 
+                var id = service.GetClaimValue(claims, "Id");
+                await service.LogoutAsync(Guid.Parse(id));
                 return true;
-            }).AuthorizeWithPolicy($"{PolicyType.Authenticated}");
+            });
 
         Field<AuthType>("refresh")
             .Argument<NonNullGraphType<StringGraphType>>("refreshToken")
@@ -53,10 +53,13 @@ public sealed class AuthMutation : ObjectGraphType
             .ResolveAsync(async (context, service) =>
             {
                 var refreshToken = context.GetArgument<string>("refreshToken");
-                //var email = contextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.Email);
-                var email = "john@example8.com";
+                var claims = service.GetUserClaims(refreshToken);
+                await service.CheckUserAuthorizationAsync(claims);
 
-                var authBusinessResponse = await service.RefreshTokens(email, refreshToken);
+                //var email = contextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.Email);
+                var email = service.GetClaimValue(claims, "Email");
+
+                var authBusinessResponse = await service.RefreshTokensAsync(email, refreshToken);
 
                 var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
                 return authResponse;

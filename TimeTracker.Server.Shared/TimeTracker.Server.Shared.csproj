@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="GraphQL.Server.Authorization.AspNetCore" Version="7.4.0" />
+  </ItemGroup>
+
 </Project>

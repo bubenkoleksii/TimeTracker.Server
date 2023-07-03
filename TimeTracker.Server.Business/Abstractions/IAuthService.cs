@@ -1,12 +1,21 @@
-﻿using TimeTracker.Server.Business.Models.Auth;
+﻿using System.Security.Claims;
+using TimeTracker.Server.Business.Models.Auth;
 
 namespace TimeTracker.Server.Business.Abstractions;
 
 public interface IAuthService
 {
-    public Task<AuthBusinessResponse> Login(AuthBusinessRequest userRequest);
+    public Task<AuthBusinessResponse> LoginAsync(AuthBusinessRequest userRequest);
 
-    public Task Logout(Guid id);
+    public Task LogoutAsync(Guid id);
 
-    public Task<AuthBusinessResponse> RefreshTokens(string email, string refreshToken);
+    public Task<AuthBusinessResponse> RefreshTokensAsync(string email, string refreshToken);
+
+    public string GetAccessToken();
+
+    public IEnumerable<Claim> GetUserClaims(string jwtToken);
+
+    public string? GetClaimValue(IEnumerable<Claim> claims, string key);
+
+    public Task<bool> CheckUserAuthorizationAsync(IEnumerable<Claim> claims);
 }

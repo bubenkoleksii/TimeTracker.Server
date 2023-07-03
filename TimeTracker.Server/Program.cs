@@ -11,7 +11,6 @@ using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using TimeTracker.Server.Middleware;
-using TimeTracker.Server.Models.Auth;
 
 namespace TimeTracker.Server;
 
@@ -21,34 +20,58 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        // DI
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IJwtService, JwtService>();
+        builder.Services.AddScoped<IUserService, UserService>();
 
-        builder.Services.AddGraphQL(graphQlBuilder => graphQlBuilder
+        builder.Services.AddSingleton<DapperContext>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+        builder.Services.AddAuthentication(conf =>
+        {
+            conf.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            conf.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            conf.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+        }).AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                     Encoding.UTF8.GetBytes(builder.Configuration.GetSection("Auth:AccessTokenKey").Value)),
+                ValidateIssuerSigningKey = true,
+                RequireExpirationTime = true,
+                RequireSignedTokens = false
+            };
+        });
+        //builder.Services.AddAuthorization(options =>
+        //{
+        //    options.AddPolicy("LoggedIn", (a) =>
+        //    {
+        //        a.RequireAuthenticatedUser();
+        //    });
+        //});
+        builder.Services.AddGraphQL(builder => builder
             .AddSystemTextJson()
             .AddSchema<RootSchema>()
             .AddGraphTypes(typeof(RootSchema).Assembly)
-            .AddAuthorization(settings =>
-            {
-                settings.AddPolicy($"{PolicyType.Authenticated}", p => p.RequireAuthenticatedUser());
-            }));
+            //.AddAuthorizationRule()
+        );
+        //builder.Services.AddGraphQL(options =>
+        //{
+        //    options.AddSchema<RootSchema>(GraphQL.DI.ServiceLifetime.Scoped)
+        //        .AddGraphTypes()
+        //        .AddSystemTextJson()
+        //        //.AddAuthorizationRule()
+        //        .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true);
+        //});
 
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidateAudience = false,
-                    ValidateIssuer = false,
-                    ClockSkew = TimeSpan.Zero,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                        builder.Configuration.GetSection("Auth:AccessTokenKey").Value
-                        )),
-                    ValidIssuer = builder.Configuration.GetSection("Auth:JwtTokenIssuer").Value,
-                    ValidAudience = builder.Configuration.GetSection("Auth:JwtTokenAudience").Value,
-                };
-            });
+
+        builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
         builder.Services.AddHttpContextAccessor();
 
@@ -61,21 +84,14 @@ public class Program
                 .ClearProviders()
                 .AddFluentMigratorConsole());
 
-        // DI
-        builder.Services.AddScoped<IAuthService, AuthService>();
-        builder.Services.AddScoped<IJwtService, JwtService>();
-        builder.Services.AddScoped<IUserService, UserService>();
-
-        builder.Services.AddSingleton<DapperContext>();
-        builder.Services.AddScoped<IUserRepository, UserRepository>();
-
         var app = builder.Build();
+
+        app.UseAuthentication();
+        //app.UseAuthorization();
 
         app.UseGraphQL();
         app.UseGraphQLAltair();
 
-        app.UseAuthentication();
-        
         Database.EnsureDatabase(
             app.Configuration["ConnectionStrings:EnsureDatabaseConnectionString"], 
             app.Configuration["Database:Name"]
