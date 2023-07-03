@@ -61,14 +61,17 @@ public class Program
             .AddGraphTypes(typeof(RootSchema).Assembly)
             //.AddAuthorizationRule()
         );
-        //builder.Services.AddGraphQL(options =>
-        //{
-        //    options.AddSchema<RootSchema>(GraphQL.DI.ServiceLifetime.Scoped)
-        //        .AddGraphTypes()
-        //        .AddSystemTextJson()
-        //        //.AddAuthorizationRule()
-        //        .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true);
-        //});
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(name: "MyAllowSpecificOrigins",
+                policy =>
+                {
+                    policy.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+                });
+        });
 
 
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -85,6 +88,8 @@ public class Program
                 .AddFluentMigratorConsole());
 
         var app = builder.Build();
+
+        app.UseCors("MyAllowSpecificOrigins");
 
         app.UseAuthentication();
         //app.UseAuthorization();
