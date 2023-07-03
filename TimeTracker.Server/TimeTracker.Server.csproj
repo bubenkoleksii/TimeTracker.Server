@@ -9,20 +9,27 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="FluentMigrator" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Extensions.SqlServer" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Runner" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Runner.Core" Version="3.3.2" />
+    <PackageReference Include="FluentMigrator.Runner.SqlServer" Version="3.3.2" />
     <PackageReference Include="GraphQL" Version="7.5.0" />
+    <PackageReference Include="GraphQL.MicrosoftDI" Version="7.5.0" />
     <PackageReference Include="GraphQL.NewtonsoftJson" Version="7.5.0" />
+    <PackageReference Include="GraphQL.Server.Authorization.AspNetCore" Version="7.4.0" />
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.4.0" />
     <PackageReference Include="GraphQL.Server.Ui.Altair" Version="7.4.0" />
     <PackageReference Include="GraphQL.SystemTextJson" Version="7.5.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.19" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="7.0.8" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.31.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TimeTracker.Server.Business\TimeTracker.Server.Business.csproj" />
     <ProjectReference Include="..\TimeTracker.Server.Data\TimeTracker.Server.Data.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="GraphQl\User\Types\" />
+    <ProjectReference Include="..\TimeTracker.Server.Shared\TimeTracker.Server.Shared.csproj" />
   </ItemGroup>
 
 </Project>

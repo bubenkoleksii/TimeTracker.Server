@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -8,10 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="GraphQL.Server.Authorization.AspNetCore" Version="7.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TimeTracker.Server.Data\TimeTracker.Server.Data.csproj" />
+    <ProjectReference Include="..\TimeTracker.Server.Shared\TimeTracker.Server.Shared.csproj" />
   </ItemGroup>
 
 </Project>

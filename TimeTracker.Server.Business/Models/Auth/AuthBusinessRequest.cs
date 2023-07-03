@@ -1,6 +1,6 @@
-﻿namespace TimeTracker.Server.Business.Models.User;
+﻿namespace TimeTracker.Server.Business.Models.Auth;
 
-public record UserBusinessRequest
+public record AuthBusinessRequest
 {
     public string Email { get; set; } = null!;
 

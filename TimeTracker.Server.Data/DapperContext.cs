@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Data;
 
@@ -12,9 +13,7 @@ public class DapperContext
     {
         var connectionString = configuration.GetConnectionString("DefaultConnectionString");
         if (string.IsNullOrEmpty(connectionString))
-        {
-            throw new ArgumentNullException("Connection string cannot be null");
-        }
+            throw new InvalidConfigurationException("Connection string cannot be null or empty");
 
         _connectionString = connectionString;
     }
