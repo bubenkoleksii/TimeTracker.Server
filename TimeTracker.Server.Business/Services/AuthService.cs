@@ -34,10 +34,10 @@ public class AuthService : IAuthService
         {
             var user = await _userRepository.GetUserByEmail(userRequest.Email);
             if (user == null)
-                throw new ArgumentNullException($"User with email {userRequest.Email} not found");
+                throw new Exception();
 
             if (!IsPasswordValid(userRequest.Password, user.HashPassword))
-                throw new AuthenticationException($"Password {userRequest.Password} is wrong");
+                throw new Exception();
 
             var userClaims = _mapper.Map<AuthTokenClaimsModel>(userRequest);
             userClaims.Id = user.Id;
@@ -54,7 +54,9 @@ public class AuthService : IAuthService
         }
         catch
         {
-            throw new InvalidOperationException("Login failed");
+            var error = new ExecutionError("Login failed");
+            error.Code = "LOGIN_FAILED";
+            throw error;
         }
     }
 
@@ -64,18 +66,20 @@ public class AuthService : IAuthService
         {
             if (!_httpContextAccessor.HttpContext!.Request.Headers.TryGetValue("Authorization", out var accessToken))
             {
-                throw new ExecutionError("You need to be authorized to run this query");
+                throw new Exception();
             }
             var accessTokenStr = accessToken.ToString();
             if (!accessTokenStr.StartsWith("Bearer "))
             {
-                throw new ExecutionError("Access denied");
+                throw new Exception();
             }
             return accessTokenStr.Replace("Bearer ", "");
         }
         catch
         {
-            throw new ExecutionError("Operation failed");
+            var error = new ExecutionError("You need to be authorized to run this query");
+            error.Code = "AUTHENTICATION_REQUIRED";
+            throw error;
         }
     }
 
@@ -88,7 +92,9 @@ public class AuthService : IAuthService
         }
         catch
         {
-            throw new ExecutionError("Operation failed");
+            var error = new ExecutionError("You need to be authorized to run this query");
+            error.Code = "AUTHENTICATION_REQUIRED";
+            throw error;
         }
     }
 
@@ -99,28 +105,37 @@ public class AuthService : IAuthService
 
     public async Task<bool> CheckUserAuthorizationAsync(IEnumerable<Claim> claims)
     {
-        var userId = GetClaimValue(claims, "Id");
-        var exp = GetClaimValue(claims, "exp");
-        if (userId is null || exp is null)
+        try
         {
-            throw new ExecutionError("Token is invalid");
+            var userId = GetClaimValue(claims, "Id");
+            var exp = GetClaimValue(claims, "exp");
+            if (userId is null || exp is null)
+            {
+                throw new Exception();
+            }
+
+            var expLong = long.Parse(exp);
+            var tokenDate = DateTimeOffset.FromUnixTimeSeconds(expLong).UtcDateTime;
+            var now = DateTime.Now.ToUniversalTime();
+
+            if (tokenDate < now)
+            {
+                throw new Exception();
+            }
+
+            var user = await _userRepository.GetUserById(Guid.Parse(userId));
+            if (user is null)
+            {
+                throw new Exception();
+            }
+            return true;
         }
-
-        var expLong = long.Parse(exp);
-        var tokenDate = DateTimeOffset.FromUnixTimeSeconds(expLong).UtcDateTime;
-        var now = DateTime.Now.ToUniversalTime();
-
-        if (tokenDate < now)
+        catch
         {
-            throw new ExecutionError("Access token is expired");
+            var error = new ExecutionError("You need to be authorized to run this query");
+            error.Code = "AUTHENTICATION_REQUIRED";
+            throw error;
         }
-
-        var user = await _userRepository.GetUserById(Guid.Parse(userId));
-        if (user is null)
-        {
-            throw new ExecutionError("There is no user with this ID");
-        }
-        return true;
     }
 
     public async Task LogoutAsync(Guid id)
@@ -131,7 +146,9 @@ public class AuthService : IAuthService
         }
         catch
         {
-            throw new InvalidOperationException("Logout failed");
+            var error = new ExecutionError("Logout failed");
+            error.Code = "LOGOUT_FAILED";
+            throw error;
         }
     }
 
@@ -142,7 +159,7 @@ public class AuthService : IAuthService
             var user = await _userRepository.GetUserByEmail(email);
 
             if (user.RefreshToken != refreshToken)
-                throw new ExecutionError("Refresh token is wrong");
+                throw new Exception();
 
             var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
             var newRefreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
@@ -158,7 +175,9 @@ public class AuthService : IAuthService
         }
         catch
         {
-            throw new ExecutionError("Failed to refresh tokens");
+            var error = new ExecutionError("Failed to refresh tokens");
+            error.Code = "REFRESH_FAILED";
+            throw error;
         }
     }
 

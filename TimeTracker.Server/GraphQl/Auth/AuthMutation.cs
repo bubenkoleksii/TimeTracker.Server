@@ -56,9 +56,7 @@ public sealed class AuthMutation : ObjectGraphType
                 var claims = service.GetUserClaims(refreshToken);
                 await service.CheckUserAuthorizationAsync(claims);
 
-                //var email = contextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.Email);
                 var email = service.GetClaimValue(claims, "Email");
-
                 var authBusinessResponse = await service.RefreshTokensAsync(email, refreshToken);
 
                 var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
