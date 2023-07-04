@@ -7,15 +7,7 @@ public interface IAuthService
 {
     public Task<AuthBusinessResponse> LoginAsync(AuthBusinessRequest userRequest);
 
-    public Task LogoutAsync(Guid id);
+    public Task LogoutAsync();
 
-    public Task<AuthBusinessResponse> RefreshTokensAsync(string email, string refreshToken);
-
-    public string GetAccessToken();
-
-    public IEnumerable<Claim> GetUserClaims(string jwtToken);
-
-    public string? GetClaimValue(IEnumerable<Claim> claims, string key);
-
-    public Task<bool> CheckUserAuthorizationAsync(IEnumerable<Claim> claims);
+    public Task<AuthBusinessResponse> RefreshTokensAsync(string refreshToken);
 }
