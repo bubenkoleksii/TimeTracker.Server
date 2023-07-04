@@ -28,7 +28,7 @@ public sealed class AuthMutation : ObjectGraphType
 
                 var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
                 return authResponse;
-            }).AllowAnonymous();
+            });
 
         Field<BooleanGraphType>("logout")
             .Resolve()
@@ -36,12 +36,7 @@ public sealed class AuthMutation : ObjectGraphType
             .WithService<IAuthService>()
             .ResolveAsync(async (context, service) =>
             {
-                var jwt = service.GetAccessToken();
-                var claims = service.GetUserClaims(jwt);
-                await service.CheckUserAuthorizationAsync(claims);
-
-                var id = service.GetClaimValue(claims, "Id");
-                await service.LogoutAsync(Guid.Parse(id));
+                await service.LogoutAsync();
                 return true;
             });
 
@@ -53,14 +48,7 @@ public sealed class AuthMutation : ObjectGraphType
             .ResolveAsync(async (context, service) =>
             {
                 var refreshToken = context.GetArgument<string>("refreshToken");
-                var claims = service.GetUserClaims(refreshToken);
-                await service.CheckUserAuthorizationAsync(claims);
-
-                //var email = contextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.Email);
-                var email = service.GetClaimValue(claims, "Email");
-
-                var authBusinessResponse = await service.RefreshTokensAsync(email, refreshToken);
-
+                var authBusinessResponse = await service.RefreshTokensAsync(refreshToken);
                 var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
                 return authResponse;
             });

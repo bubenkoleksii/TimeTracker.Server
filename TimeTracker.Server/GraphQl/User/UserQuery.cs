@@ -12,12 +12,12 @@ public class UserQuery : ObjectGraphType
         Field<StringGraphType>("test")
             .Resolve()
             .WithScope()
-            .WithService<IAuthService>()
+            .WithService<IJwtService>()
             .ResolveAsync(async (context, service) =>
             {
                 var jwt = service.GetAccessToken();
                 var claims = service.GetUserClaims(jwt);
-                await service.CheckUserAuthorizationAsync(claims);
+                await service.RequireUserAuthorizationAsync(claims);
                 return service.GetClaimValue(claims, "exp");
             });
     }
