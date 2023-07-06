@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using GraphQL;
-using GraphQL.Types;
 using GraphQL.MicrosoftDI;
+using GraphQL.Types;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.GraphQl.User.Types;
@@ -14,7 +14,7 @@ public sealed class UserMutation : ObjectGraphType
     public UserMutation(IMapper mapper)
     {
         Field<UserType>("create")
-            .Argument<NonNullGraphType<UserInputType>>("user")
+            .Argument<NonNullGraphType<CreateUserInputType>>("user")
             .Resolve()
             .WithScope()
             .WithService<IUserService>()

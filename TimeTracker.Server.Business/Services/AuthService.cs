@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using GraphQL;
-using Microsoft.AspNetCore.Http;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
 using TimeTracker.Server.Data.Abstractions;
@@ -11,9 +10,9 @@ public class AuthService : IAuthService
 {
     private readonly IJwtService _jwtService;
 
-    private readonly IUserRepository _userRepository;
-
     private readonly IMapper _mapper;
+
+    private readonly IUserRepository _userRepository;
 
     public AuthService(IJwtService jwtService, IUserRepository userRepository, IMapper mapper)
     {
@@ -42,7 +41,7 @@ public class AuthService : IAuthService
             return new AuthBusinessResponse
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken,
+                RefreshToken = refreshToken
             };
         }
         catch
@@ -60,6 +59,7 @@ public class AuthService : IAuthService
         var jwt = _jwtService.GetAccessToken();
         var claims = _jwtService.GetUserClaims(jwt);
         await _jwtService.RequireUserAuthorizationAsync(claims);
+
         var userId = _jwtService.GetClaimValue(claims, "Id");
 
         await _userRepository.RemoveRefresh(Guid.Parse(userId));
@@ -90,7 +90,7 @@ public class AuthService : IAuthService
         return new AuthBusinessResponse
         {
             AccessToken = newAccessToken,
-            RefreshToken = newRefreshToken,
+            RefreshToken = newRefreshToken
         };
     }
 

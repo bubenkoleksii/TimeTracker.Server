@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using TimeTracker.Server.Business.Models.Auth;
+﻿using TimeTracker.Server.Business.Models.Auth;
 
 namespace TimeTracker.Server.Business.Abstractions;
 

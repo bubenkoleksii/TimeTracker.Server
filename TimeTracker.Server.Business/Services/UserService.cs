@@ -8,9 +8,8 @@ namespace TimeTracker.Server.Business.Services;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _userRepository;
-
     private readonly IMapper _mapper;
+    private readonly IUserRepository _userRepository;
 
     public UserService(IUserRepository userRepository, IMapper mapper)
     {
@@ -25,7 +24,7 @@ public class UserService : IUserService
             throw new ArgumentNullException($"User with email {userRequest.Email} already exists");
 
         var userDataRequest = _mapper.Map<UserDataRequest>(userRequest);
-        userDataRequest.HashPassword = HashPassword(userRequest.Password);
+        //userDataRequest.HashPassword = HashPassword(userRequest.Password);
 
         var userDataResponse = await _userRepository.CreateUser(userDataRequest);
 

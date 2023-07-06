@@ -1,6 +1,5 @@
-﻿using GraphQL;
+﻿using GraphQL.MicrosoftDI;
 using GraphQL.Types;
-using GraphQL.MicrosoftDI;
 using TimeTracker.Server.Business.Abstractions;
 
 namespace TimeTracker.Server.GraphQl.User;

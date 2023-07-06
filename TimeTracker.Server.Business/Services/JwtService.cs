@@ -19,19 +19,19 @@ public enum JwtTokenType
 
 public class JwtService : IJwtService
 {
-    private readonly string _refreshTokenKey;
-
     private readonly string _accessTokenKey;
-
-    private readonly int _refreshTokenLifeTimeSeconds;
 
     private readonly int _accessTokenLifeTimeSeconds;
 
     private readonly IHttpContextAccessor _contextAccessor;
+    private readonly string _refreshTokenKey;
+
+    private readonly int _refreshTokenLifeTimeSeconds;
 
     private readonly IUserRepository _userRepository;
 
-    public JwtService(IConfiguration configuration, IHttpContextAccessor contextAccessor, IUserRepository userRepository)
+    public JwtService(IConfiguration configuration, IHttpContextAccessor contextAccessor,
+        IUserRepository userRepository)
     {
         _refreshTokenKey = configuration.GetSection("Auth:RefreshTokenKey").Value;
         _accessTokenKey = configuration.GetSection("Auth:AccessTokenKey").Value;
@@ -47,8 +47,8 @@ public class JwtService : IJwtService
     {
         var claims = new List<Claim>
         {
-            new ("Id", authClaims.Id.ToString()),
-            new ("Email", authClaims.Email)
+            new("Id", authClaims.Id.ToString()),
+            new("Email", authClaims.Email)
         };
 
         var tokenKey = tokenType == JwtTokenType.Refresh ? _refreshTokenKey : _accessTokenKey;
@@ -56,7 +56,9 @@ public class JwtService : IJwtService
 
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var tokenLifeTimeSeconds = tokenType == JwtTokenType.Refresh ? _refreshTokenLifeTimeSeconds : _accessTokenLifeTimeSeconds;
+        var tokenLifeTimeSeconds = tokenType == JwtTokenType.Refresh
+            ? _refreshTokenLifeTimeSeconds
+            : _accessTokenLifeTimeSeconds;
         var token = new JwtSecurityToken(
             claims: claims,
             expires: DateTime.Now.AddSeconds(tokenLifeTimeSeconds),
@@ -72,14 +74,9 @@ public class JwtService : IJwtService
         try
         {
             if (!_contextAccessor.HttpContext!.Request.Headers.TryGetValue("Authorization", out var accessToken))
-            {
                 throw new Exception();
-            }
             var accessTokenStr = accessToken.ToString();
-            if (!accessTokenStr.StartsWith("Bearer "))
-            {
-                throw new Exception();
-            }
+            if (!accessTokenStr.StartsWith("Bearer ")) throw new Exception();
             return accessTokenStr.Replace("Bearer ", "");
         }
         catch
@@ -120,19 +117,13 @@ public class JwtService : IJwtService
         {
             var userId = GetClaimValue(claims, "Id");
             var exp = GetClaimValue(claims, "exp");
-            if (userId is null || exp is null)
-            {
-                throw new Exception();
-            }
+            if (userId is null || exp is null) throw new Exception();
 
             var expLong = long.Parse(exp);
             var tokenDate = DateTimeOffset.FromUnixTimeSeconds(expLong).UtcDateTime;
             var now = DateTime.Now.ToUniversalTime();
 
-            if (tokenDate < now)
-            {
-                throw new Exception();
-            }
+            if (tokenDate < now) throw new Exception();
 
             var user = await _userRepository.GetUserById(Guid.Parse(userId)) ?? throw new Exception();
             return true;

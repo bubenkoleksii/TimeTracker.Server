@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using GraphQL;
-using GraphQL.Types;
 using GraphQL.MicrosoftDI;
+using GraphQL.Types;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
 using TimeTracker.Server.GraphQl.Auth.Types;
