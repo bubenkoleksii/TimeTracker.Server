@@ -34,7 +34,6 @@ public class UserService : IUserService
             throw new ArgumentNullException($"User with email {userRequest.Email} already exists");
 
         var userDataRequest = _mapper.Map<UserDataRequest>(userRequest);
-        //userDataRequest.HashPassword = HashPassword(userRequest.Password);
 
         var userDataResponse = await _userRepository.CreateUser(userDataRequest);
 
@@ -62,7 +61,7 @@ public class UserService : IUserService
         }
 
         var hoursExpired = int.Parse(_configuration.GetSection("Password:HoursExpired").Value);
-        var expired = DateTime.UtcNow.AddHours(hoursExpired);
+        var expired = DateTime.Now.AddHours(hoursExpired);
 
         var setPasswordLink = Guid.NewGuid();
         var setPasswordUrl = $"{_configuration.GetSection("Client:Url").Value}set-password/{setPasswordLink}/";
@@ -71,7 +70,7 @@ public class UserService : IUserService
         var text = @$"
             <div>
                 <h1>Set Password for Your Account</h1>
-                <p>In order to log in to your account, you need to set a password for it before {expired:dd.MM.yyyy HH:mm} UTC.</p>
+                <p>In order to log in to your account, you need to set a password for it before {expired:dd.MM.yyyy HH:mm}.</p>
                 <p>Click on the button below and follow the link to set a password</p>
                 <a href=""{setPasswordUrl}"" style=""display:inline-block; background-color:#4CAF50; color:white; padding:10px 20px; text-decoration:none;"">Set Password</a>
             </div>";
@@ -87,7 +86,7 @@ public class UserService : IUserService
             };
         }
 
-        await _userRepository.AddSetPasswordLink(setPasswordLink, expired, candidate.Id);
+        await _userRepository.AddSetPasswordLink(setPasswordLink, expired.ToUniversalTime(), candidate.Id);
     }
 
     public async Task SetPassword(SetPasswordUserBusinessRequest userRequest)

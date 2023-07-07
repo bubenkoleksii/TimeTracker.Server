@@ -1,4 +1,5 @@
-﻿using GraphQL.MicrosoftDI;
+﻿using GraphQL;
+using GraphQL.MicrosoftDI;
 using GraphQL.Types;
 using TimeTracker.Server.Business.Abstractions;
 
@@ -14,10 +15,7 @@ public class UserQuery : ObjectGraphType
             .WithService<IJwtService>()
             .ResolveAsync(async (context, service) =>
             {
-                var jwt = service.GetAccessToken();
-                var claims = service.GetUserClaims(jwt);
-                await service.RequireUserAuthorizationAsync(claims);
-                return service.GetClaimValue(claims, "exp");
-            });
+                return "aoaoao";
+            }).AuthorizeWithPolicy("LoggedIn");
     }
 }

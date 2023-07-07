@@ -13,6 +13,7 @@ public sealed class UserMutation : ObjectGraphType
 {
     public UserMutation(IMapper mapper)
     {
+        // Only for admin
         Field<UserType>("create")
             .Argument<NonNullGraphType<CreateUserInputType>>("user")
             .Resolve()
@@ -28,8 +29,7 @@ public sealed class UserMutation : ObjectGraphType
 
                 var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
                 return userResponse;
-            }).AuthorizeWithPolicy("LoggedIn");
-
+            });
 
         // Only for admin
         Field<bool>("addSetPasswordLink")

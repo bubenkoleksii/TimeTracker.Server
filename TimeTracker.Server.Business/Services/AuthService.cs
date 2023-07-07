@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
 using TimeTracker.Server.Business.Abstractions;
@@ -62,13 +63,19 @@ public class AuthService : IAuthService
 
     public async Task LogoutAsync()
     {
-        var jwt = _jwtService.GetAccessToken();
-        var claims = _jwtService.GetUserClaims(jwt);
-        await _jwtService.RequireUserAuthorizationAsync(claims);
+        var claims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
 
-        var userId = _jwtService.GetClaimValue(claims, "Id");
+        var userId = claims.FirstOrDefault(c => c.Type == "Id");
+        if (userId == null)
+        {
+            var error = new ExecutionError("Claim user id not found")
+            {
+                Code = "OPERATION_FAILED"
+            };
+            throw error;
+        }
 
-        await _userRepository.RemoveRefresh(Guid.Parse(userId));
+        await _userRepository.RemoveRefresh(Guid.Parse(userId.Value));
     }
 
     public async Task<string> RefreshTokensAsync()
@@ -82,10 +89,19 @@ public class AuthService : IAuthService
             throw error;
         }
 
-        var claims = _jwtService.GetUserClaims(refreshToken);
-        await _jwtService.RequireUserAuthorizationAsync(claims);
-        var userId = _jwtService.GetClaimValue(claims, "Id");
-        var user = await _userRepository.GetUserById(Guid.Parse(userId));
+        var claims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
+
+        var userId = claims.FirstOrDefault(c => c.Type == "Id");
+        if (userId == null)
+        {
+            var error = new ExecutionError("Claim user id not found")
+            {
+                Code = "OPERATION_FAILED"
+            };
+            throw error;
+        }
+
+        var user = await _userRepository.GetUserById(Guid.Parse(userId.Value));
 
         if (user.RefreshToken != refreshToken)
         {
