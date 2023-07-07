@@ -64,7 +64,7 @@ public class UserService : IUserService
         var expired = DateTime.UtcNow.AddHours(hoursExpired);
 
         var setPasswordLink = Guid.NewGuid();
-        var setPasswordUrl = $"{_configuration.GetSection("Client:Url").Value}{setPasswordLink}/";
+        var setPasswordUrl = $"{_configuration.GetSection("Client:Url").Value}set-password/{setPasswordLink}/";
 
         var subject = "TimeTracker: Please set a password for your account";
         var text = @$"
