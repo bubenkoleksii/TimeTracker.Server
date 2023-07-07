@@ -4,9 +4,9 @@ namespace TimeTracker.Server.Business.Abstractions;
 
 public interface IAuthService
 {
-    public Task<AuthBusinessResponse> LoginAsync(AuthBusinessRequest userRequest);
+    public Task<string> LoginAsync(AuthBusinessRequest userRequest);
 
     public Task LogoutAsync();
 
-    public Task<AuthBusinessResponse> RefreshTokensAsync();
+    public Task<string> RefreshTokensAsync();
 }

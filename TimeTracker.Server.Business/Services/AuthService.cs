@@ -25,7 +25,7 @@ public class AuthService : IAuthService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<AuthBusinessResponse> LoginAsync(AuthBusinessRequest userRequest)
+    public async Task<string> LoginAsync(AuthBusinessRequest userRequest)
     {
         try
         {
@@ -48,11 +48,7 @@ public class AuthService : IAuthService
                 SameSite = SameSiteMode.Strict
             });
 
-            return new AuthBusinessResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
-            };
+            return accessToken;
         }
         catch
         {
@@ -75,7 +71,7 @@ public class AuthService : IAuthService
         await _userRepository.RemoveRefresh(Guid.Parse(userId));
     }
 
-    public async Task<AuthBusinessResponse> RefreshTokensAsync()
+    public async Task<string> RefreshTokensAsync()
     {
         if (!(_httpContextAccessor.HttpContext!.Request.Cookies.TryGetValue("refreshToken", out var refreshToken)))
         {
@@ -101,16 +97,9 @@ public class AuthService : IAuthService
         }
 
         var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
-        //var newRefreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
         var newAccessToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
 
-        //await _userRepository.SetRefreshToken(newRefreshToken, user.Id);
-
-        return new AuthBusinessResponse
-        {
-            AccessToken = newAccessToken,
-            RefreshToken = "asd"
-        };
+        return newAccessToken;
     }
 
     private static bool IsPasswordValid(string password, string passwordHash)

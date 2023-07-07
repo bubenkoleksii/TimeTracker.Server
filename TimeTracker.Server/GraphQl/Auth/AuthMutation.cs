@@ -11,9 +11,9 @@ namespace TimeTracker.Server.GraphQl.Auth;
 
 public sealed class AuthMutation : ObjectGraphType
 {
-    public AuthMutation(IMapper mapper, IHttpContextAccessor contextAccessor)
+    public AuthMutation(IMapper mapper)
     {
-        Field<AuthType>("login")
+        Field<string>("login")
             .Argument<NonNullGraphType<AuthInputType>>("auth")
             .Resolve()
             .WithScope()
@@ -24,10 +24,8 @@ public sealed class AuthMutation : ObjectGraphType
 
                 var authBusinessRequest = mapper.Map<AuthBusinessRequest>(auth);
 
-                var authBusinessResponse = await service.LoginAsync(authBusinessRequest);
-
-                var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
-                return authResponse;
+                var accessToken = await service.LoginAsync(authBusinessRequest);
+                return accessToken;
             });
 
         Field<BooleanGraphType>("logout")
@@ -40,15 +38,14 @@ public sealed class AuthMutation : ObjectGraphType
                 return true;
             });
 
-        Field<AuthType>("refresh")
+        Field<string>("refresh")
             .Resolve()
             .WithScope()
             .WithService<IAuthService>()
             .ResolveAsync(async (context, service) =>
             { ;
-                var authBusinessResponse = await service.RefreshTokensAsync();
-                var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
-                return authResponse;
+                var newAccessToken = await service.RefreshTokensAsync();
+                return newAccessToken;
             });
     }
 }
