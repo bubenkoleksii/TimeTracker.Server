@@ -35,7 +35,7 @@ public class AuthService : IAuthService
             if (!IsPasswordValid(userRequest.Password, user.HashPassword))
                 throw new Exception();
 
-            var userClaims = _mapper.Map<AuthTokenClaimsModel>(userRequest);
+            var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
             userClaims.Id = user.Id;
 
             var refreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);

@@ -52,7 +52,7 @@ public class JwtService : IJwtService
             new("FullName", authClaims.FullName),
             new("EmploymentRate", authClaims.EmploymentRate.ToString()),
             new("Status", authClaims.Status),
-            new("Permissions", authClaims.Permissions)
+            new("Permissions", authClaims.Permissions ?? "")
         };
 
         var tokenKey = tokenType == JwtTokenType.Refresh ? _refreshTokenKey : _accessTokenKey;
