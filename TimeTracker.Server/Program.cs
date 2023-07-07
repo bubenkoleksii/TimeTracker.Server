@@ -16,7 +16,7 @@ namespace TimeTracker.Server;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +24,7 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IJwtService, JwtService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IMailService, MailService>();
 
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -97,12 +98,12 @@ public class Program
         app.UseGraphQL();
         app.UseGraphQLAltair();
 
-        Database.EnsureDatabase(
+        app.UseMigrations();
+
+        await Database.EnsureDatabase(
             app.Configuration["ConnectionStrings:EnsureDatabaseConnectionString"], 
             app.Configuration["Database:Name"]
             );
-
-        app.UseMigrations();
 
         app.Run();
     }

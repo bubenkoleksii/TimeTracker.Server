@@ -29,5 +29,38 @@ public sealed class UserMutation : ObjectGraphType
                 var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
                 return userResponse;
             });
+
+
+        // Only for admin
+        Field<bool>("addSetPasswordLink")
+            .Argument<NonNullGraphType<StringGraphType>>("email")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var email = context.GetArgument<string>("email");
+
+                await service.AddSetPasswordLink(email);
+
+                return true;
+            });
+
+        Field<bool>("setPassword")
+            .Argument<NonNullGraphType<SetPasswordUserInputType>>("user")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var userRequest = context.GetArgument<SetPasswordUserRequest>("user");
+
+                var userBusinessRequest = mapper.Map<SetPasswordUserBusinessRequest>(userRequest);
+                await service.SetPassword(userBusinessRequest);
+
+                return true;
+            });
+
+        // TODO: Reset password
     }
 }

@@ -13,4 +13,8 @@ public interface IUserRepository
     public Task SetRefreshToken(string refreshToken, Guid id);
 
     public Task RemoveRefresh(Guid id);
+
+    public Task AddSetPasswordLink(Guid setPasswordLink, DateTime expired, Guid id);
+
+    public Task SetPassword(SetPasswordUserDataRequest user);
 }

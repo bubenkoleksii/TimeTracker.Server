@@ -37,15 +37,26 @@ public class UserRepository : IUserRepository
     {
         var id = Guid.NewGuid();
 
-        var queryString = $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.HashPassword)}) " +
-                          $"VALUES(@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.HashPassword)})";
+        var queryString = userRequest.Permissions != null
+            ? $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.FullName)}, {nameof(UserDataRequest.Status)}, " +
+              $"{nameof(UserDataRequest.Permissions)}, {nameof(UserDataRequest.EmploymentRate)}) " +
+              $"VALUES (@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.FullName)}, @{nameof(userRequest.Status)}, " +
+              $"@{nameof(userRequest.Permissions)}, @{nameof(userRequest.EmploymentRate)})"
+
+            : $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.FullName)}, {nameof(UserDataRequest.Status)}, " +
+              $"{nameof(UserDataRequest.EmploymentRate)}) " +
+              $"VALUES (@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.FullName)}, @{nameof(userRequest.Status)}, " +
+              $"@{nameof(userRequest.EmploymentRate)})";
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(queryString, new
         {
             id, 
             userRequest.Email, 
-            userRequest.HashPassword
+            userRequest.FullName,
+            userRequest.Status,
+            userRequest.Permissions,
+            userRequest.EmploymentRate
         });
 
         var userResponse = await GetUserById(id);
@@ -70,5 +81,34 @@ public class UserRepository : IUserRepository
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, new { id });
+    }
+
+    public async Task AddSetPasswordLink(Guid setPasswordLink, DateTime expired, Guid id)
+    {
+        var query = $"UPDATE [User] SET {nameof(UserDataResponse.SetPasswordLink)} = @{nameof(setPasswordLink)}, " +
+                          $"{nameof(UserDataResponse.SetPasswordLinkExpired)} = @{nameof(expired)}" +
+                          $" WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            setPasswordLink,
+            expired,
+            id
+        });
+    }
+
+    public async Task SetPassword(SetPasswordUserDataRequest user)
+    {
+        var query = $"UPDATE [User] SET {nameof(SetPasswordUserDataRequest.HashPassword)} = @{nameof(user.HashPassword)}, {nameof(UserDataResponse.HasPassword)} = 1," +
+                          $" {nameof(UserDataResponse.SetPasswordLink)} = NULL, {nameof(UserDataResponse.SetPasswordLinkExpired)} = NULL" +
+                          $" WHERE Email = @{nameof(user.Email)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+           user.HashPassword,
+           user.Email
+        });
     }
 }
