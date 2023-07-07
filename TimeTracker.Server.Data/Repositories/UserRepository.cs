@@ -33,6 +33,17 @@ public class UserRepository : IUserRepository
         return user;
     }
 
+    public async Task<IEnumerable<UserDataResponse>> GetAllUsersAsync()
+    {
+        var query = $"SELECT {nameof(UserDataResponse.Id)}, {nameof(UserDataResponse.Email)}, {nameof(UserDataResponse.FullName)}," +
+                    $" [{nameof(UserDataResponse.Status)}], [{nameof(UserDataResponse.Permissions)}], {nameof(UserDataResponse.EmploymentRate)} FROM [User]";
+
+        using var connection = _context.GetConnection();
+        var users = await connection.QueryAsync<UserDataResponse>(query);
+
+        return users;
+    }
+
     public async Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest)
     {
         var id = Guid.NewGuid();

@@ -1,13 +1,10 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using GraphQL;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
-using TimeTracker.Server.Data.Abstractions;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -23,24 +20,17 @@ public class JwtService : IJwtService
 
     private readonly int _accessTokenLifeTimeSeconds;
 
-    private readonly IHttpContextAccessor _contextAccessor;
     private readonly string _refreshTokenKey;
 
     private readonly int _refreshTokenLifeTimeSeconds;
 
-    private readonly IUserRepository _userRepository;
-
-    public JwtService(IConfiguration configuration, IHttpContextAccessor contextAccessor,
-        IUserRepository userRepository)
+    public JwtService(IConfiguration configuration)
     {
         _refreshTokenKey = configuration.GetSection("Auth:RefreshTokenKey").Value;
         _accessTokenKey = configuration.GetSection("Auth:AccessTokenKey").Value;
 
         _refreshTokenLifeTimeSeconds = int.Parse(configuration.GetSection("Auth:RefreshTokenLifeTimeSeconds").Value);
         _accessTokenLifeTimeSeconds = int.Parse(configuration.GetSection("Auth:AccessTokenLifeTimeSeconds").Value);
-
-        _contextAccessor = contextAccessor;
-        _userRepository = userRepository;
     }
 
     public string GenerateJwtToken(AuthTokenClaimsModel authClaims, JwtTokenType tokenType)
@@ -63,6 +53,7 @@ public class JwtService : IJwtService
         var tokenLifeTimeSeconds = tokenType == JwtTokenType.Refresh
             ? _refreshTokenLifeTimeSeconds
             : _accessTokenLifeTimeSeconds;
+
         var token = new JwtSecurityToken(
             claims: claims,
             expires: DateTime.Now.AddSeconds(tokenLifeTimeSeconds),

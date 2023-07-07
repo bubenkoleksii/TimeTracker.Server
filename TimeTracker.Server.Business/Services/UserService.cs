@@ -40,6 +40,14 @@ public class UserService : IUserService
         return userBusinessResponse;
     }
 
+    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync()
+    {
+        var usersDataResponse = await _userRepository.GetAllUsersAsync();
+
+        var usersBusinessResponse = _mapper.Map<IEnumerable<UserBusinessResponse>>(usersDataResponse);
+        return usersBusinessResponse;
+    }
+
     public async Task AddSetPasswordLinkAsync(string email)
     {
         var candidate = await _userRepository.GetUserByEmailAsync(email);

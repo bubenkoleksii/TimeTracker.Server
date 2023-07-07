@@ -6,6 +6,8 @@ public interface IUserService
 {
     public Task<UserBusinessResponse> CreateUserAsync(UserBusinessRequest userRequest);
 
+    public Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync();
+
     public Task AddSetPasswordLinkAsync(string email);
 
     public Task SetPasswordAsync(SetPasswordUserBusinessRequest userRequest);

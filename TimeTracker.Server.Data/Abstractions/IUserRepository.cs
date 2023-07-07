@@ -8,6 +8,8 @@ public interface IUserRepository
 
     public Task<UserDataResponse> GetUserByEmailAsync(string email);
 
+    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync();
+
     public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 
     public Task SetRefreshTokenAsync(string refreshToken, Guid id);
