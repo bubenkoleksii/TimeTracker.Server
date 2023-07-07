@@ -8,5 +8,5 @@ public interface IAuthService
 
     public Task LogoutAsync();
 
-    public Task<AuthBusinessResponse> RefreshTokensAsync(string refreshToken);
+    public Task<AuthBusinessResponse> RefreshTokensAsync();
 }

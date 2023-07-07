@@ -49,18 +49,23 @@ public class Program
                 RequireSignedTokens = false
             };
         });
-        //builder.Services.AddAuthorization(options =>
-        //{
-        //    options.AddPolicy("LoggedIn", (a) =>
-        //    {
-        //        a.RequireAuthenticatedUser();
-        //    });
-        //});
+
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("LoggedIn", (a) =>
+            {
+                a.RequireAuthenticatedUser();
+            });
+            //options.AddPolicy("CreateUser", (a) =>
+            //{
+            //    a.RequireClaim()
+            //});
+        });
         builder.Services.AddGraphQL(builder => builder
             .AddSystemTextJson()
             .AddSchema<RootSchema>()
             .AddGraphTypes(typeof(RootSchema).Assembly)
-            //.AddAuthorizationRule()
+            .AddAuthorizationRule()
         );
 
         builder.Services.AddCors(options =>
@@ -93,7 +98,7 @@ public class Program
         app.UseCors("MyAllowSpecificOrigins");
 
         app.UseAuthentication();
-        //app.UseAuthorization();
+        app.UseAuthorization();
 
         app.UseGraphQL();
         app.UseGraphQLAltair();

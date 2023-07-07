@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GraphQL;
+using Microsoft.AspNetCore.Http;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
 using TimeTracker.Server.Data.Abstractions;
@@ -14,11 +15,14 @@ public class AuthService : IAuthService
 
     private readonly IUserRepository _userRepository;
 
-    public AuthService(IJwtService jwtService, IUserRepository userRepository, IMapper mapper)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public AuthService(IJwtService jwtService, IUserRepository userRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
     {
         _jwtService = jwtService;
         _userRepository = userRepository;
         _mapper = mapper;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<AuthBusinessResponse> LoginAsync(AuthBusinessRequest userRequest)
@@ -37,6 +41,12 @@ public class AuthService : IAuthService
             var accessToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
 
             await _userRepository.SetRefreshToken(refreshToken, user.Id);
+
+            _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = SameSiteMode.Strict
+            });
 
             return new AuthBusinessResponse
             {
@@ -65,8 +75,17 @@ public class AuthService : IAuthService
         await _userRepository.RemoveRefresh(Guid.Parse(userId));
     }
 
-    public async Task<AuthBusinessResponse> RefreshTokensAsync(string refreshToken)
+    public async Task<AuthBusinessResponse> RefreshTokensAsync()
     {
+        if (!(_httpContextAccessor.HttpContext!.Request.Cookies.TryGetValue("refreshToken", out var refreshToken)))
+        {
+            var error = new ExecutionError("Refresh token not found")
+            {
+                Code = "OPERATION_FAILED"
+            };
+            throw error;
+        }
+
         var claims = _jwtService.GetUserClaims(refreshToken);
         await _jwtService.RequireUserAuthorizationAsync(claims);
         var userId = _jwtService.GetClaimValue(claims, "Id");
@@ -82,15 +101,15 @@ public class AuthService : IAuthService
         }
 
         var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
-        var newRefreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
+        //var newRefreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
         var newAccessToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
 
-        await _userRepository.SetRefreshToken(newRefreshToken, user.Id);
+        //await _userRepository.SetRefreshToken(newRefreshToken, user.Id);
 
         return new AuthBusinessResponse
         {
             AccessToken = newAccessToken,
-            RefreshToken = newRefreshToken
+            RefreshToken = "asd"
         };
     }
 

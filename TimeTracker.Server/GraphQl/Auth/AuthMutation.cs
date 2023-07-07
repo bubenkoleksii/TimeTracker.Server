@@ -41,14 +41,12 @@ public sealed class AuthMutation : ObjectGraphType
             });
 
         Field<AuthType>("refresh")
-            .Argument<NonNullGraphType<StringGraphType>>("refreshToken")
             .Resolve()
             .WithScope()
             .WithService<IAuthService>()
             .ResolveAsync(async (context, service) =>
-            {
-                var refreshToken = context.GetArgument<string>("refreshToken");
-                var authBusinessResponse = await service.RefreshTokensAsync(refreshToken);
+            { ;
+                var authBusinessResponse = await service.RefreshTokensAsync();
                 var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
                 return authResponse;
             });

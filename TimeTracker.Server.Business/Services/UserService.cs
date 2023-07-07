@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GraphQL;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.User;

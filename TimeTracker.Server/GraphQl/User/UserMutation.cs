@@ -28,7 +28,7 @@ public sealed class UserMutation : ObjectGraphType
 
                 var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
                 return userResponse;
-            });
+            }).AuthorizeWithPolicy("LoggedIn");
 
 
         // Only for admin
