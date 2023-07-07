@@ -48,7 +48,11 @@ public class JwtService : IJwtService
         var claims = new List<Claim>
         {
             new("Id", authClaims.Id.ToString()),
-            new("Email", authClaims.Email)
+            new("Email", authClaims.Email),
+            new("FullName", authClaims.FullName),
+            new("EmploymentRate", authClaims.EmploymentRate.ToString()),
+            new("Status", authClaims.Status),
+            new("Permissions", authClaims.Permissions)
         };
 
         var tokenKey = tokenType == JwtTokenType.Refresh ? _refreshTokenKey : _accessTokenKey;

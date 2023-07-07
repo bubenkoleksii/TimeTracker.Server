@@ -23,7 +23,7 @@ public class MailService : IMailService
         _hostPort = int.Parse(configuration.GetSection("EmailSettings:Port").Value);
     }
 
-    public async Task SendTextMessage(string recipient, string subject, string text)
+    public async Task SendTextMessageAsync(string recipient, string subject, string text)
     {
         var smtpClient = new SmtpClient(_host, _hostPort)
         {

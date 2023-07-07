@@ -2,5 +2,5 @@
 
 public interface IMailService
 {
-    public Task SendTextMessage(string recipient, string subject, string text);
+    public Task SendTextMessageAsync(string recipient, string subject, string text);
 }

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using GraphQL;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.User;
@@ -27,28 +26,28 @@ public class UserService : IUserService
         _configuration = configuration;
     }
 
-    public async Task<UserBusinessResponse> CreateUser(UserBusinessRequest userRequest)
+    public async Task<UserBusinessResponse> CreateUserAsync(UserBusinessRequest userRequest)
     {
-        var candidate = await _userRepository.GetUserByEmail(userRequest.Email);
+        var candidate = await _userRepository.GetUserByEmailAsync(userRequest.Email);
         if (candidate != null)
             throw new ArgumentNullException($"User with email {userRequest.Email} already exists");
 
         var userDataRequest = _mapper.Map<UserDataRequest>(userRequest);
 
-        var userDataResponse = await _userRepository.CreateUser(userDataRequest);
+        var userDataResponse = await _userRepository.CreateUserAsync(userDataRequest);
 
         var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
         return userBusinessResponse;
     }
 
-    public async Task AddSetPasswordLink(string email)
+    public async Task AddSetPasswordLinkAsync(string email)
     {
-        var candidate = await _userRepository.GetUserByEmail(email);
+        var candidate = await _userRepository.GetUserByEmailAsync(email);
         if (candidate == null)
         {
             throw new ExecutionError($"User with email {email} not found")
             {
-                Code = "INVALID_EMAIL"
+                Code = "OPERATION_FAILED"
             };
         }
 
@@ -56,7 +55,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {email} already set a password")
             {
-                Code = "HAS_PASSWORD"
+                Code = "OPERATION_FAILED"
             };
         }
 
@@ -76,27 +75,27 @@ public class UserService : IUserService
             </div>";
         try
         {
-            await _mailService.SendTextMessage(email, subject, text);
+            await _mailService.SendTextMessageAsync(email, subject, text);
         }
         catch
         {
             throw new ExecutionError($"Could not send an email {email} to set a password")
             {
-                Code = "MAIL_SEND_FAILED"
+                Code = "OPERATION_FAILED"
             };
         }
 
-        await _userRepository.AddSetPasswordLink(setPasswordLink, expired.ToUniversalTime(), candidate.Id);
+        await _userRepository.AddSetPasswordLinkAsync(setPasswordLink, expired.ToUniversalTime(), candidate.Id);
     }
 
-    public async Task SetPassword(SetPasswordUserBusinessRequest userRequest)
+    public async Task SetPasswordAsync(SetPasswordUserBusinessRequest userRequest)
     {
-        var candidate = await _userRepository.GetUserByEmail(userRequest.Email);
+        var candidate = await _userRepository.GetUserByEmailAsync(userRequest.Email);
         if (candidate == null)
         {
             throw new ExecutionError($"User with email {userRequest.Email} not found")
             {
-                Code = "INVALID_EMAIL"
+                Code = "OPERATION_FAILED"
             };
         }
 
@@ -104,7 +103,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} has already set a password")
             {
-                Code = "PASSWORD_SET"
+                Code = "OPERATION_FAILED"
             };
         }
 
@@ -112,7 +111,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"Password link expired for user with email {userRequest.Email}")
             {
-                Code = "LINK_EXPIRED"
+                Code = "OPERATION_FAILED"
             };
         }
 
@@ -120,14 +119,14 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} used the wrong link")
             {
-                Code = "LINK_INCORRECT"
+                Code = "OPERATION_FAILED"
             };
         }
 
         var userDataRequest = _mapper.Map<SetPasswordUserDataRequest>(userRequest);
         userDataRequest.HashPassword = HashPassword(userRequest.Password);
 
-        await _userRepository.SetPassword(userDataRequest);
+        await _userRepository.SetPasswordAsync(userDataRequest);
     }
 
     private string HashPassword(string password)

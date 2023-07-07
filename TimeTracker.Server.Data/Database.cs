@@ -6,7 +6,7 @@ namespace TimeTracker.Server.Data;
 
 public static class Database
 {
-    public static async Task EnsureDatabase(string connectionString, string name)
+    public static async Task EnsureDatabaseAsync(string connectionString, string name)
     {
         if (string.IsNullOrEmpty(connectionString))
             throw new InvalidConfigurationException("Connection string cannot be null or empty");

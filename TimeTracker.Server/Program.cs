@@ -56,7 +56,7 @@ public class Program
             {
                 a.RequireAuthenticatedUser();
             });
-            //options.AddPolicy("CreateUser", (a) =>
+            //options.AddPolicy("CreateUserAsync", (a) =>
             //{
             //    a.RequireClaim()
             //});
@@ -105,7 +105,7 @@ public class Program
 
         app.UseMigrations();
 
-        await Database.EnsureDatabase(
+        await Database.EnsureDatabaseAsync(
             app.Configuration["ConnectionStrings:EnsureDatabaseConnectionString"], 
             app.Configuration["Database:Name"]
             );

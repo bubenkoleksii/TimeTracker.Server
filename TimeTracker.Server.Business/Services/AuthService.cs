@@ -30,7 +30,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            var user = await _userRepository.GetUserByEmail(userRequest.Email) ?? throw new Exception();
+            var user = await _userRepository.GetUserByEmailAsync(userRequest.Email) ?? throw new Exception();
 
             if (!IsPasswordValid(userRequest.Password, user.HashPassword))
                 throw new Exception();
@@ -41,7 +41,7 @@ public class AuthService : IAuthService
             var refreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
             var accessToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
 
-            await _userRepository.SetRefreshToken(refreshToken, user.Id);
+            await _userRepository.SetRefreshTokenAsync(refreshToken, user.Id);
 
             _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
             {
@@ -75,7 +75,7 @@ public class AuthService : IAuthService
             throw error;
         }
 
-        await _userRepository.RemoveRefresh(Guid.Parse(userId.Value));
+        await _userRepository.RemoveRefreshAsync(Guid.Parse(userId.Value));
     }
 
     public async Task<string> RefreshTokensAsync()
@@ -101,7 +101,7 @@ public class AuthService : IAuthService
             throw error;
         }
 
-        var user = await _userRepository.GetUserById(Guid.Parse(userId.Value));
+        var user = await _userRepository.GetUserByIdAsync(Guid.Parse(userId.Value));
 
         if (user.RefreshToken != refreshToken)
         {

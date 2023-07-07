@@ -25,7 +25,7 @@ public sealed class UserMutation : ObjectGraphType
 
                 var userBusinessRequest = mapper.Map<UserBusinessRequest>(user);
 
-                var userBusinessResponse = await service.CreateUser(userBusinessRequest);
+                var userBusinessResponse = await service.CreateUserAsync(userBusinessRequest);
 
                 var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
                 return userResponse;
@@ -41,7 +41,7 @@ public sealed class UserMutation : ObjectGraphType
             {
                 var email = context.GetArgument<string>("email");
 
-                await service.AddSetPasswordLink(email);
+                await service.AddSetPasswordLinkAsync(email);
 
                 return true;
             });
@@ -56,7 +56,7 @@ public sealed class UserMutation : ObjectGraphType
                 var userRequest = context.GetArgument<SetPasswordUserRequest>("user");
 
                 var userBusinessRequest = mapper.Map<SetPasswordUserBusinessRequest>(userRequest);
-                await service.SetPassword(userBusinessRequest);
+                await service.SetPasswordAsync(userBusinessRequest);
 
                 return true;
             });
