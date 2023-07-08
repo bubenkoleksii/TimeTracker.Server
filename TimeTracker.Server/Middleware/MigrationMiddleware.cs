@@ -21,6 +21,8 @@ public class MigrationMiddleware
 
 public static class MigrationExtension
 {
-    public static IApplicationBuilder UseMigrations(this IApplicationBuilder builder) =>
-        builder.UseMiddleware<MigrationMiddleware>();
+    public static IApplicationBuilder UseMigrations(this IApplicationBuilder builder)
+    {
+        return builder.UseMiddleware<MigrationMiddleware>();
+    }
 }

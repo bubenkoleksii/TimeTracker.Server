@@ -16,7 +16,7 @@ namespace TimeTracker.Server;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +24,7 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IJwtService, JwtService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IMailService, MailService>();
 
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -48,18 +49,23 @@ public class Program
                 RequireSignedTokens = false
             };
         });
-        //builder.Services.AddAuthorization(options =>
-        //{
-        //    options.AddPolicy("LoggedIn", (a) =>
-        //    {
-        //        a.RequireAuthenticatedUser();
-        //    });
-        //});
+
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("LoggedIn", (a) =>
+            {
+                a.RequireAuthenticatedUser();
+            });
+            //options.AddPolicy("CreateUserAsync", (a) =>
+            //{
+            //    a.RequireClaim()
+            //});
+        });
         builder.Services.AddGraphQL(builder => builder
             .AddSystemTextJson()
             .AddSchema<RootSchema>()
             .AddGraphTypes(typeof(RootSchema).Assembly)
-            //.AddAuthorizationRule()
+            .AddAuthorizationRule()
         );
 
         builder.Services.AddCors(options =>
@@ -92,17 +98,17 @@ public class Program
         app.UseCors("MyAllowSpecificOrigins");
 
         app.UseAuthentication();
-        //app.UseAuthorization();
+        app.UseAuthorization();
 
         app.UseGraphQL();
         app.UseGraphQLAltair();
 
-        Database.EnsureDatabase(
+        app.UseMigrations();
+
+        await Database.EnsureDatabaseAsync(
             app.Configuration["ConnectionStrings:EnsureDatabaseConnectionString"], 
             app.Configuration["Database:Name"]
             );
-
-        app.UseMigrations();
 
         app.Run();
     }

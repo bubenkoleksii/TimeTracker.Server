@@ -1,24 +1,28 @@
-﻿using GraphQL;
-using GraphQL.Types;
+﻿using AutoMapper;
+using GraphQL;
 using GraphQL.MicrosoftDI;
+using GraphQL.Types;
 using TimeTracker.Server.Business.Abstractions;
+using TimeTracker.Server.GraphQl.User.Types;
+using TimeTracker.Server.Models.User;
 
 namespace TimeTracker.Server.GraphQl.User;
 
 public class UserQuery : ObjectGraphType
 {
-    public UserQuery()
+    public UserQuery(IMapper mapper)
     {
-        Field<StringGraphType>("test")
+        // Only for admin
+        Field<ListGraphType<UserType>>("getAll")
             .Resolve()
             .WithScope()
-            .WithService<IJwtService>()
-            .ResolveAsync(async (context, service) =>
+            .WithService<IUserService>()
+            .ResolveAsync(async (_, service) =>
             {
-                var jwt = service.GetAccessToken();
-                var claims = service.GetUserClaims(jwt);
-                await service.RequireUserAuthorizationAsync(claims);
-                return service.GetClaimValue(claims, "exp");
+                var usersBusinessResponse = await service.GetAllUsersAsync();
+
+                var usersResponse = mapper.Map<IEnumerable<UserResponse>>(usersBusinessResponse);
+                return usersResponse;
             });
     }
 }

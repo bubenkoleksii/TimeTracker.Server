@@ -11,6 +11,14 @@ public record UserRequest
 
     [Required]
     [MaxLength(255)]
-    [MinLength(8)]
-    public string Password { get; set; } = null!;
+    public string FullName { get; set; } = null!;
+
+    [Required]
+    public int EmploymentRate { get; set; }
+
+    public string? Permissions { get; set; } = null!;
+
+    [Required]
+    [MaxLength(255)]
+    public string Status { get; set; } = null!;
 }

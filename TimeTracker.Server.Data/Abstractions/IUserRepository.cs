@@ -4,13 +4,21 @@ namespace TimeTracker.Server.Data.Abstractions;
 
 public interface IUserRepository
 {
-    public Task<UserDataResponse> GetUserById(Guid id);
+    public Task<UserDataResponse> GetUserByIdAsync(Guid id);
 
-    public Task<UserDataResponse> GetUserByEmail(string email);
+    public Task<UserDataResponse> GetUserByEmailAsync(string email);
 
-    public Task<UserDataResponse> CreateUser(UserDataRequest userRequest);
+    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync();
 
-    public Task SetRefreshToken(string refreshToken, Guid id);
+    public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 
-    public Task RemoveRefresh(Guid id);
+    public Task SetRefreshTokenAsync(string refreshToken, Guid id);
+
+    public Task RemoveRefreshAsync(Guid id);
+
+    public Task AddSetPasswordLinkAsync(Guid setPasswordLink, DateTime expired, Guid id);
+
+    public Task SetPasswordAsync(SetPasswordUserDataRequest user);
+
+    public Task RemovePasswordAsync(Guid id);
 }

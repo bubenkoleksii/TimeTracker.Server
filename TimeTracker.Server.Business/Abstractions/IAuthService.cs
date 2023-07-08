@@ -1,13 +1,12 @@
-﻿using System.Security.Claims;
-using TimeTracker.Server.Business.Models.Auth;
+﻿using TimeTracker.Server.Business.Models.Auth;
 
 namespace TimeTracker.Server.Business.Abstractions;
 
 public interface IAuthService
 {
-    public Task<AuthBusinessResponse> LoginAsync(AuthBusinessRequest userRequest);
+    public Task<string> LoginAsync(AuthBusinessRequest userRequest);
 
     public Task LogoutAsync();
 
-    public Task<AuthBusinessResponse> RefreshTokensAsync(string refreshToken);
+    public Task<string> RefreshTokensAsync();
 }

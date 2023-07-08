@@ -13,7 +13,7 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    public async Task<UserDataResponse> GetUserById(Guid id)
+    public async Task<UserDataResponse> GetUserByIdAsync(Guid id)
     {
         var query = $"SELECT * FROM [User] WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
 
@@ -23,7 +23,7 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<UserDataResponse> GetUserByEmail(string email)
+    public async Task<UserDataResponse> GetUserByEmailAsync(string email)
     {
         var query = $"SELECT * FROM [User] WHERE {nameof(UserDataResponse.Email)} = @{nameof(email)}";
 
@@ -33,29 +33,51 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<UserDataResponse> CreateUser(UserDataRequest userRequest)
+    public async Task<IEnumerable<UserDataResponse>> GetAllUsersAsync()
+    {
+        var query = $"SELECT {nameof(UserDataResponse.Id)}, {nameof(UserDataResponse.Email)}, {nameof(UserDataResponse.FullName)}," +
+                    $" [{nameof(UserDataResponse.Status)}], [{nameof(UserDataResponse.Permissions)}], {nameof(UserDataResponse.EmploymentRate)} FROM [User]";
+
+        using var connection = _context.GetConnection();
+        var users = await connection.QueryAsync<UserDataResponse>(query);
+
+        return users;
+    }
+
+    public async Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest)
     {
         var id = Guid.NewGuid();
 
-        var queryString = $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.HashPassword)}) " +
-                          $"VALUES(@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.HashPassword)})";
+        var queryString = userRequest.Permissions != null
+            ? $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.FullName)}, {nameof(UserDataRequest.Status)}, " +
+              $"{nameof(UserDataRequest.Permissions)}, {nameof(UserDataRequest.EmploymentRate)}) " +
+              $"VALUES (@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.FullName)}, @{nameof(userRequest.Status)}, " +
+              $"@{nameof(userRequest.Permissions)}, @{nameof(userRequest.EmploymentRate)})"
+
+            : $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.FullName)}, {nameof(UserDataRequest.Status)}, " +
+              $"{nameof(UserDataRequest.EmploymentRate)}) " +
+              $"VALUES (@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.FullName)}, @{nameof(userRequest.Status)}, " +
+              $"@{nameof(userRequest.EmploymentRate)})";
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(queryString, new
         {
             id, 
             userRequest.Email, 
-            userRequest.HashPassword
+            userRequest.FullName,
+            userRequest.Status,
+            userRequest.Permissions,
+            userRequest.EmploymentRate
         });
 
-        var userResponse = await GetUserById(id);
+        var userResponse = await GetUserByIdAsync(id);
         if (userResponse == null)
             throw new InvalidOperationException("User has not been added");
 
         return userResponse;
     }
 
-    public async Task SetRefreshToken(string refreshToken, Guid id)
+    public async Task SetRefreshTokenAsync(string refreshToken, Guid id)
     {
         var query = $"UPDATE [User] SET {nameof(UserDataResponse.RefreshToken)} = @{nameof(refreshToken)} " +
                     $"WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
@@ -64,11 +86,52 @@ public class UserRepository : IUserRepository
         await connection.ExecuteAsync(query, new { refreshToken, id });
     }
 
-    public async Task RemoveRefresh(Guid id)
+    public async Task RemoveRefreshAsync(Guid id)
     {
         var query = $"UPDATE [User] SET {nameof(UserDataResponse.RefreshToken)} = NULL WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, new { id });
+    }
+
+    public async Task AddSetPasswordLinkAsync(Guid setPasswordLink, DateTime expired, Guid id)
+    {
+        var query = $"UPDATE [User] SET {nameof(UserDataResponse.SetPasswordLink)} = @{nameof(setPasswordLink)}, " +
+                          $"{nameof(UserDataResponse.SetPasswordLinkExpired)} = @{nameof(expired)}" +
+                          $" WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            setPasswordLink,
+            expired,
+            id
+        });
+    }
+
+    public async Task SetPasswordAsync(SetPasswordUserDataRequest user)
+    {
+        var query = $"UPDATE [User] SET {nameof(SetPasswordUserDataRequest.HashPassword)} = @{nameof(user.HashPassword)}, {nameof(UserDataResponse.HasPassword)} = 1," +
+                          $" {nameof(UserDataResponse.SetPasswordLink)} = NULL, {nameof(UserDataResponse.SetPasswordLinkExpired)} = NULL" +
+                          $" WHERE Email = @{nameof(user.Email)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+           user.HashPassword,
+           user.Email
+        });
+    }
+
+    public async Task RemovePasswordAsync(Guid id)
+    {
+        var query = $"UPDATE [User] SET {nameof(SetPasswordUserDataRequest.HashPassword)} = NULL, {nameof(UserDataResponse.HasPassword)} = 0, {nameof(UserDataResponse.RefreshToken)} = NULL" +
+                          $" WHERE Id = @{nameof(id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            id
+        });
     }
 }

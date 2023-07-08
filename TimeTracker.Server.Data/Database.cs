@@ -6,7 +6,7 @@ namespace TimeTracker.Server.Data;
 
 public static class Database
 {
-    public static void EnsureDatabase(string connectionString, string name)
+    public static async Task EnsureDatabaseAsync(string connectionString, string name)
     {
         if (string.IsNullOrEmpty(connectionString))
             throw new InvalidConfigurationException("Connection string cannot be null or empty");
@@ -14,7 +14,7 @@ public static class Database
         if (string.IsNullOrEmpty(name))
             throw new ArgumentException("Database name cannot be null or empty");
 
-        using var connection = new SqlConnection(connectionString);
+        await using var connection = new SqlConnection(connectionString);
         {
             connection.Open();
 
@@ -22,8 +22,10 @@ public static class Database
                 "SELECT CASE WHEN EXISTS (SELECT 1 FROM sys.databases WHERE name = @name) THEN 1 ELSE 0 END",
                 new { name });
 
-            if (!databaseExists) 
-                connection.Execute($"CREATE DATABASE {name}");
+            if (!databaseExists)
+            {
+                await connection.ExecuteAsync($"CREATE DATABASE {name}");
+            }
         }
     }
 }

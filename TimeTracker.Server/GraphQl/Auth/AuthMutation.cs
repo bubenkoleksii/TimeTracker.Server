@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using GraphQL;
-using GraphQL.Types;
 using GraphQL.MicrosoftDI;
+using GraphQL.Types;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
 using TimeTracker.Server.GraphQl.Auth.Types;
@@ -11,9 +11,9 @@ namespace TimeTracker.Server.GraphQl.Auth;
 
 public sealed class AuthMutation : ObjectGraphType
 {
-    public AuthMutation(IMapper mapper, IHttpContextAccessor contextAccessor)
+    public AuthMutation(IMapper mapper)
     {
-        Field<AuthType>("login")
+        Field<string>("login")
             .Argument<NonNullGraphType<AuthInputType>>("auth")
             .Resolve()
             .WithScope()
@@ -24,10 +24,8 @@ public sealed class AuthMutation : ObjectGraphType
 
                 var authBusinessRequest = mapper.Map<AuthBusinessRequest>(auth);
 
-                var authBusinessResponse = await service.LoginAsync(authBusinessRequest);
-
-                var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
-                return authResponse;
+                var accessToken = await service.LoginAsync(authBusinessRequest);
+                return accessToken;
             });
 
         Field<BooleanGraphType>("logout")
@@ -38,19 +36,16 @@ public sealed class AuthMutation : ObjectGraphType
             {
                 await service.LogoutAsync();
                 return true;
-            });
+            }).AuthorizeWithPolicy("LoggedIn");
 
-        Field<AuthType>("refresh")
-            .Argument<NonNullGraphType<StringGraphType>>("refreshToken")
+        Field<string>("refresh")
             .Resolve()
             .WithScope()
             .WithService<IAuthService>()
             .ResolveAsync(async (context, service) =>
-            {
-                var refreshToken = context.GetArgument<string>("refreshToken");
-                var authBusinessResponse = await service.RefreshTokensAsync(refreshToken);
-                var authResponse = mapper.Map<AuthResponse>(authBusinessResponse);
-                return authResponse;
-            });
+            { 
+                var newAccessToken = await service.RefreshTokensAsync();
+                return newAccessToken;
+            }).AuthorizeWithPolicy("LoggedIn");
     }
 }
