@@ -19,4 +19,6 @@ public interface IUserRepository
     public Task AddSetPasswordLinkAsync(Guid setPasswordLink, DateTime expired, Guid id);
 
     public Task SetPasswordAsync(SetPasswordUserDataRequest user);
+
+    public Task RemovePasswordAsync(Guid id);
 }

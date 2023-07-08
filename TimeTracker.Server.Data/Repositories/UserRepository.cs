@@ -122,4 +122,16 @@ public class UserRepository : IUserRepository
            user.Email
         });
     }
+
+    public async Task RemovePasswordAsync(Guid id)
+    {
+        var query = $"UPDATE [User] SET {nameof(SetPasswordUserDataRequest.HashPassword)} = NULL, {nameof(UserDataResponse.HasPassword)} = 0, {nameof(UserDataResponse.RefreshToken)} = NULL" +
+                          $" WHERE Id = @{nameof(id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            id
+        });
+    }
 }

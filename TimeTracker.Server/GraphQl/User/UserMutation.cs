@@ -61,6 +61,15 @@ public sealed class UserMutation : ObjectGraphType
                 return true;
             });
 
-        // TODO: Reset password
+        Field<bool>("resetPassword")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (_, service) =>
+            {
+                await service.ResetPasswordAsync();
+
+                return true;
+            }).AuthorizeWithPolicy("LoggedIn");
     }
 }

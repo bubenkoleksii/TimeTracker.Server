@@ -1,5 +1,7 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
 using GraphQL;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.User;
@@ -18,19 +20,27 @@ public class UserService : IUserService
 
     private readonly IConfiguration _configuration;
 
-    public UserService(IMailService mailService, IUserRepository userRepository, IMapper mapper, IConfiguration configuration)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public UserService(IMailService mailService, IUserRepository userRepository, IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
     {
         _mailService = mailService;
         _userRepository = userRepository;
         _mapper = mapper;
         _configuration = configuration;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<UserBusinessResponse> CreateUserAsync(UserBusinessRequest userRequest)
     {
         var candidate = await _userRepository.GetUserByEmailAsync(userRequest.Email);
         if (candidate != null)
-            throw new ArgumentNullException($"User with email {userRequest.Email} already exists");
+        {
+            throw new ExecutionError($"User with email {userRequest.Email} already exists")
+            {
+                Code = "OPERATION_FAILED"
+            };
+        }
 
         var userDataRequest = _mapper.Map<UserDataRequest>(userRequest);
 
@@ -67,7 +77,15 @@ public class UserService : IUserService
             };
         }
 
-        var hoursExpired = int.Parse(_configuration.GetSection("Password:HoursExpired").Value);
+        if (candidate.SetPasswordLink != null && candidate.SetPasswordLinkExpired > DateTime.UtcNow)
+        {
+            throw new ExecutionError($"For user with email {email} already set a password link")
+            {
+                Code = "OPERATION_FAILED"
+            };
+        }
+
+        var hoursExpired = int.Parse(_configuration.GetSection("Password:SetHoursExpired").Value);
         var expired = DateTime.Now.AddHours(hoursExpired);
 
         var setPasswordLink = Guid.NewGuid();
@@ -135,6 +153,53 @@ public class UserService : IUserService
         userDataRequest.HashPassword = HashPassword(userRequest.Password);
 
         await _userRepository.SetPasswordAsync(userDataRequest);
+    }
+
+    public async Task ResetPasswordAsync()
+    {
+        var claims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
+
+        var userId = claims.FirstOrDefault(c => c.Type == "Id");
+        if (userId == null)
+        {
+            var error = new ExecutionError("Claim user id not found")
+            {
+                Code = "OPERATION_FAILED"
+            };
+            throw error;
+        }
+
+        var user = await _userRepository.GetUserByIdAsync(Guid.Parse(userId.Value));
+
+        var hoursExpired = int.Parse(_configuration.GetSection("Password:ResetHoursExpired").Value);
+        var expired = DateTime.Now.AddHours(hoursExpired);
+
+        var setPasswordLink = Guid.NewGuid();
+        var setPasswordUrl = $"{_configuration.GetSection("Client:Url").Value}set-password/{setPasswordLink}/";
+
+        var subject = "TimeTracker: Please reset a password for your account";
+        var text = @$"
+            <div>
+                <h1>Reset Password for Your Account</h1>
+                <p>In order to log in to your account, you need to reset a password for it before {expired:dd.MM.yyyy HH:mm}.</p>
+                <p>Click on the button below and follow the link to reset a password</p>
+                <a href=""{setPasswordUrl}"" style=""display:inline-block; background-color:#4CAF50; color:white; padding:10px 20px; text-decoration:none;"">Reset Password</a>
+            </div>";
+        try
+        {
+            await _mailService.SendTextMessageAsync(user.Email, subject, text);
+        }
+        catch
+        {
+            throw new ExecutionError($"Could not send an email {user.Email} to reset a password")
+            {
+                Code = "OPERATION_FAILED"
+            };
+        }
+
+        await _userRepository.RemovePasswordAsync(user.Id);
+
+        await _userRepository.AddSetPasswordLinkAsync(setPasswordLink, expired.ToUniversalTime(), user.Id);
     }
 
     private string HashPassword(string password)

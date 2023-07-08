@@ -11,4 +11,6 @@ public interface IUserService
     public Task AddSetPasswordLinkAsync(string email);
 
     public Task SetPasswordAsync(SetPasswordUserBusinessRequest userRequest);
+
+    public Task ResetPasswordAsync();
 }
