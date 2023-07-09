@@ -89,7 +89,7 @@ public class AuthService : IAuthService
             throw error;
         }
 
-        var claims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
+        var claims = _jwtService.DecodeJwtToken(refreshToken);
 
         var userId = claims.FirstOrDefault(c => c.Type == "Id");
         if (userId == null)

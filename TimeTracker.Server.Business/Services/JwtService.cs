@@ -63,4 +63,12 @@ public class JwtService : IJwtService
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
         return jwt;
     }
+
+    public ICollection<Claim> DecodeJwtToken(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+
+        var jwtToken = handler.ReadJwtToken(token);
+        return (ICollection<Claim>)jwtToken.Claims;
+    }
 }

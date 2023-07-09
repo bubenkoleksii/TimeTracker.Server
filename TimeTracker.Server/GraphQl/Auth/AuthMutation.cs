@@ -43,9 +43,9 @@ public sealed class AuthMutation : ObjectGraphType
             .WithScope()
             .WithService<IAuthService>()
             .ResolveAsync(async (context, service) =>
-            { 
+            {
                 var newAccessToken = await service.RefreshTokensAsync();
                 return newAccessToken;
-            }).AuthorizeWithPolicy("LoggedIn");
+            });
     }
 }

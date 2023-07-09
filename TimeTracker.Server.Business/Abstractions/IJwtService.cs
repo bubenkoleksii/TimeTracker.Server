@@ -7,4 +7,6 @@ namespace TimeTracker.Server.Business.Abstractions;
 public interface IJwtService
 {
     public string GenerateJwtToken(AuthTokenClaimsModel authClaims, JwtTokenType tokenType);
+
+    public ICollection<Claim> DecodeJwtToken(string token);
 }
