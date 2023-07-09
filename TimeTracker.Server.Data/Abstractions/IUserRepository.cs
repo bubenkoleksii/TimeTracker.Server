@@ -8,7 +8,7 @@ public interface IUserRepository
 
     public Task<UserDataResponse> GetUserByEmailAsync(string email);
 
-    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync();
+    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync(int offset, int limit);
 
     public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 

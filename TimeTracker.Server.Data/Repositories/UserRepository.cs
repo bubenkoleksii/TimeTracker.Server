@@ -33,10 +33,12 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<IEnumerable<UserDataResponse>> GetAllUsersAsync()
+
+    public async Task<IEnumerable<UserDataResponse>> GetAllUsersAsync(int offset, int limit)
     {
         var query = $"SELECT {nameof(UserDataResponse.Id)}, {nameof(UserDataResponse.Email)}, {nameof(UserDataResponse.FullName)}," +
-                    $" [{nameof(UserDataResponse.Status)}], [{nameof(UserDataResponse.Permissions)}], {nameof(UserDataResponse.EmploymentRate)} FROM [User]";
+                    $" [{nameof(UserDataResponse.Status)}], [{nameof(UserDataResponse.Permissions)}], {nameof(UserDataResponse.EmploymentRate)} FROM [User]" +
+                    $" ORDER BY {nameof(UserDataResponse.FullName)} OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY";
 
         using var connection = _context.GetConnection();
         var users = await connection.QueryAsync<UserDataResponse>(query);

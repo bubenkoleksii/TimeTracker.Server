@@ -3,6 +3,7 @@ using GraphQL;
 using GraphQL.MicrosoftDI;
 using GraphQL.Types;
 using TimeTracker.Server.Business.Abstractions;
+using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.GraphQl.User.Types;
 using TimeTracker.Server.Models.User;
 
@@ -12,14 +13,18 @@ public class UserQuery : ObjectGraphType
 {
     public UserQuery(IMapper mapper)
     {
-        // Only for admin
         Field<ListGraphType<UserType>>("getAll")
+            .Argument<IntGraphType>("offset")
+            .Argument<IntGraphType>("limit")
             .Resolve()
             .WithScope()
             .WithService<IUserService>()
-            .ResolveAsync(async (_, service) =>
+            .ResolveAsync(async (context, service) =>
             {
-                var usersBusinessResponse = await service.GetAllUsersAsync();
+                var offset = context.GetArgument<int?>("offset");
+                var limit = context.GetArgument<int?>("limit");
+
+                var usersBusinessResponse = await service.GetAllUsersAsync(offset, limit);
 
                 var usersResponse = mapper.Map<IEnumerable<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
