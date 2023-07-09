@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Collections;
+using System.Security.Claims;
 using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
@@ -50,9 +51,27 @@ public class UserService : IUserService
         return userBusinessResponse;
     }
 
-    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync()
+    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit)
     {
-        var usersDataResponse = await _userRepository.GetAllUsersAsync();
+        var offsetDefault = int.Parse(_configuration.GetSection("Pagination:Offset").Value);
+        var limitDefault = int.Parse(_configuration.GetSection("Pagination:Limit").Value);
+
+        IEnumerable<UserDataResponse> usersDataResponse;
+
+        if (offset == null && limit == null)
+        {
+            usersDataResponse = await _userRepository.GetAllUsersAsync(offsetDefault, limitDefault);
+        } else if (offset == null && limit != null)
+        {
+            usersDataResponse = await _userRepository.GetAllUsersAsync(offsetDefault, (int)limit);
+        } else if (offset != null && limit == null)
+        {
+            usersDataResponse = await _userRepository.GetAllUsersAsync((int)offset, limitDefault);
+        }
+        else
+        {
+            usersDataResponse = await _userRepository.GetAllUsersAsync((int)offset, (int)limit);
+        }
 
         var usersBusinessResponse = _mapper.Map<IEnumerable<UserBusinessResponse>>(usersDataResponse);
         return usersBusinessResponse;
