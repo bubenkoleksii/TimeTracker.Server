@@ -6,6 +6,7 @@ using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.GraphQl.User.Types;
 using TimeTracker.Server.Models.User;
+using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server.GraphQl.User;
 
