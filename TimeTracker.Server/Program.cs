@@ -46,7 +46,8 @@ public class Program
                      Encoding.UTF8.GetBytes(builder.Configuration.GetSection("Auth:AccessTokenKey").Value)),
                 ValidateIssuerSigningKey = true,
                 RequireExpirationTime = true,
-                RequireSignedTokens = false
+                RequireSignedTokens = false,
+                ClockSkew = TimeSpan.Zero
             };
         });
 
