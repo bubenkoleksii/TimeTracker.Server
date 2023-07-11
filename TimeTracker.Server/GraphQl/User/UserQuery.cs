@@ -28,6 +28,6 @@ public class UserQuery : ObjectGraphType
 
                 var usersResponse = mapper.Map<IEnumerable<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
-            });
+            }).AuthorizeWithPolicy("LoggedIn");
     }
 }
