@@ -46,7 +46,8 @@ public class AuthService : IAuthService
             _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                SameSite = SameSiteMode.Strict
+                SameSite = SameSiteMode.None,
+                Secure = true
             });
 
             return accessToken;

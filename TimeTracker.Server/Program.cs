@@ -74,9 +74,10 @@ public class Program
             options.AddPolicy(name: "MyAllowSpecificOrigins",
                 policy =>
                 {
-                    policy.AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
+                    policy.WithOrigins("http://localhost:3000")
+                        .AllowCredentials()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
                 });
         });
 
