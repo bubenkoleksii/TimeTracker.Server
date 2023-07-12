@@ -1,5 +1,5 @@
 ﻿using FluentMigrator;
-using TimeTracker.Server.Data.Models.Track;
+using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Data.Models.User;
 
 namespace TimeTracker.Server.Data.Migrations;
@@ -9,11 +9,11 @@ public class Migration_20230705213700 : Migration
 {
     public override void Up()
     {
-        Create.Table("Track")
-            .WithColumn(nameof(TrackDataResponse.Id)).AsGuid().PrimaryKey()
-            .WithColumn(nameof(TrackDataResponse.UserId)).AsGuid().ForeignKey("User", nameof(UserDataResponse.Id))
-            .WithColumn(nameof(TrackDataResponse.Start)).AsDateTime().NotNullable()
-            .WithColumn(nameof(TrackDataResponse.End)).AsDateTime().NotNullable();
+        Create.Table("WorkSession")
+            .WithColumn(nameof(WorkSessionDataResponse.Id)).AsGuid().PrimaryKey()
+            .WithColumn(nameof(WorkSessionDataResponse.UserId)).AsGuid().ForeignKey("User", nameof(UserDataResponse.Id))
+            .WithColumn(nameof(WorkSessionDataResponse.Start)).AsDateTime().NotNullable()
+            .WithColumn(nameof(WorkSessionDataResponse.End)).AsDateTime().Nullable();
     }
 
     public override void Down()

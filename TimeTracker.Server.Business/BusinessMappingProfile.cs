@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using TimeTracker.Server.Business.Models.Auth;
-using TimeTracker.Server.Business.Models.Track;
+using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Business.Models.User;
-using TimeTracker.Server.Data.Models.Track;
+using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Data.Models.User;
 
 namespace TimeTracker.Server.Business;
@@ -19,7 +19,7 @@ public class BusinessMappingProfile : Profile
         CreateMap<AuthBusinessRequest, AuthTokenClaimsModel>();
         CreateMap<UserDataResponse, AuthTokenClaimsModel>();
 
-        CreateMap<TrackBusinessRequest, TrackDataRequest>();
-        CreateMap<TrackDataResponse, TrackBusinessResponse>();
+        CreateMap<WorkSessionBusinessRequest, WorkSessionDataRequest>();
+        CreateMap<WorkSessionDataResponse, WorkSessionBusinessResponse>();
     }
 }
