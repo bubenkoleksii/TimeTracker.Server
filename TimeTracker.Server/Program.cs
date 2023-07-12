@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using GraphQL;
 using TimeTracker.Server.Business.Abstractions;
@@ -9,8 +10,10 @@ using TimeTracker.Server.Data.Migrations;
 using TimeTracker.Server.GraphQl;
 using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using TimeTracker.Server.Middleware;
+using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server;
 
@@ -53,15 +56,10 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("LoggedIn", (a) =>
-            {
-                a.RequireAuthenticatedUser();
-            });
-            //options.AddPolicy("CreateUserAsync", (a) =>
-            //{
-            //    a.RequireClaim()
-            //});
+            options.AddPolicy("LoggedIn", (a) => a.RequireAuthenticatedUser());
+            options.AddPolicy("CreateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "CreateUser")));
         });
+
         builder.Services.AddGraphQL(builder => builder
             .AddSystemTextJson()
             .AddSchema<RootSchema>()
@@ -113,5 +111,21 @@ public class Program
             );
 
         app.Run();
+    }
+
+    private static bool HasPermissionClaim(AuthorizationHandlerContext context, string permission)
+    {
+        if (context.User.Identity is ClaimsIdentity claimsIdentity)
+        {
+            var permissionClaim = claimsIdentity.Claims.FirstOrDefault(c => c.Type == "Permissions");
+
+            if (permissionClaim != null)
+            {
+                var permissionJson = permissionClaim.Value;
+                return PermissionHelper.HasPermit(permissionJson, permission);
+            }
+        }
+
+        return false;
     }
 }
