@@ -23,12 +23,12 @@ namespace TimeTracker.Server.Data.Repositories
             return workSession;
         }
 
-        public async Task<WorkSessionDataResponse> GetWorkSessionById(Guid Id)
+        public async Task<WorkSessionDataResponse> GetWorkSessionById(Guid id)
         {
-            const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(Id)}";
+            const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
 
             using var connection = _context.GetConnection();
-            var workSession = await connection.QuerySingleOrDefaultAsync<WorkSessionDataResponse>(query, new { Id });
+            var workSession = await connection.QuerySingleOrDefaultAsync<WorkSessionDataResponse>(query, new { id });
 
             return workSession;
         }
@@ -36,7 +36,7 @@ namespace TimeTracker.Server.Data.Repositories
         public async Task<WorkSessionDataResponse> GetActiveWorkSessionByUserId(Guid userId)
         {
             const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)} AND " +
-                        $"{nameof(WorkSessionDataResponse.End)} = NULL";
+                        $"[{nameof(WorkSessionDataResponse.End)}] is NULL";
 
             using var connection = _context.GetConnection();
             var workSession = await connection.QuerySingleOrDefaultAsync<WorkSessionDataResponse>(query, new { userId });
@@ -46,20 +46,20 @@ namespace TimeTracker.Server.Data.Repositories
 
         public async Task<WorkSessionDataResponse> CreateWorkSession(WorkSessionDataRequest workSession)
         {
-            var Id = Guid.NewGuid();
+            var id = Guid.NewGuid();
 
             const string query = $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}) " +
-                                 $"VALUES (@{nameof(Id)}, @{nameof(WorkSessionDataRequest.UserId)}, @{nameof(WorkSessionDataRequest.Start)})";
+                                 $"VALUES (@{nameof(id)}, @{nameof(WorkSessionDataRequest.UserId)}, @{nameof(WorkSessionDataRequest.Start)})";
 
             using var connection = _context.GetConnection();
             await connection.ExecuteAsync(query, new
             {
-                Id,
+                id,
                 workSession.UserId,
                 workSession.Start
             });
 
-            var workSessionResponse = await GetWorkSessionById(Id);
+            var workSessionResponse = await GetWorkSessionById(id);
             if (workSessionResponse is null)
             {
                 throw new InvalidOperationException("User has not been added");
@@ -68,13 +68,13 @@ namespace TimeTracker.Server.Data.Repositories
             return workSessionResponse;
         }
 
-        public async Task SetWorkSessionEnd(Guid Id, DateTime endDateTime)
+        public async Task SetWorkSessionEnd(Guid id, DateTime endDateTime)
         {
-            const string query = $"UPDATE [WorkSession] SET {nameof(WorkSessionDataResponse.End)} = @{nameof(endDateTime)} " +
-                        $"WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(Id)}";
+            const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)} " +
+                        $"WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
 
             using var connection = _context.GetConnection();
-            await connection.ExecuteAsync(query, new { endDateTime, Id});
+            await connection.ExecuteAsync(query, new { endDateTime, id });
         }
     }
 }
