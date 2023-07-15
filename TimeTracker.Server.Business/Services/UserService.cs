@@ -5,6 +5,7 @@ using GraphQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
+using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.User;
@@ -32,6 +33,16 @@ public class UserService : IUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
+    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit)
+    {
+        var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
+
+        var usersDataResponse = await _userRepository.GetAllUsersAsync(offset ?? default, limit ?? limitDefault);
+
+        var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
+        return usersBusinessResponse;
+    }
+
     public async Task<UserBusinessResponse> CreateUserAsync(UserBusinessRequest userRequest)
     {
         var candidate = await _userRepository.GetUserByEmailAsync(userRequest.Email);
@@ -49,16 +60,6 @@ public class UserService : IUserService
 
         var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
         return userBusinessResponse;
-    }
-
-    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit)
-    {
-        var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
-
-        var usersDataResponse = await _userRepository.GetAllUsersAsync(offset ?? default, limit ?? limitDefault);
-
-        var usersBusinessResponse = _mapper.Map<IEnumerable<UserBusinessResponse>>(usersDataResponse);
-        return usersBusinessResponse;
     }
 
     public async Task AddSetPasswordLinkAsync(string email)

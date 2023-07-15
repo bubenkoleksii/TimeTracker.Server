@@ -1,4 +1,5 @@
-﻿using TimeTracker.Server.Data.Models.User;
+﻿using TimeTracker.Server.Data.Models.Pagination;
+using TimeTracker.Server.Data.Models.User;
 
 namespace TimeTracker.Server.Data.Abstractions;
 
@@ -8,7 +9,7 @@ public interface IUserRepository
 
     public Task<UserDataResponse> GetUserByEmailAsync(string email);
 
-    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync(int offset, int limit);
+    public Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit);
 
     public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 

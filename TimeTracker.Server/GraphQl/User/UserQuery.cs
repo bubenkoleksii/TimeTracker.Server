@@ -5,6 +5,7 @@ using GraphQL.Types;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.GraphQl.User.Types;
+using TimeTracker.Server.Models.Pagination;
 using TimeTracker.Server.Models.User;
 using TimeTracker.Server.Shared.Helpers;
 
@@ -14,7 +15,7 @@ public class UserQuery : ObjectGraphType
 {
     public UserQuery(IMapper mapper)
     {
-        Field<ListGraphType<UserType>>("getAll")
+        Field<PaginationUserType>("getAll")
             .Argument<IntGraphType>("offset")
             .Argument<IntGraphType>("limit")
             .Resolve()
@@ -27,7 +28,7 @@ public class UserQuery : ObjectGraphType
 
                 var usersBusinessResponse = await service.GetAllUsersAsync(offset, limit);
 
-                var usersResponse = mapper.Map<IEnumerable<UserResponse>>(usersBusinessResponse);
+                var usersResponse = mapper.Map<PaginationResponse<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
             })/*.AuthorizeWithPolicy("LoggedIn")*/;
     }
