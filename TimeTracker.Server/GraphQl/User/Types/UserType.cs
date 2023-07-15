@@ -25,5 +25,9 @@ public sealed class UserType : ObjectGraphType<UserResponse>
             .Description("Permissions for user object");
         Field(i => i.Status, type: typeof(StringGraphType), nullable: false)
             .Description("Status for user object");
+        Field(i => i.HasPassword, type: typeof(BooleanGraphType), nullable: false)
+            .Description("Has password flag for user object");
+        Field(i => i.HasValidSetPasswordLink, type: typeof(BooleanGraphType), nullable: false)
+            .Description("Has valid set password link flag for user object");
     }
 }

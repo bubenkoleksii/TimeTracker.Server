@@ -34,7 +34,6 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-
     public async Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? sortingColumn)
     {
         var query = "SELECT * FROM [User]";
@@ -87,6 +86,15 @@ public class UserRepository : IUserRepository
 
         var users = await multiQuery.ReadAsync<UserDataResponse>();
         var count = await multiQuery.ReadSingleAsync<int>();
+
+        if (users != null)
+        {
+            foreach (var user in users)
+            {
+                user.HasValidSetPasswordLink =
+                    user.SetPasswordLink != null && user.SetPasswordLinkExpired > DateTime.UtcNow;
+            }
+        }
 
         var response = new PaginationDataResponse<UserDataResponse>
         {

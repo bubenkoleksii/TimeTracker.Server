@@ -22,6 +22,8 @@ public class UserDataResponse
 
     public bool HasPassword { get; set; }
 
+    public bool HasValidSetPasswordLink { get; set; }
+
     public Guid? SetPasswordLink { get; set; }
 
     public DateTime? SetPasswordLinkExpired { get; set; }
