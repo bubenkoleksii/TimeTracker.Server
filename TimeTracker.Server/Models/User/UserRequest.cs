@@ -16,6 +16,9 @@ public record UserRequest
     [Required]
     public int EmploymentRate { get; set; }
 
+    [Required]
+    public DateTime EmploymentDate { get; set; }
+
     public string? Permissions { get; set; } = null!;
 
     [Required]

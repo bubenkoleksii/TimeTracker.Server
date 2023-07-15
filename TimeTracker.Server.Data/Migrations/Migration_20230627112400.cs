@@ -29,6 +29,7 @@ public class Migration_20230627112400 : Migration
             .WithColumn(nameof(UserDataResponse.Status)).AsString(255).NotNullable()
             .WithColumn(nameof(UserDataResponse.Permissions)).AsCustom("TEXT").Nullable()
             .WithColumn(nameof(UserDataResponse.EmploymentRate)).AsInt16().NotNullable()
+            .WithColumn(nameof(UserDataResponse.EmploymentDate)).AsDateTime().NotNullable()
             .WithColumn(nameof(UserDataResponse.HasPassword)).AsBoolean().NotNullable().WithDefaultValue(false)
             .WithColumn(nameof(UserDataResponse.SetPasswordLink)).AsGuid().Nullable()
             .WithColumn(nameof(UserDataResponse.SetPasswordLinkExpired)).AsDateTime().Nullable();
@@ -42,6 +43,7 @@ public class Migration_20230627112400 : Migration
                 HasPassword = true,
                 FullName = "Admin Admin",
                 EmploymentRate = 100,
+                EmploymentDate = DateTime.Now.ToUniversalTime(),
                 Status = $"working",
                 Permissions = "ALL"
             }

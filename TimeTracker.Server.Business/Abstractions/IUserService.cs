@@ -7,7 +7,7 @@ public interface IUserService
 {
     public Task<UserBusinessResponse> CreateUserAsync(UserBusinessRequest userRequest);
 
-    public Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit);
+    public Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? sortingColumn);
 
     public Task AddSetPasswordLinkAsync(string email);
 

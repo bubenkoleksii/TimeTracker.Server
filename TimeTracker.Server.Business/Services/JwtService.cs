@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +42,7 @@ public class JwtService : IJwtService
             new("Email", authClaims.Email),
             new("FullName", authClaims.FullName),
             new("EmploymentRate", authClaims.EmploymentRate.ToString()),
+            new("EmploymentDate", authClaims.EmploymentDate.ToString(CultureInfo.InvariantCulture)),
             new("Status", authClaims.Status),
             new("Permissions", authClaims.Permissions ?? "")
         };

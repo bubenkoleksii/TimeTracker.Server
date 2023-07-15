@@ -35,20 +35,63 @@ public class UserRepository : IUserRepository
     }
 
 
-    public async Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit)
+    public async Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? sortingColumn)
     {
-        var query =
-            $"SELECT {nameof(UserDataResponse.Id)}, {nameof(UserDataResponse.Email)}, {nameof(UserDataResponse.FullName)}," +
-            $" [{nameof(UserDataResponse.Status)}], [{nameof(UserDataResponse.Permissions)}], {nameof(UserDataResponse.EmploymentRate)} FROM [User]" +
-            $" ORDER BY {nameof(UserDataResponse.FullName)} OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY";
+        var query = "SELECT * FROM [User]";
+        var countQuery = " SELECT COUNT(*) FROM [User]";
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            var searchQuery = $" WHERE (LOWER({nameof(UserDataResponse.FullName)}) LIKE '%{search}%')";
+
+            query += searchQuery;
+            countQuery += searchQuery;
+        }
+        else
+        {
+            var searchQuery = " WHERE 1=1";
+
+            query += searchQuery;
+            countQuery += searchQuery;
+        }
+
+        if (filteringEmploymentRate is > 0 and <= 100)
+        {
+            var filteringEmploymentRateQuery = $" AND {nameof(UserDataResponse.EmploymentRate)} = {filteringEmploymentRate}";
+
+            query += filteringEmploymentRateQuery;
+            countQuery += filteringEmploymentRateQuery;
+        }
+
+        query += " ORDER BY";
+        if (sortingColumn is not null && string.Equals(sortingColumn, $"{nameof(UserDataResponse.FullName)}",
+                StringComparison.CurrentCultureIgnoreCase))
+        {
+            query += $" {nameof(UserDataResponse.FullName)}";
+        } else if (sortingColumn is not null && string.Equals(sortingColumn, $"{nameof(UserDataResponse.EmploymentDate)}",
+                       StringComparison.CurrentCultureIgnoreCase))
+        {
+            query += $" {nameof(UserDataResponse.EmploymentDate)} DESC";
+        }
+        else
+        {
+            query += " Id";
+        }
+
+        query += $" OFFSET @{nameof(offset)} ROWS FETCH NEXT @{nameof(limit)} ROWS ONLY";
+
+        query += ";" + countQuery;
 
         using var connection = _context.GetConnection();
-        var users = await connection.QueryAsync<UserDataResponse>(query);
+        await using var multiQuery = await connection.QueryMultipleAsync(query, new {offset, limit});
+
+        var users = await multiQuery.ReadAsync<UserDataResponse>();
+        var count = await multiQuery.ReadSingleAsync<int>();
 
         var response = new PaginationDataResponse<UserDataResponse>
         {
             Items = users,
-            Count = 2
+            Count = count
         };
 
         return response;
@@ -60,14 +103,14 @@ public class UserRepository : IUserRepository
 
         var queryString = userRequest.Permissions != null
             ? $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.FullName)}, {nameof(UserDataRequest.Status)}, " +
-              $"{nameof(UserDataRequest.Permissions)}, {nameof(UserDataRequest.EmploymentRate)}) " +
+              $"{nameof(UserDataRequest.Permissions)}, {nameof(UserDataRequest.EmploymentRate)}, {nameof(UserDataRequest.EmploymentDate)}) " +
               $"VALUES (@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.FullName)}, @{nameof(userRequest.Status)}, " +
-              $"@{nameof(userRequest.Permissions)}, @{nameof(userRequest.EmploymentRate)})"
+              $"@{nameof(userRequest.Permissions)}, @{nameof(userRequest.EmploymentRate)}, @{nameof(userRequest.EmploymentDate)})"
 
             : $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.FullName)}, {nameof(UserDataRequest.Status)}, " +
-              $"{nameof(UserDataRequest.EmploymentRate)}) " +
+              $"{nameof(UserDataRequest.EmploymentRate)}, {nameof(UserDataRequest.EmploymentDate)}) " +
               $"VALUES (@{nameof(id)}, @{nameof(userRequest.Email)}, @{nameof(userRequest.FullName)}, @{nameof(userRequest.Status)}, " +
-              $"@{nameof(userRequest.EmploymentRate)})";
+              $"@{nameof(userRequest.EmploymentRate)} @{nameof(userRequest.EmploymentDate)})";
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(queryString, new
@@ -77,7 +120,8 @@ public class UserRepository : IUserRepository
             userRequest.FullName,
             userRequest.Status,
             userRequest.Permissions,
-            userRequest.EmploymentRate
+            userRequest.EmploymentRate,
+            userRequest.EmploymentDate
         });
 
         var userResponse = await GetUserByIdAsync(id);

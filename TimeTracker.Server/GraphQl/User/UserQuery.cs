@@ -18,6 +18,9 @@ public class UserQuery : ObjectGraphType
         Field<PaginationUserType>("getAll")
             .Argument<IntGraphType>("offset")
             .Argument<IntGraphType>("limit")
+            .Argument<StringGraphType>("search")
+            .Argument<StringGraphType>("sortingColumn")
+            .Argument<IntGraphType>("filteringEmploymentRate")
             .Resolve()
             .WithScope()
             .WithService<IUserService>()
@@ -25,8 +28,11 @@ public class UserQuery : ObjectGraphType
             {
                 var offset = context.GetArgument<int?>("offset");
                 var limit = context.GetArgument<int?>("limit");
+                var search = context.GetArgument<string>("search");
+                var filteringEmploymentRate = context.GetArgument<int?>("filteringEmploymentRate");
+                var sortingColumn = context.GetArgument<string?>("sortingColumn");
 
-                var usersBusinessResponse = await service.GetAllUsersAsync(offset, limit);
+                var usersBusinessResponse = await service.GetAllUsersAsync(offset, limit, search, filteringEmploymentRate, sortingColumn);
 
                 var usersResponse = mapper.Map<PaginationResponse<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
