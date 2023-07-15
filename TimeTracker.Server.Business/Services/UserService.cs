@@ -53,25 +53,9 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit)
     {
-        var offsetDefault = int.Parse(_configuration.GetSection("Pagination:Offset").Value);
-        var limitDefault = int.Parse(_configuration.GetSection("Pagination:Limit").Value);
+        var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
 
-        IEnumerable<UserDataResponse> usersDataResponse;
-
-        if (offset == null && limit == null)
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync(offsetDefault, limitDefault);
-        } else if (offset == null && limit != null)
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync(offsetDefault, (int)limit);
-        } else if (offset != null && limit == null)
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync((int)offset, limitDefault);
-        }
-        else
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync((int)offset, (int)limit);
-        }
+        var usersDataResponse = await _userRepository.GetAllUsersAsync(offset ?? default, limit ?? limitDefault);
 
         var usersBusinessResponse = _mapper.Map<IEnumerable<UserBusinessResponse>>(usersDataResponse);
         return usersBusinessResponse;
