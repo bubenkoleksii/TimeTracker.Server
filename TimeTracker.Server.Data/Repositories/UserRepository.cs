@@ -139,6 +139,39 @@ public class UserRepository : IUserRepository
         return userResponse;
     }
 
+    public async Task<UserDataResponse> UpdateUserAsync(UserDataRequest userRequest, Guid id)
+    {
+        var queryString = userRequest.Permissions != null
+            ? $"UPDATE [User] SET {nameof(UserDataRequest.Email)} = @{nameof(userRequest.Email)}, " +
+              $"{nameof(UserDataRequest.FullName)} = @{nameof(userRequest.FullName)}, " +
+              $"{nameof(UserDataRequest.Status)} = @{nameof(userRequest.Status)}, " +
+              $"{nameof(UserDataRequest.Permissions)} = @{nameof(userRequest.Permissions)}, " +
+              $"{nameof(UserDataRequest.EmploymentRate)} = @{nameof(userRequest.EmploymentRate)}, " +
+              $"{nameof(UserDataRequest.EmploymentDate)} = @{nameof(userRequest.EmploymentDate)} " +
+              $"WHERE Id = @{nameof(id)}"
+            : $"UPDATE [User] SET {nameof(UserDataRequest.Email)} = @{nameof(userRequest.Email)}, " +
+              $"{nameof(UserDataRequest.FullName)} = @{nameof(userRequest.FullName)}, " +
+              $"{nameof(UserDataRequest.Status)} = @{nameof(userRequest.Status)}, " +
+              $"{nameof(UserDataRequest.EmploymentRate)} = @{nameof(userRequest.EmploymentRate)}, " +
+              $"{nameof(UserDataRequest.EmploymentDate)} = @{nameof(userRequest.EmploymentDate)} " +
+              $"WHERE Id = @{nameof(id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(queryString, new
+        {
+            id,
+            userRequest.Email,
+            userRequest.FullName,
+            userRequest.Status,
+            userRequest.Permissions,
+            userRequest.EmploymentRate,
+            userRequest.EmploymentDate
+        });
+
+        var userResponse = await GetUserByIdAsync(id);
+        return userResponse;
+    }
+
     public async Task FireUserAsync(Guid id)
     {
         var query = $"UPDATE [User] SET Status = 'fired' WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";

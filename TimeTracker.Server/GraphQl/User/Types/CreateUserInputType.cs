@@ -3,11 +3,11 @@ using TimeTracker.Server.Models.User;
 
 namespace TimeTracker.Server.GraphQl.User.Types;
 
-public sealed class CreateUserInputType : InputObjectGraphType<UserRequest>
+public sealed class CreateUpdateUserInputType : InputObjectGraphType<UserRequest>
 {
-    public CreateUserInputType()
+    public CreateUpdateUserInputType()
     {
-        Name = "CreateUserInput";
+        Name = "CreateUpdateUser";
 
         Field(i => i.Email, type: typeof(StringGraphType), nullable: false)
             .Description("Email field for user object");

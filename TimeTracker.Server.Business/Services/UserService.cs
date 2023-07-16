@@ -32,6 +32,33 @@ public class UserService : IUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
+    public async Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id)
+    {
+        var existingUser = await _userRepository.GetUserByIdAsync(id);
+        if (existingUser == null)
+        {
+            throw new ExecutionError($"User with id {id} not found")
+            {
+                Code = "OPERATION_FAILED"
+            };
+        }
+
+        if (existingUser.Status == "fired")
+        {
+            throw new ExecutionError($"User with id {id} cannot be updated because they are fired")
+            {
+                Code = "OPERATION_FAILED"
+            };
+        }
+
+        var userDataRequest = _mapper.Map<UserDataRequest>(userRequest);
+
+        var userDataResponse = await _userRepository.UpdateUserAsync(userDataRequest, id);
+
+        var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
+        return userBusinessResponse;
+    }
+
     public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? sortingColumn)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);

@@ -7,6 +7,9 @@ public static class PermissionHelper
 {
     public static bool HasPermit(string permissionJson, string permission)
     {
+        if (permissionJson.ToLower() == "all")
+            return true;
+
         try
         {
             var permissions = JObject.Parse(permissionJson);

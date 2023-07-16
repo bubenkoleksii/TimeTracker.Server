@@ -36,6 +36,6 @@ public class UserQuery : ObjectGraphType
 
                 var usersResponse = mapper.Map<PaginationResponse<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
-            })/*.AuthorizeWithPolicy("LoggedIn")*/;
+            }).AuthorizeWithPolicy("GetUsers");
     }
 }
