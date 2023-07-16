@@ -139,6 +139,17 @@ public class UserRepository : IUserRepository
         return userResponse;
     }
 
+    public async Task FireUserAsync(Guid id)
+    {
+        var query = $"UPDATE [User] SET Status = 'fired' WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
+        
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            id,
+        });
+    }
+
     public async Task SetRefreshTokenAsync(string refreshToken, Guid id)
     {
         var query = $"UPDATE [User] SET {nameof(UserDataResponse.RefreshToken)} = @{nameof(refreshToken)} " +

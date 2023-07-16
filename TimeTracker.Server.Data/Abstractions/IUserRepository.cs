@@ -13,6 +13,8 @@ public interface IUserRepository
 
     public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 
+    public Task FireUserAsync(Guid id);
+
     public Task SetRefreshTokenAsync(string refreshToken, Guid id);
 
     public Task RemoveRefreshAsync(Guid id);

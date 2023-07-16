@@ -32,6 +32,20 @@ public sealed class UserMutation : ObjectGraphType
             });
 
         // Only for admin
+        Field<bool>("fire")
+            .Argument<NonNullGraphType<IdGraphType>>("id")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var id = context.GetArgument<Guid>("id");
+
+                await service.FireUserAsync(id);
+                return true;
+            });
+
+        // Only for admin
         Field<bool>("addSetPasswordLink")
             .Argument<NonNullGraphType<StringGraphType>>("email")
             .Resolve()

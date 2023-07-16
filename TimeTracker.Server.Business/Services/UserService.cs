@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +43,32 @@ public class UserService : IUserService
 
         var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
         return usersBusinessResponse;
+    }
+
+    public async Task FireUserAsync(Guid id)
+    {
+        var candidate = await _userRepository.GetUserByIdAsync(id);
+        if (candidate == null)
+        {
+            throw new ExecutionError($"User with id {id} not found")
+            {
+                Code = "OPERATION_FAILED"
+            };
+        }
+
+        if (candidate.Status == "fired")
+            return;
+
+        await _userRepository.FireUserAsync(id);
+
+        var user = await _userRepository.GetUserByIdAsync(id);
+        if (user.Status != "fired")
+        {
+            throw new ExecutionError($"User with id {id} not fired")
+            {
+                Code = "OPERATION_FAILED"
+            };
+        }
     }
 
     public async Task<UserBusinessResponse> CreateUserAsync(UserBusinessRequest userRequest)
