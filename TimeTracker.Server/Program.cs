@@ -28,9 +28,11 @@ public class Program
         builder.Services.AddScoped<IJwtService, JwtService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IMailService, MailService>();
+        builder.Services.AddScoped<IWorkSessionService, WorkSessionService>();
 
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IWorkSessionRepository, WorkSessionRepository>();
 
         builder.Services.AddAuthentication(conf =>
         {
