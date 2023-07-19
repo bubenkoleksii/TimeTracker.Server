@@ -44,6 +44,8 @@ public class JwtService : IJwtService
             new("EmploymentRate", authClaims.EmploymentRate.ToString()),
             new("EmploymentDate", authClaims.EmploymentDate.ToString(CultureInfo.InvariantCulture)),
             new("Status", authClaims.Status),
+            new("HasPassword", authClaims.HasPassword.ToString()),
+            new("HasValidSetPasswordLink", authClaims.HasValidSetPasswordLink.ToString()),
             new("Permissions", authClaims.Permissions ?? "")
         };
 

@@ -12,9 +12,9 @@ public static class PermissionHelper
 
         try
         {
-            var permissions = JObject.Parse(permissionJson);
+            var permissions = JObject.Parse(permissionJson.ToLower());
 
-            if (permissions.TryGetValue(permission, out var permit))
+            if (permissions.TryGetValue(permission.ToLower(), out var permit))
             {
                 return permit.Value<bool>();
             }
