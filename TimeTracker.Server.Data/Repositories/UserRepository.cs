@@ -108,6 +108,7 @@ public class UserRepository : IUserRepository
     public async Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest)
     {
         var id = Guid.NewGuid();
+        userRequest.EmploymentDate = userRequest.EmploymentDate.ToUniversalTime();
 
         var queryString = userRequest.Permissions != null
             ? $"INSERT INTO [User] (Id, {nameof(UserDataRequest.Email)}, {nameof(UserDataRequest.FullName)}, {nameof(UserDataRequest.Status)}, " +
@@ -141,6 +142,8 @@ public class UserRepository : IUserRepository
 
     public async Task<UserDataResponse> UpdateUserAsync(UserDataRequest userRequest, Guid id)
     {
+        userRequest.EmploymentDate = userRequest.EmploymentDate.ToUniversalTime();
+
         var queryString = userRequest.Permissions != null
             ? $"UPDATE [User] SET {nameof(UserDataRequest.Email)} = @{nameof(userRequest.Email)}, " +
               $"{nameof(UserDataRequest.FullName)} = @{nameof(userRequest.FullName)}, " +
@@ -169,6 +172,7 @@ public class UserRepository : IUserRepository
         });
 
         var userResponse = await GetUserByIdAsync(id);
+        
         return userResponse;
     }
 
