@@ -29,12 +29,15 @@ public class AuthService : IAuthService
 
     public async Task<string> LoginAsync(AuthBusinessRequest userRequest)
     {
-        var user = await _userRepository.GetUserByEmailAsync(userRequest.Email) ?? throw new Exception();
+        var user = await _userRepository.GetUserByEmailAsync(userRequest.Email) ?? throw new ExecutionError("There is no user with this email")
+        {
+            Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+        };
 
         if (!IsPasswordValid(userRequest.Password, user.HashPassword))
             throw new ExecutionError("Invalid password") 
             {
-                Code = GraphQLCustomErrorCodesEnum.INVAlID_PASSWORD.ToString()
+                Code = GraphQLCustomErrorCodesEnum.INVALID_PASSWORD.ToString()
             };
 
         var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
@@ -78,7 +81,7 @@ public class AuthService : IAuthService
         {
             var error = new ExecutionError("Refresh token not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.REFRESH_TOKEN_NOT_FOUND.ToString()
             };
             throw error;
         }
@@ -88,9 +91,9 @@ public class AuthService : IAuthService
         var userId = claims.FirstOrDefault(c => c.Type == "Id");
         if (userId == null)
         {
-            var error = new ExecutionError("Claim user id not found")
+            var error = new ExecutionError("Can not find user id claim in refresh token payload")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
             throw error;
         }
@@ -99,9 +102,9 @@ public class AuthService : IAuthService
 
         if (user.RefreshToken != refreshToken)
         {
-            var error = new ExecutionError("Failed to refresh tokens")
+            var error = new ExecutionError("Refresh token doesn't match saved in db")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.REFRESH_TOKEN_NOT_MATCHED.ToString()
             };
             throw error;
         }
