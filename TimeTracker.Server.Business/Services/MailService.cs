@@ -2,6 +2,8 @@
 using TimeTracker.Server.Business.Abstractions;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using GraphQL;
+using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -48,7 +50,10 @@ public class MailService : IMailService
         }
         catch (Exception exception)
         {
-            throw new Exception(exception.Message);
+            throw new ExecutionError(exception.Message)
+            {
+                Code = GraphQLCustomErrorCodesEnum.SEND_EMAIL_FAILED.ToString()
+            };
         }
     }
 }

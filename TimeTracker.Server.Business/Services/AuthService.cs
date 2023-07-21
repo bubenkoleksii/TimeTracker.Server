@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
 using TimeTracker.Server.Data.Abstractions;
+using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -28,38 +29,33 @@ public class AuthService : IAuthService
 
     public async Task<string> LoginAsync(AuthBusinessRequest userRequest)
     {
-        try
+        var user = await _userRepository.GetUserByEmailAsync(userRequest.Email) ?? throw new ExecutionError("There is no user with this email")
         {
-            var user = await _userRepository.GetUserByEmailAsync(userRequest.Email) ?? throw new Exception();
+            Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+        };
 
-            if (!IsPasswordValid(userRequest.Password, user.HashPassword))
-                throw new Exception();
-
-            var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
-            userClaims.Id = user.Id;
-
-            var refreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
-            var accessToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
-
-            await _userRepository.SetRefreshTokenAsync(refreshToken, user.Id);
-
-            _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        if (!IsPasswordValid(userRequest.Password, user.HashPassword))
+            throw new ExecutionError("Invalid password") 
             {
-                HttpOnly = true,
-                SameSite = SameSiteMode.None,
-                Secure = true
-            });
-
-            return accessToken;
-        }
-        catch
-        {
-            var error = new ExecutionError("Login failed")
-            {
-                Code = "LOGIN_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.INVALID_PASSWORD.ToString()
             };
-            throw error;
-        }
+
+        var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
+        userClaims.Id = user.Id;
+
+        var refreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
+        var accessToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
+
+        await _userRepository.SetRefreshTokenAsync(refreshToken, user.Id);
+
+        _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.None,
+            Secure = true
+        });
+
+        return accessToken;
     }
 
     public async Task LogoutAsync()
@@ -67,16 +63,16 @@ public class AuthService : IAuthService
         var claims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
 
         var userId = claims.FirstOrDefault(c => c.Type == "Id");
-        if (userId == null)
+        if (userId is not null)
         {
-            var error = new ExecutionError("Claim user id not found")
+            await _userRepository.RemoveRefreshAsync(Guid.Parse(userId.Value));
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete("refreshToken", new CookieOptions
             {
-                Code = "OPERATION_FAILED"
-            };
-            throw error;
+                HttpOnly = true,
+                SameSite = SameSiteMode.None,
+                Secure = true
+            });
         }
-
-        await _userRepository.RemoveRefreshAsync(Guid.Parse(userId.Value));
     }
 
     public async Task<string> RefreshTokensAsync()
@@ -85,7 +81,7 @@ public class AuthService : IAuthService
         {
             var error = new ExecutionError("Refresh token not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.REFRESH_TOKEN_NOT_FOUND.ToString()
             };
             throw error;
         }
@@ -95,9 +91,9 @@ public class AuthService : IAuthService
         var userId = claims.FirstOrDefault(c => c.Type == "Id");
         if (userId == null)
         {
-            var error = new ExecutionError("Claim user id not found")
+            var error = new ExecutionError("Can not find user id claim in refresh token payload")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
             throw error;
         }
@@ -106,9 +102,9 @@ public class AuthService : IAuthService
 
         if (user.RefreshToken != refreshToken)
         {
-            var error = new ExecutionError("Failed to refresh tokens")
+            var error = new ExecutionError("Refresh token doesn't match saved in db")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.REFRESH_TOKEN_NOT_MATCHED.ToString()
             };
             throw error;
         }
