@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
 using TimeTracker.Server.Business.Models.Auth;
-using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Models.Auth;
 using TimeTracker.Server.Models.Pagination;
+using TimeTracker.Server.Models.WorkSession;
 using TimeTracker.Server.Models.User;
+using TimeTracker.Server.Business.Models.WorkSession;
 
 namespace TimeTracker.Server;
 

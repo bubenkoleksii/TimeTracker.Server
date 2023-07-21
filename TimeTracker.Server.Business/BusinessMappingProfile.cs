@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using TimeTracker.Server.Business.Models.Auth;
+using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
+using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Data.Models.Pagination;
 using TimeTracker.Server.Data.Models.User;
 
@@ -19,5 +21,8 @@ public class BusinessMappingProfile : Profile
 
         CreateMap<AuthBusinessRequest, AuthTokenClaimsModel>();
         CreateMap<UserDataResponse, AuthTokenClaimsModel>();
+
+        CreateMap<WorkSessionBusinessRequest, WorkSessionDataRequest>();
+        CreateMap<WorkSessionDataResponse, WorkSessionBusinessResponse>();
     }
 }
