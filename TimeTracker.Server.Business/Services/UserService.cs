@@ -59,14 +59,14 @@ public class UserService : IUserService
         return userBusinessResponse;
     }
 
-    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? sortingColumn)
+    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
 
         var validatedOffset = offset is >= 0 ? offset.Value : default;
         var validatedLimit = limit is > 0 ? limit.Value : limitDefault;
 
-        var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, sortingColumn);
+        var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
 
         var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
         return usersBusinessResponse;

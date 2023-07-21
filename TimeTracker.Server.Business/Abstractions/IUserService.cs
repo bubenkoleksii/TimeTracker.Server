@@ -9,7 +9,7 @@ public interface IUserService
 
     public Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id);
 
-    public Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? sortingColumn);
+    public Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn);
 
     public Task FireUserAsync(Guid id);
 

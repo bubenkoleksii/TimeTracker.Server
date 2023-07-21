@@ -34,7 +34,7 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? sortingColumn)
+    public async Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
     {
         var query = "SELECT * FROM [User]";
         var countQuery = " SELECT COUNT(*) FROM [User]";
@@ -60,6 +60,14 @@ public class UserRepository : IUserRepository
 
             query += filteringEmploymentRateQuery;
             countQuery += filteringEmploymentRateQuery;
+        }
+
+        if (!string.IsNullOrEmpty(filteringStatus))
+        {
+            var filteringStatusRateQuery = $" AND {nameof(UserDataResponse.Status)} = '{filteringStatus}'";
+
+            query += filteringStatusRateQuery;
+            countQuery += filteringStatusRateQuery;
         }
 
         query += " ORDER BY";
