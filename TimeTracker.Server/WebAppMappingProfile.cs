@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using TimeTracker.Server.Business.Models.Auth;
+using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Models.Auth;
 using TimeTracker.Server.Models.Pagination;
