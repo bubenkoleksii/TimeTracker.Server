@@ -21,6 +21,9 @@ public class WebAppMappingProfile : Profile
         CreateMap<UserBusinessResponse, UserResponse>();
         CreateMap<PaginationBusinessResponse<UserBusinessResponse>, PaginationResponse<UserResponse>>();
 
+        CreateMap<WorkSessionRequest, WorkSessionBusinessRequest>();
+        CreateMap<WorkSessionBusinessResponse, WorkSessionResponse>();
+
         CreateMap<SetPasswordUserRequest, SetPasswordUserBusinessRequest>();
     }
 }

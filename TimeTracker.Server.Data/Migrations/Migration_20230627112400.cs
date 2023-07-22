@@ -24,7 +24,7 @@ public class Migration_20230627112400 : Migration
             .WithColumn(nameof(UserDataResponse.Id)).AsGuid().PrimaryKey()
             .WithColumn(nameof(UserDataResponse.Email)).AsString(255).Unique().NotNullable()
             .WithColumn(nameof(UserDataResponse.HashPassword)).AsString(255).Nullable()
-            .WithColumn(nameof(UserDataResponse.RefreshToken)).AsString(512).Nullable()
+            .WithColumn(nameof(UserDataResponse.RefreshToken)).AsCustom("TEXT").Nullable()
             .WithColumn(nameof(UserDataResponse.FullName)).AsString(255).NotNullable()
             .WithColumn(nameof(UserDataResponse.Status)).AsString(255).NotNullable()
             .WithColumn(nameof(UserDataResponse.Permissions)).AsCustom("TEXT").Nullable()
