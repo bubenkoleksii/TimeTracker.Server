@@ -8,6 +8,7 @@ using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.User;
+using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -39,7 +40,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with id {id} not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
         }
 
@@ -47,7 +48,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with id {id} cannot be updated because they are fired")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_ALREADY_EXISTS.ToString()
             };
         }
 
@@ -79,7 +80,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with id {id} not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
         }
 
@@ -93,7 +94,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with id {id} not fired")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
     }
@@ -105,7 +106,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} already exists")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_ALREADY_EXISTS.ToString()
             };
         }
 
@@ -124,7 +125,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {email} not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
         }
 
@@ -132,7 +133,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {email} already set a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_HAS_PASSWORD.ToString()
             };
         }
 
@@ -140,7 +141,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"For user with email {email} already set a password link")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -166,7 +167,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"Could not send an email {email} to set a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.SEND_EMAIL_FAILED.ToString()
             };
         }
 
@@ -180,7 +181,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
         }
 
@@ -188,7 +189,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} has already set a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_HAS_PASSWORD.ToString()
             };
         }
 
@@ -196,7 +197,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"Password link expired for user with email {userRequest.Email}")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -204,7 +205,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} used the wrong link")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -223,7 +224,7 @@ public class UserService : IUserService
         {
             var error = new ExecutionError("Claim user id not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
             throw error;
         }
@@ -252,7 +253,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"Could not send an email {user.Email} to reset a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.SEND_EMAIL_FAILED.ToString()
             };
         }
 
