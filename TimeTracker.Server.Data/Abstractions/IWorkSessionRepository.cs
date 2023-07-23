@@ -10,5 +10,6 @@ namespace TimeTracker.Server.Data.Abstractions
         public Task<WorkSessionDataResponse> GetActiveWorkSessionByUserId(Guid userId);
         public Task<WorkSessionDataResponse> CreateWorkSession(WorkSessionDataRequest workSession);
         public Task SetWorkSessionEnd(Guid id, DateTime endDateTime);
+        public Task UpdateWorkSession(Guid id, WorkSessionDataRequest workSession);
     }
 }

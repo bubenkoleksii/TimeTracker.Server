@@ -96,5 +96,14 @@ namespace TimeTracker.Server.Data.Repositories
             using var connection = _context.GetConnection();
             await connection.ExecuteAsync(query, new { endDateTime, id });
         }
+
+        public async Task UpdateWorkSession(Guid id, WorkSessionDataRequest workSession)
+        {
+            const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.Start)}] = @{nameof(workSession.Start)}, " +
+                $"[{nameof(WorkSessionDataResponse.End)}] = @{nameof(workSession.End)} WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)}";
+
+            using var connection = _context.GetConnection();
+            await connection.ExecuteAsync(query, new { workSession.Start, workSession.End, id });
+        }
     }
 }

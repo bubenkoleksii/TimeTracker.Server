@@ -28,7 +28,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var offset = context.GetArgument<int>("offset");
                     var limit = context.GetArgument<int>("limit");
                     var filterDate = context.GetArgument<DateTime?>("filterDate");
-                    var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserId(userId, orderByDesc, offset, limit, filterDate);
+                    var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, filterDate);
                     var workSessionPaginationResponse = mapper.Map<WorkSessionPaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
                     return workSessionPaginationResponse;
                 }).AuthorizeWithPolicy("LoggedIn"); ;
@@ -41,7 +41,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                 .ResolveAsync(async (context, service) =>
                 {
                     var id = context.GetArgument<Guid>("id");
-                    var workSessionBusinessResponse = await service.GetWorkSessionById(id);
+                    var workSessionBusinessResponse = await service.GetWorkSessionByIdAsync(id);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
                 }).AuthorizeWithPolicy("LoggedIn"); ;
@@ -54,7 +54,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                 .ResolveAsync(async (context, service) =>
                 {
                     var userId = context.GetArgument<Guid>("userId");
-                    var workSessionBusinessResponse = await service.GetActiveWorkSessionByUserId(userId);
+                    var workSessionBusinessResponse = await service.GetActiveWorkSessionByUserIdAsync(userId);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
                 }).AuthorizeWithPolicy("LoggedIn"); ;
