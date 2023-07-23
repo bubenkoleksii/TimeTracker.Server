@@ -14,11 +14,15 @@ public class UserDataResponse
 
     public int EmploymentRate { get; set; }
 
+    public DateTime EmploymentDate { get; set; }
+
     public string? Permissions { get; set; } = null!;
 
     public string Status { get; set; } = null!;
 
     public bool HasPassword { get; set; }
+
+    public bool HasValidSetPasswordLink { get; set; }
 
     public Guid? SetPasswordLink { get; set; }
 

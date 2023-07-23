@@ -19,9 +19,15 @@ public sealed class UserType : ObjectGraphType<UserResponse>
             .Description("Full name for user object");
         Field(i => i.EmploymentRate, type: typeof(IntGraphType), nullable: false)
             .Description("Employment rate for user object");
+        Field(i => i.EmploymentDate, type: typeof(DateTimeGraphType), nullable: false)
+            .Description("Employment rate for user object");
         Field(i => i.Permissions, type: typeof(StringGraphType), nullable: true)
             .Description("Permissions for user object");
         Field(i => i.Status, type: typeof(StringGraphType), nullable: false)
             .Description("Status for user object");
+        Field(i => i.HasPassword, type: typeof(BooleanGraphType), nullable: false)
+            .Description("Has password flag for user object");
+        Field(i => i.HasValidSetPasswordLink, type: typeof(BooleanGraphType), nullable: false)
+            .Description("Has valid set password link flag for user object");
     }
 }
