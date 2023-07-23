@@ -21,7 +21,8 @@ namespace TimeTracker.Server.Business.Services
             _userRepository = userRepository;
         }
 
-        public async Task<IEnumerable<WorkSessionBusinessResponse>> GetWorkSessionsByUserId(Guid userId)
+        public async Task<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserId(Guid userId, bool orderByDesc, int offset,
+            int limit, DateTime? filterDate)
         {
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user is null)
@@ -32,9 +33,9 @@ namespace TimeTracker.Server.Business.Services
                 };
             }
 
-            var workSessionsDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId);
-            var workSessionsBusinessResponse = _mapper.Map<IEnumerable<WorkSessionBusinessResponse>>(workSessionsDataResponse);
-            return workSessionsBusinessResponse;
+            var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId, orderByDesc, offset, limit, filterDate);
+            var workSessionPaginationBusinessResponse = _mapper.Map<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
+            return workSessionPaginationBusinessResponse;
         }
 
         public async Task<WorkSessionBusinessResponse> GetWorkSessionById(Guid id)

@@ -12,17 +12,25 @@ namespace TimeTracker.Server.GraphQl.WorkSession
     {
         public WorkSessionQuery(IMapper mapper)
         {
-            Field<ListGraphType<WorkSessionType>>("getWorkSessionsByUserId")
+            Field<WorkSessionPaginationResponseType>("getWorkSessionsByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
+                .Argument<NonNullGraphType<BooleanGraphType>>("orderByDesc")
+                .Argument<NonNullGraphType<IntGraphType>>("offset")
+                .Argument<NonNullGraphType<IntGraphType>>("limit")
+                .Argument<DateTimeGraphType>("filterDate")
                 .Resolve()
                 .WithScope()
                 .WithService<IWorkSessionService>()
                 .ResolveAsync(async (context, service) =>
                 {
                     var userId = context.GetArgument<Guid>("userId");
-                    var workSessionsBusinessResponse = await service.GetWorkSessionsByUserId(userId);
-                    var workSessions = mapper.Map<IEnumerable<WorkSessionResponse>>(workSessionsBusinessResponse);
-                    return workSessions;
+                    var orderByDesc = context.GetArgument<bool>("orderByDesc");
+                    var offset = context.GetArgument<int>("offset");
+                    var limit = context.GetArgument<int>("limit");
+                    var filterDate = context.GetArgument<DateTime?>("filterDate");
+                    var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserId(userId, orderByDesc, offset, limit, filterDate);
+                    var workSessionPaginationResponse = mapper.Map<WorkSessionPaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
+                    return workSessionPaginationResponse;
                 }).AuthorizeWithPolicy("LoggedIn"); ;
 
             Field<WorkSessionType>("getWorkSessionById")

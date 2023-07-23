@@ -4,7 +4,8 @@ namespace TimeTracker.Server.Business.Abstractions
 {
     public interface IWorkSessionService
     {
-        public Task<IEnumerable<WorkSessionBusinessResponse>> GetWorkSessionsByUserId(Guid userId);
+        public Task<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserId(Guid userId, bool orderByDesc, int offset, 
+            int limit, DateTime? filterDate);
         public Task<WorkSessionBusinessResponse> GetWorkSessionById(Guid id);
         public Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserId(Guid userId);
         public Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSession);
