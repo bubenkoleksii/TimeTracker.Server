@@ -1,13 +1,14 @@
-﻿using System.Collections;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
+using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.User;
+using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -32,6 +33,72 @@ public class UserService : IUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
+    public async Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id)
+    {
+        var existingUser = await _userRepository.GetUserByIdAsync(id);
+        if (existingUser == null)
+        {
+            throw new ExecutionError($"User with id {id} not found")
+            {
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+            };
+        }
+
+        if (existingUser.Status == "fired")
+        {
+            throw new ExecutionError($"User with id {id} cannot be updated because they are fired")
+            {
+                Code = GraphQLCustomErrorCodesEnum.USER_ALREADY_EXISTS.ToString()
+            };
+        }
+
+        var userDataRequest = _mapper.Map<UserDataRequest>(userRequest);
+
+        var userDataResponse = await _userRepository.UpdateUserAsync(userDataRequest, id);
+
+        var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
+        return userBusinessResponse;
+    }
+
+    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
+    {
+        var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
+
+        var validatedOffset = offset is >= 0 ? offset.Value : default;
+        var validatedLimit = limit is > 0 ? limit.Value : limitDefault;
+
+        var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
+
+        var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
+        return usersBusinessResponse;
+    }
+
+    public async Task FireUserAsync(Guid id)
+    {
+        var candidate = await _userRepository.GetUserByIdAsync(id);
+        if (candidate == null)
+        {
+            throw new ExecutionError($"User with id {id} not found")
+            {
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+            };
+        }
+
+        if (candidate.Status == "fired")
+            return;
+
+        await _userRepository.FireUserAsync(id);
+
+        var user = await _userRepository.GetUserByIdAsync(id);
+        if (user.Status != "fired")
+        {
+            throw new ExecutionError($"User with id {id} not fired")
+            {
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
+            };
+        }
+    }
+
     public async Task<UserBusinessResponse> CreateUserAsync(UserBusinessRequest userRequest)
     {
         var candidate = await _userRepository.GetUserByEmailAsync(userRequest.Email);
@@ -39,7 +106,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} already exists")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_ALREADY_EXISTS.ToString()
             };
         }
 
@@ -51,32 +118,6 @@ public class UserService : IUserService
         return userBusinessResponse;
     }
 
-    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit)
-    {
-        var offsetDefault = int.Parse(_configuration.GetSection("Pagination:Offset").Value);
-        var limitDefault = int.Parse(_configuration.GetSection("Pagination:Limit").Value);
-
-        IEnumerable<UserDataResponse> usersDataResponse;
-
-        if (offset == null && limit == null)
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync(offsetDefault, limitDefault);
-        } else if (offset == null && limit != null)
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync(offsetDefault, (int)limit);
-        } else if (offset != null && limit == null)
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync((int)offset, limitDefault);
-        }
-        else
-        {
-            usersDataResponse = await _userRepository.GetAllUsersAsync((int)offset, (int)limit);
-        }
-
-        var usersBusinessResponse = _mapper.Map<IEnumerable<UserBusinessResponse>>(usersDataResponse);
-        return usersBusinessResponse;
-    }
-
     public async Task AddSetPasswordLinkAsync(string email)
     {
         var candidate = await _userRepository.GetUserByEmailAsync(email);
@@ -84,7 +125,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {email} not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
         }
 
@@ -92,7 +133,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {email} already set a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_HAS_PASSWORD.ToString()
             };
         }
 
@@ -100,7 +141,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"For user with email {email} already set a password link")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -126,7 +167,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"Could not send an email {email} to set a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.SEND_EMAIL_FAILED.ToString()
             };
         }
 
@@ -140,7 +181,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
         }
 
@@ -148,7 +189,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} has already set a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_HAS_PASSWORD.ToString()
             };
         }
 
@@ -156,7 +197,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"Password link expired for user with email {userRequest.Email}")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -164,7 +205,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"User with email {userRequest.Email} used the wrong link")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -183,7 +224,7 @@ public class UserService : IUserService
         {
             var error = new ExecutionError("Claim user id not found")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
             throw error;
         }
@@ -212,7 +253,7 @@ public class UserService : IUserService
         {
             throw new ExecutionError($"Could not send an email {user.Email} to reset a password")
             {
-                Code = "OPERATION_FAILED"
+                Code = GraphQLCustomErrorCodesEnum.SEND_EMAIL_FAILED.ToString()
             };
         }
 

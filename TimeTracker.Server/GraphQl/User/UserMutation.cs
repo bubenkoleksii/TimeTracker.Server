@@ -13,9 +13,8 @@ public sealed class UserMutation : ObjectGraphType
 {
     public UserMutation(IMapper mapper)
     {
-        // Only for admin
         Field<UserType>("create")
-            .Argument<NonNullGraphType<CreateUserInputType>>("user")
+            .Argument<NonNullGraphType<CreateUpdateUserInputType>>("user")
             .Resolve()
             .WithScope()
             .WithService<IUserService>()
@@ -29,9 +28,40 @@ public sealed class UserMutation : ObjectGraphType
 
                 var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
                 return userResponse;
-            });
+            }).AuthorizeWithPolicy("CreateUser");
 
-        // Only for admin
+        Field<UserType>("update")
+            .Argument<NonNullGraphType<CreateUpdateUserInputType>>("user")
+            .Argument<NonNullGraphType<IdGraphType>>("id")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var user = context.GetArgument<UserRequest>("user");
+                var id = context.GetArgument<Guid>("id");
+
+                var userBusinessRequest = mapper.Map<UserBusinessRequest>(user);
+
+                var userBusinessResponse = await service.UpdateUserAsync(userBusinessRequest, id);
+
+                var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
+                return userResponse;
+            }).AuthorizeWithPolicy("UpdateUser");
+
+        Field<bool>("fire")
+            .Argument<NonNullGraphType<IdGraphType>>("id")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var id = context.GetArgument<Guid>("id");
+
+                await service.FireUserAsync(id);
+                return true;
+            }).AuthorizeWithPolicy("FireUser");
+
         Field<bool>("addSetPasswordLink")
             .Argument<NonNullGraphType<StringGraphType>>("email")
             .Resolve()
@@ -44,7 +74,8 @@ public sealed class UserMutation : ObjectGraphType
                 await service.AddSetPasswordLinkAsync(email);
 
                 return true;
-            });
+            }).AuthorizeWithPolicy("CreateUser")
+              .AuthorizeWithPolicy("UpdateUser");
 
         Field<bool>("setPassword")
             .Argument<NonNullGraphType<SetPasswordUserInputType>>("user")

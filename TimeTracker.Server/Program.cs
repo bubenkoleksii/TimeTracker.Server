@@ -60,6 +60,9 @@ public class Program
         {
             options.AddPolicy("LoggedIn", (a) => a.RequireAuthenticatedUser());
             options.AddPolicy("CreateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "CreateUser")));
+            options.AddPolicy("GetUsers", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "GetUsers")));
+            options.AddPolicy("FireUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "FireUser")));
+            options.AddPolicy("UpdateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "UpdateUser")));
         });
 
         builder.Services.AddGraphQL(builder => builder
