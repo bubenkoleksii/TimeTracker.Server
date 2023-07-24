@@ -24,5 +24,6 @@ public class BusinessMappingProfile : Profile
 
         CreateMap<WorkSessionBusinessRequest, WorkSessionDataRequest>();
         CreateMap<WorkSessionDataResponse, WorkSessionBusinessResponse>();
+        CreateMap<WorkSessionPaginationDataResponse<WorkSessionDataResponse>, WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>>();
     }
 }

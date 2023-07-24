@@ -23,6 +23,7 @@ public class WebAppMappingProfile : Profile
 
         CreateMap<WorkSessionRequest, WorkSessionBusinessRequest>();
         CreateMap<WorkSessionBusinessResponse, WorkSessionResponse>();
+        CreateMap<WorkSessionPaginationBusinessRespoІnse<WorkSessionBusinessResponse>, WorkSessionPaginationResponse<WorkSessionResponse>>();
 
         CreateMap<SetPasswordUserRequest, SetPasswordUserBusinessRequest>();
     }

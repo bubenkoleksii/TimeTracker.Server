@@ -21,7 +21,8 @@ namespace TimeTracker.Server.Business.Services
             _userRepository = userRepository;
         }
 
-        public async Task<IEnumerable<WorkSessionBusinessResponse>> GetWorkSessionsByUserId(Guid userId)
+        public async Task<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool orderByDesc, int offset,
+            int limit, DateTime? filterDate)
         {
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user is null)
@@ -32,19 +33,19 @@ namespace TimeTracker.Server.Business.Services
                 };
             }
 
-            var workSessionsDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId);
-            var workSessionsBusinessResponse = _mapper.Map<IEnumerable<WorkSessionBusinessResponse>>(workSessionsDataResponse);
-            return workSessionsBusinessResponse;
+            var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId, orderByDesc, offset, limit, filterDate);
+            var workSessionPaginationBusinessResponse = _mapper.Map<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
+            return workSessionPaginationBusinessResponse;
         }
 
-        public async Task<WorkSessionBusinessResponse> GetWorkSessionById(Guid id)
+        public async Task<WorkSessionBusinessResponse> GetWorkSessionByIdAsync(Guid id)
         {
             var workSessionDataResponse = await _workSessionRepository.GetWorkSessionById(id);
             var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
             return workSessionBusinessResponse;
         }
 
-        public async Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserId(Guid userId)
+        public async Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserIdAsync(Guid userId)
         {
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user is null)
@@ -97,6 +98,21 @@ namespace TimeTracker.Server.Business.Services
             }
 
             await _workSessionRepository.SetWorkSessionEnd(id, endDateTime);
+        }
+
+        public async Task UpdateWorkSessionAsync(Guid id, WorkSessionBusinessRequest workSession)
+        {
+            var workSessionCheck = await _workSessionRepository.GetWorkSessionById(id);
+            if (workSession is null)
+            {
+                throw new ExecutionError("This work session doesn't exist")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
+                };
+            }
+
+            var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSession);
+            await _workSessionRepository.UpdateWorkSession(id, workSessionDataRequest);
         }
     }
 }
