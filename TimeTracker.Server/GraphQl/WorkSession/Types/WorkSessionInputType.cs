@@ -11,6 +11,8 @@ namespace TimeTracker.Server.GraphQl.WorkSession.Types
                 .Description("User id field for work session object");
             Field(ws => ws.Start, type: typeof(DateTimeGraphType), nullable: false)
                 .Description("Start of work session field in work session object");
+            Field(ws => ws.End, type: typeof(DateTimeGraphType), nullable: true)
+                .Description("End of work session field in work session object");
         }
     }
 }

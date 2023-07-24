@@ -40,6 +40,21 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     await service.SetWorkSessionEndAsync(id, endDateTime);
                     return true;
                 }).AuthorizeWithPolicy("LoggedIn"); ;
+
+            Field<BooleanGraphType>("update")
+                .Argument<NonNullGraphType<IdGraphType>>("id")
+                .Argument<NonNullGraphType<WorkSessionInputType>>("workSession")
+                .Resolve()
+                .WithScope()
+                .WithService<IWorkSessionService>()
+                .ResolveAsync(async (context, service) =>
+                {
+                    var id = context.GetArgument<Guid>("id");
+                    var workSession = context.GetArgument<WorkSessionRequest>("workSession");
+                    var workSessionBusinessRequest = mapper.Map<WorkSessionBusinessRequest>(workSession);
+                    await service.UpdateWorkSessionAsync(id, workSessionBusinessRequest);
+                    return true;
+                }).AuthorizeWithPolicy("LoggedIn"); ;
         }
     }
 }

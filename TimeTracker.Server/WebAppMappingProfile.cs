@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using TimeTracker.Server.Business.Models.Auth;
+using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Models.Auth;
+using TimeTracker.Server.Models.Pagination;
 using TimeTracker.Server.Models.WorkSession;
 using TimeTracker.Server.Models.User;
 using TimeTracker.Server.Business.Models.WorkSession;
@@ -17,10 +19,12 @@ public class WebAppMappingProfile : Profile
 
         CreateMap<UserRequest, UserBusinessRequest>();
         CreateMap<UserBusinessResponse, UserResponse>();
-
-        CreateMap<SetPasswordUserRequest, SetPasswordUserBusinessRequest>();
+        CreateMap<PaginationBusinessResponse<UserBusinessResponse>, PaginationResponse<UserResponse>>();
 
         CreateMap<WorkSessionRequest, WorkSessionBusinessRequest>();
         CreateMap<WorkSessionBusinessResponse, WorkSessionResponse>();
+        CreateMap<WorkSessionPaginationBusinessRespoІnse<WorkSessionBusinessResponse>, WorkSessionPaginationResponse<WorkSessionResponse>>();
+
+        CreateMap<SetPasswordUserRequest, SetPasswordUserBusinessRequest>();
     }
 }

@@ -36,7 +36,7 @@ public sealed class AuthMutation : ObjectGraphType
             {
                 await service.LogoutAsync();
                 return true;
-            }).AuthorizeWithPolicy("LoggedIn");
+            });
 
         Field<string>("refresh")
             .Resolve()

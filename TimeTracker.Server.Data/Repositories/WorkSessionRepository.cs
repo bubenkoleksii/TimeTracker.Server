@@ -13,14 +13,34 @@ namespace TimeTracker.Server.Data.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<WorkSessionDataResponse>> GetWorkSessionsByUserId(Guid userId)
+        public async Task<WorkSessionPaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserId(Guid userId, bool orderByDesc,
+            int offset, int limit, DateTime? filterDate)
         {
-            const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
+            string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
+            if (filterDate is not null)
+            {
+                query += $" AND DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(filterDate)}) = 0";
+            }
+            query += $" ORDER BY [{nameof(WorkSessionDataResponse.Start)}] {(orderByDesc ? "desc" : "")}" + $" OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY;";
+            query += "SELECT COUNT(*) from [WorkSession];";
 
             using var connection = _context.GetConnection();
-            var workSession = await connection.QueryAsync<WorkSessionDataResponse>(query, new { userId });
+            await using var multiQuery = await connection.QueryMultipleAsync(query, new
+            {
+                userId,
+                filterDate
+            });
+            
+            var workSessions = await multiQuery.ReadAsync<WorkSessionDataResponse>();
+            var count = await multiQuery.ReadSingleAsync<int>();
 
-            return workSession;
+            var workSessionPaginatinDataResponse = new WorkSessionPaginationDataResponse<WorkSessionDataResponse>()
+            {
+                Count = count,
+                Items = workSessions
+            };
+
+            return workSessionPaginatinDataResponse;
         }
 
         public async Task<WorkSessionDataResponse> GetWorkSessionById(Guid id)
@@ -75,6 +95,15 @@ namespace TimeTracker.Server.Data.Repositories
 
             using var connection = _context.GetConnection();
             await connection.ExecuteAsync(query, new { endDateTime, id });
+        }
+
+        public async Task UpdateWorkSession(Guid id, WorkSessionDataRequest workSession)
+        {
+            const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.Start)}] = @{nameof(workSession.Start)}, " +
+                $"[{nameof(WorkSessionDataResponse.End)}] = @{nameof(workSession.End)} WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)}";
+
+            using var connection = _context.GetConnection();
+            await connection.ExecuteAsync(query, new { workSession.Start, workSession.End, id });
         }
     }
 }

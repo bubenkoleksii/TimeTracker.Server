@@ -4,6 +4,7 @@ using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
+using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services
 {
@@ -20,122 +21,98 @@ namespace TimeTracker.Server.Business.Services
             _userRepository = userRepository;
         }
 
-        public async Task<IEnumerable<WorkSessionBusinessResponse>> GetWorkSessionsByUserId(Guid userId)
+        public async Task<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool orderByDesc, int offset,
+            int limit, DateTime? filterDate)
         {
-            try
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user is null)
             {
-                var user = await _userRepository.GetUserByIdAsync(userId);
-                if (user is null)
+                throw new ExecutionError("User not found")
                 {
-                    throw new Exception();
-                }
-
-                var workSessionsDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId);
-                var workSessionsBusinessResponse = _mapper.Map<IEnumerable<WorkSessionBusinessResponse>>(workSessionsDataResponse);
-                return workSessionsBusinessResponse;
-            }
-            catch
-            {
-                var error = new ExecutionError("Get works sessions by user id operation failed")
-                {
-                    Code = "OPERATION_FAILED"
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
                 };
-                throw error;
             }
+
+            var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId, orderByDesc, offset, limit, filterDate);
+            var workSessionPaginationBusinessResponse = _mapper.Map<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
+            return workSessionPaginationBusinessResponse;
         }
 
-        public async Task<WorkSessionBusinessResponse> GetWorkSessionById(Guid id)
+        public async Task<WorkSessionBusinessResponse> GetWorkSessionByIdAsync(Guid id)
         {
-            try
-            {
-                var workSessionDataResponse = await _workSessionRepository.GetWorkSessionById(id);
-                var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
-                return workSessionBusinessResponse;
-            }
-            catch
-            {
-                var error = new ExecutionError("Get work session by id operation failed")
-                {
-                    Code = "OPERATION_FAILED"
-                };
-                throw error;
-            }
+            var workSessionDataResponse = await _workSessionRepository.GetWorkSessionById(id);
+            var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
+            return workSessionBusinessResponse;
         }
 
-        public async Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserId(Guid userId)
+        public async Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserIdAsync(Guid userId)
         {
-            try
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user is null)
             {
-                var user = await _userRepository.GetUserByIdAsync(userId);
-                if (user is null)
+                throw new ExecutionError("User not found")
                 {
-                    throw new Exception();
-                }
-
-                var workSessionDataResponse = await _workSessionRepository.GetActiveWorkSessionByUserId(userId);
-                var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
-                return workSessionBusinessResponse;
-            }
-            catch
-            {
-                var error = new ExecutionError("Get active work session by user id operation failed")
-                {
-                    Code = "OPERATION_FAILED"
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
                 };
-                throw error;
             }
+
+            var workSessionDataResponse = await _workSessionRepository.GetActiveWorkSessionByUserId(userId);
+            var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
+            return workSessionBusinessResponse;
         }
 
         public async Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSessionBusinessRequest)
         {
-            try
+            var user = await _userRepository.GetUserByIdAsync(workSessionBusinessRequest.UserId);
+            if (user is null)
             {
-                var user = await _userRepository.GetUserByIdAsync(workSessionBusinessRequest.UserId);
-                if (user is null)
+                throw new ExecutionError("User not found")
                 {
-                    throw new Exception();
-                }
-
-                var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSessionBusinessRequest);
-                var workSessionDataResponse = await _workSessionRepository.CreateWorkSession(workSessionDataRequest);
-                if (workSessionDataResponse is null)
-                {
-                    throw new Exception();
-                }
-
-                var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
-                return workSessionBusinessResponse;
-            }
-            catch
-            {
-                var error = new ExecutionError("Work session create operation failed")
-                {
-                    Code = "OPERATION_FAILED"
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
                 };
-                throw error;
             }
+
+            var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSessionBusinessRequest);
+            var workSessionDataResponse = await _workSessionRepository.CreateWorkSession(workSessionDataRequest);
+            if (workSessionDataResponse is null)
+            {
+                throw new ExecutionError("Work session was not created")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
+                };
+            }
+
+            var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
+            return workSessionBusinessResponse;
         }
 
         public async Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime)
         {
-            try
+            var workSession = await _workSessionRepository.GetWorkSessionById(id);
+            if (workSession is null)
             {
-                var workSession = await _workSessionRepository.GetWorkSessionById(id);
-                if (workSession is null)
+                throw new ExecutionError("This work session doesn't exist")
                 {
-                    throw new Exception();
-                }
-
-                await _workSessionRepository.SetWorkSessionEnd(id, endDateTime);
-            }
-            catch
-            {
-                var error = new ExecutionError("Set work session end datetime operation failed")
-                {
-                    Code = "OPERATION_FAILED"
+                    Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
                 };
-                throw error;
             }
+
+            await _workSessionRepository.SetWorkSessionEnd(id, endDateTime);
+        }
+
+        public async Task UpdateWorkSessionAsync(Guid id, WorkSessionBusinessRequest workSession)
+        {
+            var workSessionCheck = await _workSessionRepository.GetWorkSessionById(id);
+            if (workSession is null)
+            {
+                throw new ExecutionError("This work session doesn't exist")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
+                };
+            }
+
+            var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSession);
+            await _workSessionRepository.UpdateWorkSession(id, workSessionDataRequest);
         }
     }
 }
