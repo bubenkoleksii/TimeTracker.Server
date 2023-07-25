@@ -5,6 +5,7 @@ using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Shared.Exceptions;
+using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server.Business.Services
 {
@@ -97,6 +98,23 @@ namespace TimeTracker.Server.Business.Services
                 };
             }
 
+            var user = await _userRepository.GetUserByIdAsync(workSession.UserId);
+            if (user is null)
+            {
+                throw new ExecutionError("User not found")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+                };
+            }
+            
+            if (user.Permissions is null || PermissionHelper.HasPermit(user.Permissions, "ReadWorkSessions"))
+            {
+                throw new ExecutionError("User does not have access to read other user's work sessions")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
+                };
+            }
+
             await _workSessionRepository.SetWorkSessionEnd(id, endDateTime);
         }
 
@@ -108,6 +126,24 @@ namespace TimeTracker.Server.Business.Services
                 throw new ExecutionError("This work session doesn't exist")
                 {
                     Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
+                };
+            }
+
+            var user = await _userRepository.GetUserByIdAsync(workSession.UserId);
+            if (user is null)
+            {
+                throw new ExecutionError("User not found")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+                };
+            }
+
+            if(true)
+            //if (user.Permissions is null || PermissionHelper.HasPermit(user.Permissions, "ReadWorkSessions"))
+            {
+                throw new ExecutionError("User does not have access to read other user's work sessions")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
                 };
             }
 
