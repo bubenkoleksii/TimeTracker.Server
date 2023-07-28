@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GraphQL;
+using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
@@ -11,19 +12,26 @@ namespace TimeTracker.Server.Business.Services
     public class WorkSessionService : IWorkSessionService
     {
         private readonly IMapper _mapper;
+        private readonly IConfiguration _configuration;
         private readonly IWorkSessionRepository _workSessionRepository;
         private readonly IUserRepository _userRepository;
 
-        public WorkSessionService(IMapper mapper, IWorkSessionRepository workSessionRepository, IUserRepository userRepository)
+        public WorkSessionService(IMapper mapper, IConfiguration configuration, IWorkSessionRepository workSessionRepository, IUserRepository userRepository)
         {
             _mapper = mapper;
+            _configuration = configuration;
             _workSessionRepository = workSessionRepository;
             _userRepository = userRepository;
         }
 
-        public async Task<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool orderByDesc, int offset,
-            int limit, DateTime? filterDate)
+        public async Task<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset,
+            int? limit, DateTime? filterDate)
         {
+            var limitDefault = int.Parse(_configuration.GetSection("Pagination:WorkSessionLimit").Value);
+
+            var validatedOffset = offset is >= 0 ? offset.Value : default;
+            var validatedLimit = limit is > 0 ? limit.Value : limitDefault;
+
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user is null)
             {
@@ -33,7 +41,7 @@ namespace TimeTracker.Server.Business.Services
                 };
             }
 
-            var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId, orderByDesc, offset, limit, filterDate);
+            var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId, orderByDesc, validatedOffset, validatedLimit, filterDate);
             var workSessionPaginationBusinessResponse = _mapper.Map<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
             return workSessionPaginationBusinessResponse;
         }
@@ -97,13 +105,21 @@ namespace TimeTracker.Server.Business.Services
                 };
             }
 
+            if (workSession.Type.ToLower() == "planned")
+            {
+                throw new ExecutionError("This work session is planned")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.INVALID_WORK_SESSION_TYPE.ToString()
+                };
+            }
+
             await _workSessionRepository.SetWorkSessionEnd(id, endDateTime);
         }
 
-        public async Task UpdateWorkSessionAsync(Guid id, WorkSessionBusinessRequest workSession)
+        public async Task UpdateWorkSessionAsync(Guid id, WorkSessionBusinessUpdateRequest workSession)
         {
             var workSessionCheck = await _workSessionRepository.GetWorkSessionById(id);
-            if (workSession is null)
+            if (workSessionCheck is null)
             {
                 throw new ExecutionError("This work session doesn't exist")
                 {
@@ -111,7 +127,15 @@ namespace TimeTracker.Server.Business.Services
                 };
             }
 
-            var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSession);
+            if (workSessionCheck.Type is "planned" or "completed" && workSession.End == null)
+            {
+                throw new ExecutionError("End date of work session cannot be null")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.DATE_NULL.ToString()
+                };
+            }
+
+            var workSessionDataRequest = _mapper.Map<WorkSessionDataUpdateRequest>(workSession);
             await _workSessionRepository.UpdateWorkSession(id, workSessionDataRequest);
         }
     }

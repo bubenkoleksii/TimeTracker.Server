@@ -13,15 +13,16 @@ namespace TimeTracker.Server.Data.Repositories
             _context = context;
         }
 
-        public async Task<WorkSessionPaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserId(Guid userId, bool orderByDesc,
+        public async Task<WorkSessionPaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserId(Guid userId, bool? orderByDesc,
             int offset, int limit, DateTime? filterDate)
         {
-            string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
+            var query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
             if (filterDate is not null)
             {
                 query += $" AND DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(filterDate)}) = 0";
             }
-            query += $" ORDER BY [{nameof(WorkSessionDataResponse.Start)}] {(orderByDesc ? "desc" : "")}" + $" OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY;";
+            query += $" ORDER BY [{nameof(WorkSessionDataResponse.Start)}] {(orderByDesc is true ? "desc" : "")}" + 
+                     $" OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY;";
             query += "SELECT COUNT(*) from [WorkSession];";
 
             using var connection = _context.GetConnection();
@@ -34,13 +35,13 @@ namespace TimeTracker.Server.Data.Repositories
             var workSessions = await multiQuery.ReadAsync<WorkSessionDataResponse>();
             var count = await multiQuery.ReadSingleAsync<int>();
 
-            var workSessionPaginatinDataResponse = new WorkSessionPaginationDataResponse<WorkSessionDataResponse>()
+            var workSessionPaginationDataResponse = new WorkSessionPaginationDataResponse<WorkSessionDataResponse>()
             {
                 Count = count,
                 Items = workSessions
             };
 
-            return workSessionPaginatinDataResponse;
+            return workSessionPaginationDataResponse;
         }
 
         public async Task<WorkSessionDataResponse> GetWorkSessionById(Guid id)
@@ -68,15 +69,16 @@ namespace TimeTracker.Server.Data.Repositories
         {
             var id = Guid.NewGuid();
 
-            const string query = $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}) " +
-                                 $"VALUES (@{nameof(id)}, @{nameof(WorkSessionDataRequest.UserId)}, @{nameof(WorkSessionDataRequest.Start)})";
+            const string query = $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}, {nameof(WorkSessionDataRequest.Type)}) " +
+                                 $"VALUES (@{nameof(id)}, @{nameof(WorkSessionDataRequest.UserId)}, @{nameof(WorkSessionDataRequest.Start)}, @{nameof(WorkSessionDataRequest.Type)})";
 
             using var connection = _context.GetConnection();
             await connection.ExecuteAsync(query, new
             {
                 id,
                 workSession.UserId,
-                workSession.Start
+                workSession.Start,
+                workSession.Type,
             });
 
             var workSessionResponse = await GetWorkSessionById(id);
@@ -90,20 +92,31 @@ namespace TimeTracker.Server.Data.Repositories
 
         public async Task SetWorkSessionEnd(Guid id, DateTime endDateTime)
         {
-            const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)} " +
-                        $"WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
+            const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)}," +
+                                 $" {nameof(WorkSessionDataResponse.Type)} = 'completed'" +
+                        $" WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
 
             using var connection = _context.GetConnection();
             await connection.ExecuteAsync(query, new { endDateTime, id });
         }
 
-        public async Task UpdateWorkSession(Guid id, WorkSessionDataRequest workSession)
+        public async Task UpdateWorkSession(Guid id, WorkSessionDataUpdateRequest workSession)
         {
-            const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.Start)}] = @{nameof(workSession.Start)}, " +
-                $"[{nameof(WorkSessionDataResponse.End)}] = @{nameof(workSession.End)} WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)}";
+            var query = "UPDATE [WorkSession] " +
+                                 $"SET [{nameof(WorkSessionDataResponse.Start)}] = @{nameof(workSession.Start)}, " +
+                                 $"[{nameof(WorkSessionDataResponse.Title)}] = {(workSession.Title != null ? $"@{nameof(workSession.Title)}" : "NULL")}, " +
+                                 $"[{nameof(WorkSessionDataResponse.Description)}] = {(workSession.Description != null ? $"@{nameof(workSession.Description)}" : "NULL")} " +
+                                 $"WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)}";
 
             using var connection = _context.GetConnection();
-            await connection.ExecuteAsync(query, new { workSession.Start, workSession.End, id });
+            await connection.ExecuteAsync(query, new
+            {
+                workSession.Start, 
+                workSession.End, 
+                workSession.Title, 
+                workSession.Description,
+                id
+            });
         }
     }
 }

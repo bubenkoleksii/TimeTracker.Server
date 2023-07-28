@@ -24,9 +24,9 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                 .ResolveAsync(async (context, service) =>
                 {
                     var userId = context.GetArgument<Guid>("userId");
-                    var orderByDesc = context.GetArgument<bool>("orderByDesc");
-                    var offset = context.GetArgument<int>("offset");
-                    var limit = context.GetArgument<int>("limit");
+                    var orderByDesc = context.GetArgument<bool?>("orderByDesc");
+                    var offset = context.GetArgument<int?>("offset");
+                    var limit = context.GetArgument<int?>("limit");
                     var filterDate = context.GetArgument<DateTime?>("filterDate");
                     var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, filterDate);
                     var workSessionPaginationResponse = mapper.Map<WorkSessionPaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
