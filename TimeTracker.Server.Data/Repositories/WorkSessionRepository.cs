@@ -70,8 +70,15 @@ public class WorkSessionRepository : IWorkSessionRepository
     {
         var id = Guid.NewGuid();
 
-        const string query = $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}, {nameof(WorkSessionDataRequest.Type)}) " +
-                             $"VALUES (@{nameof(id)}, @{nameof(WorkSessionDataRequest.UserId)}, @{nameof(WorkSessionDataRequest.Start)}, @{nameof(WorkSessionDataRequest.Type)})";
+        var query =
+            $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}, {nameof(WorkSessionDataRequest.Type)}, {nameof(WorkSessionDataRequest.Title)}, {nameof(WorkSessionDataRequest.Description)}) " +
+            $"VALUES (@{nameof(id)}, " +
+            $"@{nameof(WorkSessionDataRequest.UserId)}, " +
+            $"@{nameof(WorkSessionDataRequest.Start)}, " +
+            $"@{nameof(WorkSessionDataRequest.Type)}, " +
+            $"{(workSession.Title != null ? $"@{nameof(WorkSessionDataRequest.Title)}" : "NULL")}, " +
+            $"{(workSession.Description != null ? $"@{nameof(WorkSessionDataRequest.Description)}" : "NULL")})";
+
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, new
@@ -80,6 +87,8 @@ public class WorkSessionRepository : IWorkSessionRepository
             workSession.UserId,
             workSession.Start,
             workSession.Type,
+            workSession.Title,
+            workSession.Description
         });
 
         var workSessionResponse = await GetWorkSessionById(id);
