@@ -1,10 +1,11 @@
-﻿using TimeTracker.Server.Data.Models.WorkSession;
+﻿using TimeTracker.Server.Data.Models.Pagination;
+using TimeTracker.Server.Data.Models.WorkSession;
 
 namespace TimeTracker.Server.Data.Abstractions
 {
     public interface IWorkSessionRepository
     {
-        public Task<WorkSessionPaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserId(Guid userId, bool? orderByDesc, 
+        public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserId(Guid userId, bool? orderByDesc, 
             int offset, int limit, DateTime? filterDate);
         public Task<WorkSessionDataResponse> GetWorkSessionById(Guid id);
         public Task<WorkSessionDataResponse> GetActiveWorkSessionByUserId(Guid userId);

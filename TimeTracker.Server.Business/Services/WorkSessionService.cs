@@ -2,6 +2,7 @@
 using GraphQL;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
+using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
@@ -24,7 +25,7 @@ namespace TimeTracker.Server.Business.Services
             _userRepository = userRepository;
         }
 
-        public async Task<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset,
+        public async Task<PaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset,
             int? limit, DateTime? filterDate)
         {
             var limitDefault = int.Parse(_configuration.GetSection("Pagination:WorkSessionLimit").Value);
@@ -42,7 +43,7 @@ namespace TimeTracker.Server.Business.Services
             }
 
             var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserId(userId, orderByDesc, validatedOffset, validatedLimit, filterDate);
-            var workSessionPaginationBusinessResponse = _mapper.Map<WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
+            var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
             return workSessionPaginationBusinessResponse;
         }
 
