@@ -71,21 +71,23 @@ public class WorkSessionRepository : IWorkSessionRepository
         var id = Guid.NewGuid();
 
         var query =
-            $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}, {nameof(WorkSessionDataRequest.Type)}, {nameof(WorkSessionDataRequest.Title)}, {nameof(WorkSessionDataRequest.Description)}) " +
+            $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}, [{nameof(WorkSessionDataRequest.End)}], {nameof(WorkSessionDataRequest.Type)}, {nameof(WorkSessionDataRequest.Title)}, {nameof(WorkSessionDataRequest.Description)}) " +
             $"VALUES (@{nameof(id)}, " +
             $"@{nameof(WorkSessionDataRequest.UserId)}, " +
             $"@{nameof(WorkSessionDataRequest.Start)}, " +
+            $"{(workSession.End != null ? $"@{nameof(WorkSessionDataRequest.End)}" : "NULL")}, " +
             $"@{nameof(WorkSessionDataRequest.Type)}, " +
             $"{(workSession.Title != null ? $"@{nameof(WorkSessionDataRequest.Title)}" : "NULL")}, " +
             $"{(workSession.Description != null ? $"@{nameof(WorkSessionDataRequest.Description)}" : "NULL")})";
 
-
         using var connection = _context.GetConnection();
+
         await connection.ExecuteAsync(query, new
         {
             id,
             workSession.UserId,
             workSession.Start,
+            workSession.End,
             workSession.Type,
             workSession.Title,
             workSession.Description
@@ -94,7 +96,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         var workSessionResponse = await GetWorkSessionById(id);
         if (workSessionResponse is null)
         {
-            throw new InvalidOperationException("User has not been added");
+            throw new InvalidOperationException("Work session has not been added");
         }
 
         return workSessionResponse;
@@ -115,7 +117,8 @@ public class WorkSessionRepository : IWorkSessionRepository
         var query = "UPDATE [WorkSession] " +
                     $"SET [{nameof(WorkSessionDataResponse.Start)}] = @{nameof(workSession.Start)}, " +
                     $"[{nameof(WorkSessionDataResponse.Title)}] = {(workSession.Title != null ? $"@{nameof(workSession.Title)}" : "NULL")}, " +
-                    $"[{nameof(WorkSessionDataResponse.Description)}] = {(workSession.Description != null ? $"@{nameof(workSession.Description)}" : "NULL")} " +
+                    $"[{nameof(WorkSessionDataResponse.Description)}] = {(workSession.Description != null ? $"@{nameof(workSession.Description)}" : "NULL")}, " +
+                    $"[{nameof(WorkSessionDataResponse.End)}] = {(workSession.End != null ? $"@{nameof(workSession.End)}" : "NULL")} " +
                     $"WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)}";
 
         using var connection = _context.GetConnection();
