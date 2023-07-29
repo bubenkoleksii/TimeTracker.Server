@@ -59,7 +59,6 @@ public class WorkSessionRepository : IWorkSessionRepository
     {
         const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)} AND " +
                              $"[{nameof(WorkSessionDataResponse.End)}] is NULL";
-
         using var connection = _context.GetConnection();
         var workSession = await connection.QuerySingleOrDefaultAsync<WorkSessionDataResponse>(query, new { userId });
 
@@ -101,6 +100,30 @@ public class WorkSessionRepository : IWorkSessionRepository
 
         return workSessionResponse;
     }
+    
+        public async Task<WorkSessionDataResponse> CreateWorkSessionAsync(WorkSessionDataRequest workSession)
+        {
+            var id = Guid.NewGuid();
+
+            const string query = $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}) " +
+                                 $"VALUES (@{nameof(id)}, @{nameof(WorkSessionDataRequest.UserId)}, @{nameof(WorkSessionDataRequest.Start)})";
+
+            using var connection = _context.GetConnection();
+            await connection.ExecuteAsync(query, new
+            {
+                id,
+                workSession.UserId,
+                workSession.Start
+            });
+
+            var workSessionResponse = await GetWorkSessionByIdAsync(id);
+            if (workSessionResponse is null)
+            {
+                throw new InvalidOperationException("User has not been added");
+            }
+
+            return workSessionResponse;
+        }
 
     public async Task SetWorkSessionEnd(Guid id, DateTime endDateTime)
     {
@@ -130,5 +153,13 @@ public class WorkSessionRepository : IWorkSessionRepository
             workSession.Description,
             id
         });
+
+        public async Task DeleteWorkSessionAsync(Guid id)
+        {
+            const string query = $"DELETE FROM [WorkSession] WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)};";
+
+            using var connection = _context.GetConnection();
+            await connection.ExecuteAsync(query, new { id });
+        }
     }
 }

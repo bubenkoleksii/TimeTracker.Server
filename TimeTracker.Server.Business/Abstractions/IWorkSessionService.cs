@@ -12,4 +12,5 @@ public interface IWorkSessionService
     public Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSession);
     public Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime);
     public Task UpdateWorkSessionAsync(Guid id, WorkSessionBusinessUpdateRequest workSession);
+    public Task DeleteWorkSessionAsync(Guid id);
 }

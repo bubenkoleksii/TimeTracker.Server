@@ -17,5 +17,7 @@ namespace TimeTracker.Server.Data.Abstractions
         public Task SetWorkSessionEnd(Guid id, DateTime endDateTime);
 
         public Task UpdateWorkSession(Guid id, WorkSessionDataUpdateRequest workSession);
+
+        public Task DeleteWorkSessionAsync(Guid id);
     }
 }

@@ -7,6 +7,7 @@ using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Shared.Exceptions;
+using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -118,19 +119,36 @@ public class WorkSessionService : IWorkSessionService
         return workSessionBusinessResponse;
     }
 
-    public async Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime)
-    {
-        var workSession = await _workSessionRepository.GetWorkSessionById(id);
-        if (workSession is null)
-        {
-            throw new ExecutionError("This work session doesn't exist")
+public async Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime)
+{
+            var workSession = await _workSessionRepository.GetWorkSessionByIdAsync(id);
+            if (workSession is null)
             {
-                Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
-            };
-        }
+                throw new ExecutionError("This work session doesn't exist")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
+                };
+            }
 
-        await _workSessionRepository.SetWorkSessionEnd(id, endDateTime);
-    }
+            var user = await _userRepository.GetUserByIdAsync(workSession.UserId);
+            if (user is null)
+            {
+                throw new ExecutionError("User not found")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+                };
+            }
+            
+            if (workSession.UserId != user.Id)
+            {
+                throw new ExecutionError("User does not have access to read other user's work sessions")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
+                };
+            }
+
+            await _workSessionRepository.SetWorkSessionEndAsync(id, endDateTime);
+}
 
     public async Task UpdateWorkSessionAsync(Guid id, WorkSessionBusinessUpdateRequest workSession)
     {
@@ -149,9 +167,65 @@ public class WorkSessionService : IWorkSessionService
             {
                 Code = GraphQLCustomErrorCodesEnum.DATE_NULL.ToString()
             };
+
+            var user = await _userRepository.GetUserByIdAsync(workSession.UserId);
+            if (user is null)
+            {
+                throw new ExecutionError("User not found")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+                };
+            }
+
+            if (user.Permissions is null || PermissionHelper.HasPermit(user.Permissions, "UpdateWorkSessions") == false || workSession.UserId != user.Id)
+            {
+                throw new ExecutionError("User does not have access to read other user's work sessions")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
+                };
+            }
+
+            var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSession);
+            await _workSessionRepository.UpdateWorkSessionAsync(id, workSessionDataRequest);
         }
 
-        var workSessionDataRequest = _mapper.Map<WorkSessionDataUpdateRequest>(workSession);
-        await _workSessionRepository.UpdateWorkSession(id, workSessionDataRequest);
+        public async Task DeleteWorkSessionAsync(Guid id)
+        {
+            var workSession = await _workSessionRepository.GetWorkSessionByIdAsync(id);
+            if (workSession is null)
+            {
+                throw new ExecutionError("This work session doesn't exist")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
+                };
+            }
+
+            if (workSession.End is null)
+            {
+                throw new ExecutionError("Can not delete active work session")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_IS_ACTIVE.ToString()
+                };
+            }
+
+            var user = await _userRepository.GetUserByIdAsync(workSession.UserId);
+            if (user is null)
+            {
+                throw new ExecutionError("User not found")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+                };
+            }
+
+            if (user.Permissions is null || PermissionHelper.HasPermit(user.Permissions, "DeleteWorkSessions") == false || workSession.UserId != user.Id)
+            {
+                throw new ExecutionError("User does not have access to read other user's work sessions")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
+                };
+            }
+
+            await _workSessionRepository.DeleteWorkSessionAsync(id);
+        }
     }
 }
