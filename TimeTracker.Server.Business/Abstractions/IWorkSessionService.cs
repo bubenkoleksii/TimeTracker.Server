@@ -11,5 +11,6 @@ namespace TimeTracker.Server.Business.Abstractions
         public Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSession);
         public Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime);
         public Task UpdateWorkSessionAsync(Guid id, WorkSessionBusinessRequest workSession);
+        public Task DeleteWorkSessionAsync(Guid id);
     }
 }
