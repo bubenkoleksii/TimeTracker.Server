@@ -14,7 +14,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         _context = context;
     }
 
-    public async Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserId(Guid userId, bool? orderByDesc,
+    public async Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc,
         int offset, int limit, DateTime? filterDate)
     {
         var query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
@@ -45,7 +45,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         return workSessionPaginationDataResponse;
     }
 
-    public async Task<WorkSessionDataResponse> GetWorkSessionById(Guid id)
+    public async Task<WorkSessionDataResponse> GetWorkSessionByIdAsync(Guid id)
     {
         const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
 
@@ -55,7 +55,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         return workSession;
     }
 
-    public async Task<WorkSessionDataResponse> GetActiveWorkSessionByUserId(Guid userId)
+    public async Task<WorkSessionDataResponse> GetActiveWorkSessionByUserIdAsync(Guid userId)
     {
         const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)} AND " +
                              $"[{nameof(WorkSessionDataResponse.End)}] is NULL";
@@ -65,7 +65,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         return workSession;
     }
 
-    public async Task<WorkSessionDataResponse> CreateWorkSession(WorkSessionDataRequest workSession)
+    public async Task<WorkSessionDataResponse> CreateWorkSessionAsync(WorkSessionDataRequest workSession)
     {
         var id = Guid.NewGuid();
 
@@ -92,7 +92,7 @@ public class WorkSessionRepository : IWorkSessionRepository
             workSession.Description
         });
 
-        var workSessionResponse = await GetWorkSessionById(id);
+        var workSessionResponse = await GetWorkSessionByIdAsync(id);
         if (workSessionResponse is null)
         {
             throw new InvalidOperationException("Work session has not been added");
@@ -101,31 +101,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         return workSessionResponse;
     }
     
-        public async Task<WorkSessionDataResponse> CreateWorkSessionAsync(WorkSessionDataRequest workSession)
-        {
-            var id = Guid.NewGuid();
-
-            const string query = $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.Start)}) " +
-                                 $"VALUES (@{nameof(id)}, @{nameof(WorkSessionDataRequest.UserId)}, @{nameof(WorkSessionDataRequest.Start)})";
-
-            using var connection = _context.GetConnection();
-            await connection.ExecuteAsync(query, new
-            {
-                id,
-                workSession.UserId,
-                workSession.Start
-            });
-
-            var workSessionResponse = await GetWorkSessionByIdAsync(id);
-            if (workSessionResponse is null)
-            {
-                throw new InvalidOperationException("User has not been added");
-            }
-
-            return workSessionResponse;
-        }
-
-    public async Task SetWorkSessionEnd(Guid id, DateTime endDateTime)
+    public async Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime)
     {
         const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)}," +
                              $" {nameof(WorkSessionDataResponse.Type)} = 'completed'" +
@@ -135,7 +111,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         await connection.ExecuteAsync(query, new { endDateTime, id });
     }
 
-    public async Task UpdateWorkSession(Guid id, WorkSessionDataUpdateRequest workSession)
+    public async Task UpdateWorkSessionAsync(Guid id, WorkSessionDataUpdateRequest workSession)
     {
         var query = "UPDATE [WorkSession] " +
                     $"SET [{nameof(WorkSessionDataResponse.Start)}] = @{nameof(workSession.Start)}, " +
@@ -153,13 +129,13 @@ public class WorkSessionRepository : IWorkSessionRepository
             workSession.Description,
             id
         });
+    }
 
-        public async Task DeleteWorkSessionAsync(Guid id)
-        {
-            const string query = $"DELETE FROM [WorkSession] WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)};";
+    public async Task DeleteWorkSessionAsync(Guid id)
+    {
+        const string query = $"DELETE FROM [WorkSession] WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)};";
 
-            using var connection = _context.GetConnection();
-            await connection.ExecuteAsync(query, new { id });
-        }
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new { id });
     }
 }
