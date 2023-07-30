@@ -23,7 +23,8 @@ public class BusinessMappingProfile : Profile
         CreateMap<UserDataResponse, AuthTokenClaimsModel>();
 
         CreateMap<WorkSessionBusinessRequest, WorkSessionDataRequest>();
+        CreateMap<WorkSessionBusinessUpdateRequest, WorkSessionDataUpdateRequest>();
         CreateMap<WorkSessionDataResponse, WorkSessionBusinessResponse>();
-        CreateMap<WorkSessionPaginationDataResponse<WorkSessionDataResponse>, WorkSessionPaginationBusinessResponse<WorkSessionBusinessResponse>>();
+        CreateMap<PaginationDataResponse<WorkSessionDataResponse>, PaginationBusinessResponse<WorkSessionBusinessResponse>>();
     }
 }
