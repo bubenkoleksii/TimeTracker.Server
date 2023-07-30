@@ -82,7 +82,6 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-
         if (user.Permissions is null 
             || (PermissionHelper.HasPermit(user.Permissions, "CreateWorkSessions") == false && workSessionBusinessRequest.UserId != user.Id))
         {
