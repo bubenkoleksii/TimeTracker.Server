@@ -28,7 +28,7 @@ public class HolidayRepository : IHolidayRepository
         const string query = $"SELECT * FROM [Holidays];";
 
         using var connection = _context.GetConnection();
-        var holidays = await connection.QuerySingleOrDefaultAsync<IList<HolidayDataResponse>>(query);
+        var holidays = await connection.QueryAsync<HolidayDataResponse>(query);
 
         return holidays;
     }
@@ -40,7 +40,7 @@ public class HolidayRepository : IHolidayRepository
         var query =
             $"INSERT INTO [Holidays] ([Id], [{nameof(HolidayDataResponse.Title)}], [{nameof(HolidayDataResponse.Type)}], [{nameof(HolidayDataResponse.Date)}], " +
             $"[{nameof(HolidayDataResponse.EndDate)}]) VALUES (@{nameof(id)}, @{nameof(holidayDataRequest.Title)}, @{nameof(holidayDataRequest.Type)}, " +
-            $"@{nameof(holidayDataRequest.Date)}, {(holidayDataRequest.EndDate is not null ? $"@{nameof(holidayDataRequest.EndDate)}" : "NULL")};";
+            $"@{nameof(holidayDataRequest.Date)}, {(holidayDataRequest.EndDate is not null ? $"@{nameof(holidayDataRequest.EndDate)}" : "NULL")});";
 
         using var connection = _context.GetConnection();
 
@@ -68,7 +68,7 @@ public class HolidayRepository : IHolidayRepository
                     $"SET [{nameof(HolidayDataResponse.Title)}] = @{nameof(holidayDataRequest.Title)}, " +
                     $"[{nameof(HolidayDataResponse.Type)}] = @{nameof(holidayDataRequest.Type)}, " +
                     $"[{nameof(HolidayDataResponse.Date)}] = @{nameof(holidayDataRequest.Date)}, " +
-                    $"[{nameof(HolidayDataResponse.EndDate)}] = {(holidayDataRequest.EndDate is not null ? $"@{nameof(holidayDataRequest.EndDate)}" : "NULL")}, " +
+                    $"[{nameof(HolidayDataResponse.EndDate)}] = {(holidayDataRequest.EndDate is not null ? $"@{nameof(holidayDataRequest.EndDate)}" : "NULL")} " +
                     $"WHERE [{nameof(HolidayDataResponse.Id)}] = @{nameof(id)};";
 
         using var connection = _context.GetConnection();

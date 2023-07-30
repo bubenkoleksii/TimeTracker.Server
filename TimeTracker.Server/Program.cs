@@ -29,10 +29,12 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IMailService, MailService>();
         builder.Services.AddScoped<IWorkSessionService, WorkSessionService>();
+        builder.Services.AddScoped<IHolidayService, HolidayService>();
 
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IWorkSessionRepository, WorkSessionRepository>();
+        builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 
         builder.Services.AddAuthentication(conf =>
         {
