@@ -25,7 +25,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.CreateWorkSessionAsync(workSessionBusinessRequest);
                     var workSessionResponse = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSessionResponse;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
 
             Field<BooleanGraphType>("setEnd")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -39,22 +39,34 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var endDateTime = context.GetArgument<DateTime>("endDateTime");
                     await service.SetWorkSessionEndAsync(id, endDateTime);
                     return true;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
 
             Field<BooleanGraphType>("update")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
-                .Argument<NonNullGraphType<WorkSessionInputType>>("workSession")
+                .Argument<NonNullGraphType<WorkSessionInputUpdateType>>("workSession")
                 .Resolve()
                 .WithScope()
                 .WithService<IWorkSessionService>()
                 .ResolveAsync(async (context, service) =>
                 {
                     var id = context.GetArgument<Guid>("id");
-                    var workSession = context.GetArgument<WorkSessionRequest>("workSession");
-                    var workSessionBusinessRequest = mapper.Map<WorkSessionBusinessRequest>(workSession);
+                    var workSession = context.GetArgument<WorkSessionUpdateRequest>("workSession");
+                    var workSessionBusinessRequest = mapper.Map<WorkSessionBusinessUpdateRequest>(workSession);
                     await service.UpdateWorkSessionAsync(id, workSessionBusinessRequest);
                     return true;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
+
+            Field<BooleanGraphType>("delete")
+                .Argument<NonNullGraphType<IdGraphType>>("id")
+                .Resolve()
+                .WithScope()
+                .WithService<IWorkSessionService>()
+                .ResolveAsync(async (context, service) =>
+                {
+                    var id = context.GetArgument<Guid>("id");
+                    await service.DeleteWorkSessionAsync(id);
+                    return true;
+                }).AuthorizeWithPolicy("LoggedIn");
         }
     }
 }
