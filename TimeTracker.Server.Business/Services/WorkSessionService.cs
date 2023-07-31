@@ -42,6 +42,13 @@ public class WorkSessionService : IWorkSessionService
                 Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
             };
         }
+        if ((PermissionHelper.HasPermit(user.Permissions, "GetWorkSessions") == false && userId != user.Id))
+        {
+            throw new ExecutionError("User does not have access to read other user's work sessions")
+            {
+                Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
+            };
+        }
 
         var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserIdAsync(userId, orderByDesc, validatedOffset, validatedLimit, filterDate);
         var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
@@ -82,8 +89,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if (user.Permissions is null 
-            || (PermissionHelper.HasPermit(user.Permissions, "CreateWorkSessions") == false && workSessionBusinessRequest.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, "CreateWorkSessions") == false && workSessionBusinessRequest.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {
@@ -187,8 +193,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if (user.Permissions is null
-            || (PermissionHelper.HasPermit(user.Permissions, "UpdateWorkSessions") == false && workSession.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, "UpdateWorkSessions") == false && workSession.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {
@@ -228,8 +233,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if (user.Permissions is null
-            || (PermissionHelper.HasPermit(user.Permissions, "DeleteWorkSessions") == false && workSession.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, "DeleteWorkSessions") == false && workSession.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {
