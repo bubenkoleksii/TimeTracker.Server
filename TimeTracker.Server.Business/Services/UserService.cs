@@ -55,6 +55,10 @@ public class UserService : IUserService
         var userDataRequest = _mapper.Map<UserDataRequest>(userRequest);
 
         var userDataResponse = await _userRepository.UpdateUserAsync(userDataRequest, id);
+        if (userDataResponse.SetPasswordLink != null && userDataResponse.SetPasswordLinkExpired > DateTime.UtcNow)
+        {
+            userDataResponse.HasValidSetPasswordLink = true;
+        }
 
         var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
         return userBusinessResponse;
