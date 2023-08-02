@@ -43,15 +43,15 @@ namespace TimeTracker.Server.GraphQl.WorkSession
 
             Field<BooleanGraphType>("update")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
-                .Argument<NonNullGraphType<WorkSessionInputType>>("workSession")
+                .Argument<NonNullGraphType<WorkSessionInputUpdateType>>("workSession")
                 .Resolve()
                 .WithScope()
                 .WithService<IWorkSessionService>()
                 .ResolveAsync(async (context, service) =>
                 {
                     var id = context.GetArgument<Guid>("id");
-                    var workSession = context.GetArgument<WorkSessionRequest>("workSession");
-                    var workSessionBusinessRequest = mapper.Map<WorkSessionBusinessRequest>(workSession);
+                    var workSession = context.GetArgument<WorkSessionUpdateRequest>("workSession");
+                    var workSessionBusinessRequest = mapper.Map<WorkSessionBusinessUpdateRequest>(workSession);
                     await service.UpdateWorkSessionAsync(id, workSessionBusinessRequest);
                     return true;
                 }).AuthorizeWithPolicy("LoggedIn");

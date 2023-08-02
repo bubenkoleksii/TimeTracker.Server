@@ -4,6 +4,7 @@ using GraphQL.MicrosoftDI;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.GraphQl.WorkSession.Types;
 using GraphQL;
+using TimeTracker.Server.Models.Pagination;
 using TimeTracker.Server.Models.WorkSession;
 
 namespace TimeTracker.Server.GraphQl.WorkSession
@@ -14,9 +15,9 @@ namespace TimeTracker.Server.GraphQl.WorkSession
         {
             Field<WorkSessionPaginationResponseType>("getWorkSessionsByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
-                .Argument<NonNullGraphType<BooleanGraphType>>("orderByDesc")
-                .Argument<NonNullGraphType<IntGraphType>>("offset")
-                .Argument<NonNullGraphType<IntGraphType>>("limit")
+                .Argument<BooleanGraphType>("orderByDesc")
+                .Argument<IntGraphType>("offset")
+                .Argument<IntGraphType>("limit")
                 .Argument<DateTimeGraphType>("filterDate")
                 .Resolve()
                 .WithScope()
@@ -24,14 +25,16 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                 .ResolveAsync(async (context, service) =>
                 {
                     var userId = context.GetArgument<Guid>("userId");
-                    var orderByDesc = context.GetArgument<bool>("orderByDesc");
-                    var offset = context.GetArgument<int>("offset");
-                    var limit = context.GetArgument<int>("limit");
+                    var orderByDesc = context.GetArgument<bool?>("orderByDesc");
+                    var offset = context.GetArgument<int?>("offset");
+                    var limit = context.GetArgument<int?>("limit");
                     var filterDate = context.GetArgument<DateTime?>("filterDate");
+
                     var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, filterDate);
-                    var workSessionPaginationResponse = mapper.Map<WorkSessionPaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
+                    var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
+
                     return workSessionPaginationResponse;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
 
             Field<WorkSessionType>("getWorkSessionById")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -44,7 +47,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.GetWorkSessionByIdAsync(id);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
 
             Field<WorkSessionType>("getActiveWorkSessionByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
@@ -57,7 +60,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.GetActiveWorkSessionByUserIdAsync(userId);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
         }
     }
 }

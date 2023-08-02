@@ -1,9 +1,10 @@
 ﻿using GraphQL.Types;
+using TimeTracker.Server.Models.Pagination;
 using TimeTracker.Server.Models.WorkSession;
 
 namespace TimeTracker.Server.GraphQl.WorkSession.Types
 {
-    public class WorkSessionPaginationResponseType : ObjectGraphType<WorkSessionPaginationResponse<WorkSessionResponse>>
+    public class WorkSessionPaginationResponseType : ObjectGraphType<PaginationResponse<WorkSessionResponse>>
     {
         public WorkSessionPaginationResponseType()
         {
