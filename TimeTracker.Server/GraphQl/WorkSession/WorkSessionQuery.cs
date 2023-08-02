@@ -47,7 +47,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.GetWorkSessionByIdAsync(id);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
 
             Field<WorkSessionType>("getActiveWorkSessionByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
@@ -60,7 +60,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.GetActiveWorkSessionByUserIdAsync(userId);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
-                }).AuthorizeWithPolicy("LoggedIn"); ;
+                }).AuthorizeWithPolicy("LoggedIn");
         }
     }
 }
