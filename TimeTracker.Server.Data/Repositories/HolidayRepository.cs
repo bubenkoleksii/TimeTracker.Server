@@ -25,7 +25,7 @@ public class HolidayRepository : IHolidayRepository
 
     public async Task<IEnumerable<HolidayDataResponse>> GetHolidaysAsync()
     {
-        const string query = $"SELECT * FROM [Holidays];";
+        const string query = $"SELECT * FROM [Holidays] ORDER BY [{nameof(HolidayDataResponse.Date)}];";
 
         using var connection = _context.GetConnection();
         var holidays = await connection.QueryAsync<HolidayDataResponse>(query);

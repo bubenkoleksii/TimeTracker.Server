@@ -27,7 +27,7 @@ public class HolidayMutations : ObjectGraphType
                     var holidayResponse = mapper.Map<HolidayResponse>(holidayBusinessResponse);
 
                     return holidayResponse;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy("ManageHolidays");
 
         Field<BooleanGraphType>("update")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -44,7 +44,7 @@ public class HolidayMutations : ObjectGraphType
                     await service.UpdateHolidayAsync(id, holidayBusinessRequest);
 
                     return true;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy("ManageHolidays");
 
         Field<BooleanGraphType>("delete")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -56,6 +56,6 @@ public class HolidayMutations : ObjectGraphType
                     var id = context.GetArgument<Guid>("id");
                     await service.DeleteHolidayAsync(id);
                     return true;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy("ManageHolidays");
     }
 }

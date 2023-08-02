@@ -65,6 +65,7 @@ public class Program
             options.AddPolicy("GetUsers", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "GetUsers")));
             options.AddPolicy("FireUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "FireUser")));
             options.AddPolicy("UpdateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "UpdateUser")));
+            options.AddPolicy("ManageHolidays", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "ManageHolidays")));
         });
 
         builder.Services.AddGraphQL(builder => builder
