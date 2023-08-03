@@ -44,9 +44,9 @@ public class UserService : IUserService
             };
         }
 
-        if (existingUser.Status == "fired")
+        if (existingUser.Status == "deactivated")
         {
-            throw new ExecutionError($"User with id {id} cannot be updated because they are fired")
+            throw new ExecutionError($"User with id {id} cannot be updated because they are deactivated")
             {
                 Code = GraphQLCustomErrorCodesEnum.USER_ALREADY_EXISTS.ToString()
             };
@@ -77,7 +77,7 @@ public class UserService : IUserService
         return usersBusinessResponse;
     }
 
-    public async Task FireUserAsync(Guid id)
+    public async Task DeactivateUserAsync(Guid id)
     {
         var candidate = await _userRepository.GetUserByIdAsync(id);
         if (candidate == null)
@@ -88,15 +88,15 @@ public class UserService : IUserService
             };
         }
 
-        if (candidate.Status == "fired")
+        if (candidate.Status == "deactivated")
             return;
 
-        await _userRepository.FireUserAsync(id);
+        await _userRepository.DeactivateUserAsync(id);
 
         var user = await _userRepository.GetUserByIdAsync(id);
-        if (user.Status != "fired")
+        if (user.Status != "deactivated")
         {
-            throw new ExecutionError($"User with id {id} not fired")
+            throw new ExecutionError($"User with id {id} not deactivated")
             {
                 Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };

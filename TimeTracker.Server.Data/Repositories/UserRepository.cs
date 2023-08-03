@@ -184,9 +184,9 @@ public class UserRepository : IUserRepository
         return userResponse;
     }
 
-    public async Task FireUserAsync(Guid id)
+    public async Task DeactivateUserAsync(Guid id)
     {
-        var query = $"UPDATE [User] SET Status = 'fired' WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
+        var query = $"UPDATE [User] SET Status = 'deactivated' WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
         
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, new
