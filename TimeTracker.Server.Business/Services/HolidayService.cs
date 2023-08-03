@@ -35,6 +35,7 @@ public class HolidayService : IHolidayService
 
     public async Task<HolidayBusinessResponse> CreateHolidayAsync(HolidayBusinessRequest holidayBusinessRequest)
     {
+        ValidateHolidayRequestData(holidayBusinessRequest);
         var holidayDataRequest = _mapper.Map<HolidayDataRequest>(holidayBusinessRequest);
         var holidayDataResponse = await _holidayRepository.CreateHolidayAsync(holidayDataRequest);
         var holidayBusinessResponse = _mapper.Map<HolidayBusinessResponse>(holidayDataResponse);
@@ -51,6 +52,7 @@ public class HolidayService : IHolidayService
                 Code = GraphQLCustomErrorCodesEnum.HOLIDAY_NOT_FOUND.ToString()
             };
         }
+        ValidateHolidayRequestData(holidayBusinessRequest);
 
         var holidayDataRequest = _mapper.Map<HolidayDataRequest>(holidayBusinessRequest);
         await _holidayRepository.UpdateHolidayAsync(id, holidayDataRequest);
@@ -68,5 +70,24 @@ public class HolidayService : IHolidayService
         }
 
         await _holidayRepository.DeleteHolidayAsync(id);
+    }
+    
+    protected void ValidateHolidayRequestData(HolidayBusinessRequest holidayBusinessRequest)
+    {
+        if (!Enum.TryParse<HolidayTypesEnum>(holidayBusinessRequest.Type, false, out var _))
+        {
+            throw new ExecutionError("Invalid holiday type")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_INPUT_DATA.ToString()
+            };
+        }
+
+        if (holidayBusinessRequest is not null && DateTime.Compare(holidayBusinessRequest.Date, (DateTime)holidayBusinessRequest.EndDate) > 0)
+        {
+            throw new ExecutionError("Invalid dates input")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_INPUT_DATA.ToString()
+            };
+        }
     }
 }
