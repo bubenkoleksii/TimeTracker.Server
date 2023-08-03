@@ -3,6 +3,7 @@
     public enum GraphQLCustomErrorCodesEnum
     {
         INVALID_PASSWORD,
+        INVALID_INPUT_DATA,
         REFRESH_TOKEN_NOT_MATCHED,
         USER_ALREADY_EXISTS,
         USER_FIRED,
