@@ -71,7 +71,7 @@ public class HolidayService : IHolidayService
 
         await _holidayRepository.DeleteHolidayAsync(id);
     }
-
+    
     protected void ValidateHolidayRequestData(HolidayBusinessRequest holidayBusinessRequest)
     {
         if (!Enum.TryParse<HolidayTypesEnum>(holidayBusinessRequest.Type, false, out var _))
