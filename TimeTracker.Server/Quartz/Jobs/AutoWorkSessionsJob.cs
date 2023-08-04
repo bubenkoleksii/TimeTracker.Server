@@ -18,7 +18,6 @@ public class AutoWorkSessionsJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var users = await _userRepository.GetFullTimeUsersAsync();
-        Console.WriteLine("AutoWorkSessionsJob working");
 
         DateTime workSessionStart = DateTime.Today + new TimeSpan(5, 0, 0);
         DateTime workSessionEnd = DateTime.Today + new TimeSpan(13, 0, 0);
