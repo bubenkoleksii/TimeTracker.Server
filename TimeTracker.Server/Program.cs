@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using TimeTracker.Server.Middleware;
 using TimeTracker.Server.Shared.Helpers;
+using Quartz;
+using TimeTracker.Server.Quartz.Jobs;
 
 namespace TimeTracker.Server;
 
@@ -87,10 +89,30 @@ public class Program
                 });
         });
 
-
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
         builder.Services.AddHttpContextAccessor();
+
+        builder.Services.AddQuartz(q =>
+        {
+            q.UseMicrosoftDependencyInjectionJobFactory();
+
+            var jobKey = new JobKey("AutoWorkSessionsJob");
+            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(jobKey));
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity("AutoWorkSessionsJobTrigger")
+                .WithDailyTimeIntervalSchedule(s => s
+                    .WithIntervalInHours(24)
+                    .OnEveryDay()
+                    //starts at 01:00
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(1, 0))
+                )
+            );
+        });
+
+        builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete =  true);
 
         builder.Services.AddFluentMigratorCore()
             .ConfigureRunner(runnerBuilder => runnerBuilder
