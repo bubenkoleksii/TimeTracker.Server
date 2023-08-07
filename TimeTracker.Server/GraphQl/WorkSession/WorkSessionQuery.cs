@@ -18,7 +18,8 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                 .Argument<BooleanGraphType>("orderByDesc")
                 .Argument<IntGraphType>("offset")
                 .Argument<IntGraphType>("limit")
-                .Argument<DateTimeGraphType>("filterDate")
+                .Argument<DateTimeGraphType>("startDate")
+                .Argument<DateTimeGraphType>("endDate")
                 .Resolve()
                 .WithScope()
                 .WithService<IWorkSessionService>()
@@ -28,9 +29,10 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var orderByDesc = context.GetArgument<bool?>("orderByDesc");
                     var offset = context.GetArgument<int?>("offset");
                     var limit = context.GetArgument<int?>("limit");
-                    var filterDate = context.GetArgument<DateTime?>("filterDate");
+                    var startDate = context.GetArgument<DateTime?>("startDate");
+                    var endDate = context.GetArgument<DateTime?>("endDate");
 
-                    var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, filterDate);
+                    var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, startDate, endDate);
                     var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
 
                     return workSessionPaginationResponse;

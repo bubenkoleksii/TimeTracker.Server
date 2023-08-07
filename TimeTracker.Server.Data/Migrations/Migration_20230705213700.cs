@@ -16,7 +16,8 @@ public class Migration_20230705213700 : Migration
             .WithColumn(nameof(WorkSessionDataResponse.End)).AsDateTime().Nullable()
             .WithColumn(nameof(WorkSessionDataResponse.Type)).AsString().NotNullable()
             .WithColumn(nameof(WorkSessionDataResponse.Title)).AsString().Nullable()
-            .WithColumn(nameof(WorkSessionDataResponse.Description)).AsCustom("TEXT").Nullable();
+            .WithColumn(nameof(WorkSessionDataResponse.Description)).AsCustom("TEXT").Nullable()
+            .WithColumn(nameof(WorkSessionDataResponse.LastModifierId)).AsGuid().NotNullable();
     }
 
     public override void Down()
