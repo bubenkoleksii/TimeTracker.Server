@@ -6,7 +6,7 @@ namespace TimeTracker.Server.Data.Abstractions
     public interface IWorkSessionRepository
     {
         public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, 
-            int offset, int limit, DateTime? filterDate);
+            int offset, int limit, DateTime? startDate, DateTime? endDate);
 
         public Task<WorkSessionDataResponse> GetWorkSessionByIdAsync(Guid id);
 

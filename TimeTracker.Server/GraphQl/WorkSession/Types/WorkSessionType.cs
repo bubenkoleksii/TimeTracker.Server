@@ -21,6 +21,10 @@ namespace TimeTracker.Server.GraphQl.WorkSession.Types
                 .Description("Title field in work session object");
             Field(ws => ws.Description, type: typeof(StringGraphType), nullable: true)
                 .Description("Description field in work session object");
+            Field(ws => ws.LastModifierId, type: typeof(IdGraphType), nullable: true)
+                .Description("Last modifier id field in work session object");
+            Field(ws => ws.LastModifierName, type: typeof(StringGraphType), nullable: true)
+                .Description("Last modifier name field in work session object");
         }
     }
 }

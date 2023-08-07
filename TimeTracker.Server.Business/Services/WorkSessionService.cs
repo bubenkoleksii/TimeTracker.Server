@@ -1,5 +1,7 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
 using GraphQL;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
@@ -17,17 +19,19 @@ public class WorkSessionService : IWorkSessionService
     private readonly IConfiguration _configuration;
     private readonly IWorkSessionRepository _workSessionRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public WorkSessionService(IMapper mapper, IConfiguration configuration, IWorkSessionRepository workSessionRepository, IUserRepository userRepository)
+    public WorkSessionService(IMapper mapper, IConfiguration configuration, IWorkSessionRepository workSessionRepository, IUserRepository userRepository, IHttpContextAccessor httpContextAccessor)
     {
         _mapper = mapper;
         _configuration = configuration;
         _workSessionRepository = workSessionRepository;
         _userRepository = userRepository;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<PaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset,
-        int? limit, DateTime? filterDate)
+        int? limit, DateTime? startDate, DateTime? endDate)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:WorkSessionLimit").Value);
 
@@ -50,7 +54,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserIdAsync(userId, orderByDesc, validatedOffset, validatedLimit, filterDate);
+        var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserIdAsync(userId, orderByDesc, validatedOffset, validatedLimit, startDate, endDate);
         var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
         return workSessionPaginationBusinessResponse;
     }
@@ -120,7 +124,12 @@ public class WorkSessionService : IWorkSessionService
             }
         }
 
+        var modifierClaims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
+        var modifierId = modifierClaims.FirstOrDefault(c => c.Type == "Id");
+
         var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSessionBusinessRequest);
+        workSessionDataRequest.LastModifierId = Guid.Parse(modifierId.Value);
+
         var workSessionDataResponse = await _workSessionRepository.CreateWorkSessionAsync(workSessionDataRequest);
         if (workSessionDataResponse is null)
         {
@@ -201,7 +210,12 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
+        var modifierClaims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
+        var modifierId = modifierClaims.FirstOrDefault(c => c.Type == "Id");
+
         var workSessionDataRequest = _mapper.Map<WorkSessionDataUpdateRequest>(workSession);
+        workSessionDataRequest.LastModifierId = Guid.Parse(modifierId.Value);
+
         await _workSessionRepository.UpdateWorkSessionAsync(id, workSessionDataRequest);
     }
 

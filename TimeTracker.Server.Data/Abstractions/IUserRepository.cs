@@ -17,7 +17,7 @@ public interface IUserRepository
 
     public Task<UserDataResponse> UpdateUserAsync(UserDataRequest userRequest, Guid id);
 
-    public Task FireUserAsync(Guid id);
+    public Task DeactivateUserAsync(Guid id);
 
     public Task SetRefreshTokenAsync(string refreshToken, Guid id);
 

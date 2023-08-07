@@ -6,7 +6,7 @@ namespace TimeTracker.Server.Business.Abstractions;
 public interface IWorkSessionService
 {
     public Task<PaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset, 
-        int? limit, DateTime? filterDate);
+        int? limit, DateTime? startDate, DateTime? endDate);
     public Task<WorkSessionBusinessResponse> GetWorkSessionByIdAsync(Guid id);
     public Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserIdAsync(Guid userId);
     public Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSession);
