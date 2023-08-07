@@ -34,6 +34,16 @@ public class UserRepository : IUserRepository
         return user;
     }
 
+    public async Task<IEnumerable<UserDataResponse>> GetFullTimeUsersAsync()
+    {
+        const string query = $"SELECT * FROM [User] WHERE {nameof(UserDataResponse.EmploymentRate)} = 100";
+
+        using var connection = _context.GetConnection();
+        var users = await connection.QueryAsync<UserDataResponse>(query);
+
+        return users;
+    }
+
     public async Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
     {
         var query = "SELECT * FROM [User]";
@@ -184,9 +194,9 @@ public class UserRepository : IUserRepository
         return userResponse;
     }
 
-    public async Task FireUserAsync(Guid id)
+    public async Task DeactivateUserAsync(Guid id)
     {
-        var query = $"UPDATE [User] SET Status = 'fired' WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
+        var query = $"UPDATE [User] SET Status = 'deactivated' WHERE {nameof(UserDataResponse.Id)} = @{nameof(id)}";
         
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, new

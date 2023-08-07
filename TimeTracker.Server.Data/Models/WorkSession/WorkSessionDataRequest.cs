@@ -13,4 +13,6 @@ public record WorkSessionDataRequest
     public string? Description { get; set; }
 
     public string Type { get; set; } = null!;
+
+    public Guid LastModifierId { get; set; }
 }

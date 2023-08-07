@@ -49,7 +49,7 @@ public sealed class UserMutation : ObjectGraphType
                 return userResponse;
             }).AuthorizeWithPolicy("UpdateUser");
 
-        Field<bool>("fire")
+        Field<bool>("deactivate")
             .Argument<NonNullGraphType<IdGraphType>>("id")
             .Resolve()
             .WithScope()
@@ -58,9 +58,9 @@ public sealed class UserMutation : ObjectGraphType
             {
                 var id = context.GetArgument<Guid>("id");
 
-                await service.FireUserAsync(id);
+                await service.DeactivateUserAsync(id);
                 return true;
-            }).AuthorizeWithPolicy("FireUser");
+            }).AuthorizeWithPolicy("DeactivateUser");
 
         Field<bool>("addSetPasswordLink")
             .Argument<NonNullGraphType<StringGraphType>>("email")

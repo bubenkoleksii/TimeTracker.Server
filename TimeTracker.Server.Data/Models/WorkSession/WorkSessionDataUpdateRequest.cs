@@ -9,4 +9,6 @@ public record WorkSessionDataUpdateRequest
     public string? Title { get; set; }
 
     public string? Description { get; set; }
+
+    public Guid LastModifierId { get; set; }
 }

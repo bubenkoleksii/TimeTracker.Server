@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using TimeTracker.Server.Middleware;
 using TimeTracker.Server.Shared.Helpers;
+using Quartz;
+using TimeTracker.Server.Quartz.Jobs;
 
 namespace TimeTracker.Server;
 
@@ -29,10 +31,12 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IMailService, MailService>();
         builder.Services.AddScoped<IWorkSessionService, WorkSessionService>();
+        builder.Services.AddScoped<IHolidayService, HolidayService>();
 
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IWorkSessionRepository, WorkSessionRepository>();
+        builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 
         builder.Services.AddAuthentication(conf =>
         {
@@ -61,8 +65,9 @@ public class Program
             options.AddPolicy("LoggedIn", (a) => a.RequireAuthenticatedUser());
             options.AddPolicy("CreateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "CreateUser")));
             options.AddPolicy("GetUsers", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "GetUsers")));
-            options.AddPolicy("FireUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "FireUser")));
+            options.AddPolicy("DeactivateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "DeactivateUser")));
             options.AddPolicy("UpdateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "UpdateUser")));
+            options.AddPolicy("ManageHolidays", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "ManageHolidays")));
         });
 
         builder.Services.AddGraphQL(builder => builder
@@ -84,10 +89,30 @@ public class Program
                 });
         });
 
-
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
         builder.Services.AddHttpContextAccessor();
+
+        builder.Services.AddQuartz(q =>
+        {
+            q.UseMicrosoftDependencyInjectionJobFactory();
+
+            var jobKey = new JobKey("AutoWorkSessionsJob");
+            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(jobKey));
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity("AutoWorkSessionsJobTrigger")
+                .WithDailyTimeIntervalSchedule(s => s
+                    .WithIntervalInHours(24)
+                    .OnEveryDay()
+                    //starts at 01:00
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(1, 0))
+                )
+            );
+        });
+
+        builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete =  true);
 
         builder.Services.AddFluentMigratorCore()
             .ConfigureRunner(runnerBuilder => runnerBuilder

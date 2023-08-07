@@ -9,13 +9,15 @@ public interface IUserRepository
 
     public Task<UserDataResponse> GetUserByEmailAsync(string email);
 
+    public Task<IEnumerable<UserDataResponse>> GetFullTimeUsersAsync();
+
     public Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn);
 
     public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 
     public Task<UserDataResponse> UpdateUserAsync(UserDataRequest userRequest, Guid id);
 
-    public Task FireUserAsync(Guid id);
+    public Task DeactivateUserAsync(Guid id);
 
     public Task SetRefreshTokenAsync(string refreshToken, Guid id);
 

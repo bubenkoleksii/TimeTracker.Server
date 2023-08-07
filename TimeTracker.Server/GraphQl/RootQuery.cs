@@ -1,4 +1,5 @@
 ﻿using GraphQL.Types;
+using TimeTracker.Server.GraphQl.Holiday;
 using TimeTracker.Server.GraphQl.User;
 using TimeTracker.Server.GraphQl.WorkSession;
 
@@ -11,5 +12,7 @@ public sealed class RootQuery : ObjectGraphType
         Field<UserQuery>("user").Resolve(_ => new { });
 
         Field<WorkSessionQuery>("workSession").Resolve(_ => new { });
+
+        Field<HolidayQuery>("holiday").Resolve(_ => new { });
     }
 }
