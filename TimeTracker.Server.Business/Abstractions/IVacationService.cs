@@ -4,11 +4,9 @@ namespace TimeTracker.Server.Business.Abstractions;
 
 public interface IVacationService
 {
-    public Task<VacationBusinessResponse> GetVacationByIdAsync(Guid id);
+    public Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc);
 
-    public Task<IEnumerable<VacationBusinessResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc);
-
-    public Task<IEnumerable<VacationBusinessResponse>> GetVacationRequestsAsync();
+    public Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationRequestsAsync();
 
     public Task<VacationInfoBusinessResponse> GetVacationInfoByUserIdAsync(Guid userId);
 

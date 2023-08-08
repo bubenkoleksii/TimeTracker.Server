@@ -60,7 +60,7 @@ public class VacationInfoRepository : IVacationInfoRepository
     public async Task AddDaysSpentAsync(Guid userId, int daysSpent)
     {
         const string query = $"UPDATE [VacationInfo] SET " +
-            $"[{nameof(VacationInfoDataResponse.DaysSpent)}] = @{nameof(daysSpent)} " +
+            $"[{nameof(VacationInfoDataResponse.DaysSpent)}] = [{nameof(VacationInfoDataResponse.DaysSpent)}] + @{nameof(daysSpent)} " +
             $"WHERE [{nameof(VacationInfoDataResponse.UserId)}] = @{nameof(userId)};";
 
         using var connection = _context.GetConnection();

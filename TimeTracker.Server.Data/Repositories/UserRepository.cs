@@ -251,6 +251,18 @@ public class UserRepository : IUserRepository
         });
     }
 
+    public async Task SetUserStatusAsync(Guid id, string status)
+    {
+        var query = $"UPDATE [User] SET {nameof(UserDataResponse.Status)} = @{nameof(status)} WHERE [{nameof(UserDataResponse.Id)}] = @{nameof(id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            status,
+            id
+        });
+    }
+
     public async Task RemovePasswordAsync(Guid id)
     {
         var query = $"UPDATE [User] SET {nameof(SetPasswordUserDataRequest.HashPassword)} = NULL, {nameof(UserDataResponse.HasPassword)} = 0, {nameof(UserDataResponse.RefreshToken)} = NULL" +

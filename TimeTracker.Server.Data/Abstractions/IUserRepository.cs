@@ -27,5 +27,7 @@ public interface IUserRepository
 
     public Task SetPasswordAsync(SetPasswordUserDataRequest user);
 
+    public Task SetUserStatusAsync(Guid id, string status);
+
     public Task RemovePasswordAsync(Guid id);
 }

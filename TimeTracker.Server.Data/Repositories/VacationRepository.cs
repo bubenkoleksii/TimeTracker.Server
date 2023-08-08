@@ -39,15 +39,27 @@ public class VacationRepository : IVacationRepository
         query += $" ORDER BY [{nameof(VacationDataResponse.Start)}] {orderByPostfix}, [{nameof(VacationDataResponse.End)}] {orderByPostfix}";
 
         using var connection = _context.GetConnection();
-        await using var multiQuery = await connection.QueryMultipleAsync(query, new { userId });
+        var vacationsDataResponse = await connection.QueryAsync<VacationDataResponse>(query, new { userId });
 
-        var vacationsDataResponse = await multiQuery.ReadAsync<VacationDataResponse>();
         return vacationsDataResponse;
     }
 
     public async Task<IEnumerable<VacationDataResponse>> GetVacationRequestsAsync()
     {
-        const string query = $"SELECT * FROM [Vacation] WHERE [{nameof(VacationDataResponse.IsApproved)}] is NULL;";
+        const string query = $"SELECT * FROM [Vacation] WHERE [{nameof(VacationDataResponse.IsApproved)}] IS NULL;";
+
+        using var connection = _context.GetConnection();
+        var vacationsDataResponse = await connection.QueryAsync<VacationDataResponse>(query);
+
+        return vacationsDataResponse;
+    }
+
+    public async Task<IEnumerable<VacationDataResponse>> GetNotStartedUpdatedVacationsAsync()
+    {
+        const string query = $"SELECT * FROM [Vacation] WHERE " +
+            $"[{nameof(VacationDataResponse.IsApproved)}] IS NOT NULL" +
+            $"[{nameof(VacationDataResponse.Start)}] < GETDATE()" +
+            $";";
 
         using var connection = _context.GetConnection();
         var vacationsDataResponse = await connection.QueryAsync<VacationDataResponse>(query);

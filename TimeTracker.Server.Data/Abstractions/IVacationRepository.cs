@@ -10,6 +10,8 @@ public interface IVacationRepository
 
     public Task<IEnumerable<VacationDataResponse>> GetVacationRequestsAsync();
 
+    public Task<IEnumerable<VacationDataResponse>> GetNotStartedUpdatedVacationsAsync();
+
     public Task<VacationDataResponse> CreateVacationAsync(VacationDataRequest vacationDataRequest);
 
     public Task ApproverUpdateVacationAsync(VacationApproveDataRequest vacationApproveDataRequest);
