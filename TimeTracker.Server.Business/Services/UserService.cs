@@ -20,15 +20,19 @@ public class UserService : IUserService
 
     private readonly IUserRepository _userRepository;
 
+    private readonly IVacationInfoRepository _vacationInfoRepository;
+
     private readonly IConfiguration _configuration;
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public UserService(IMailService mailService, IUserRepository userRepository, IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+    public UserService(IMailService mailService, IUserRepository userRepository, IVacationInfoRepository vacationInfoRepository, IMapper mapper, 
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
     {
         _mailService = mailService;
         _userRepository = userRepository;
         _mapper = mapper;
+        _vacationInfoRepository = vacationInfoRepository;
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
     }
@@ -217,6 +221,8 @@ public class UserService : IUserService
         userDataRequest.HashPassword = HashPassword(userRequest.Password);
 
         await _userRepository.SetPasswordAsync(userDataRequest);
+
+        await _vacationInfoRepository.CreateVacationInfoAsync(candidate.Id);
     }
 
     public async Task ResetPasswordAsync()

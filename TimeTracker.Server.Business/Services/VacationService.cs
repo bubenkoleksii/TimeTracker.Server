@@ -13,7 +13,6 @@ namespace TimeTracker.Server.Business.Services;
 
 public class VacationService : IVacationService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IMapper _mapper;
 
     private readonly IVacationInfoRepository _vacationInfoRepository;
@@ -21,13 +20,11 @@ public class VacationService : IVacationService
 
     private readonly IUserService _userService;
 
-    public VacationService(IMapper mapper, IVacationInfoRepository vacationInfoRepository, IVacationRepository vacationRepository, IHttpContextAccessor httpContextAccessor,
-        IUserService userService)
+    public VacationService(IMapper mapper, IVacationInfoRepository vacationInfoRepository, IVacationRepository vacationRepository, IUserService userService)
     {
         _mapper = mapper;
         _vacationInfoRepository = vacationInfoRepository;
         _vacationRepository = vacationRepository;
-        _httpContextAccessor = httpContextAccessor;
         _userService = userService;
     }
 
@@ -107,6 +104,14 @@ public class VacationService : IVacationService
 
     public async Task<VacationBusinessResponse> CreateVacationAsync(VacationBusinessRequest vacationBusinessRequest)
     {
+        if (DateTime.Compare(vacationBusinessRequest.Start, vacationBusinessRequest.End) > 0)
+        {
+            throw new ExecutionError("Invalid dates input")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_INPUT_DATA.ToString()
+            };
+        }
+
         var vacationDataRequest = _mapper.Map<VacationDataRequest>(vacationBusinessRequest);
         var vacationDataResponse = await _vacationRepository.CreateVacationAsync(vacationDataRequest);
         var vacationBusinessResponse = _mapper.Map<VacationBusinessResponse>(vacationDataResponse);
@@ -117,6 +122,13 @@ public class VacationService : IVacationService
     {
         var vacationApproveDataRequest = _mapper.Map<VacationApproveDataRequest>(vacationApproveBusinessRequest);
         await _vacationRepository.ApproverUpdateVacationAsync(vacationApproveDataRequest);
+
+        if (vacationApproveDataRequest.IsApproved)
+        {
+            var vacationDataResponse = await _vacationRepository.GetVacationByIdAsync(vacationApproveDataRequest.Id);
+            var vacationDurationInDays = (vacationDataResponse.End - vacationDataResponse.Start).TotalDays + 1;
+            await _vacationInfoRepository.AddDaysSpentAsync(vacationDataResponse.UserId, (int)vacationDurationInDays);
+        }
     }
 
     public async Task DeleteVacationAsync(Guid id)
