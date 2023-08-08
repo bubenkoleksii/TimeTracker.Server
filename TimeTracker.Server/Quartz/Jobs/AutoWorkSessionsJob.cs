@@ -29,7 +29,10 @@ public class AutoWorkSessionsJob : IJob
                 UserId = user.Id,
                 Start = workSessionStart,
                 End = workSessionEnd,
-                Type = "Auto"
+                Title = null,
+                Description = null,
+                Type = "Auto",
+                LastModifierId = user.Id
             };
             await _workSessionRepository.CreateWorkSessionAsync(plannedWorkSession);
         }

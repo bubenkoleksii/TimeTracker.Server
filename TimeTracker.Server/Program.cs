@@ -16,6 +16,7 @@ using TimeTracker.Server.Middleware;
 using TimeTracker.Server.Shared.Helpers;
 using Quartz;
 using TimeTracker.Server.Quartz.Jobs;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server;
 
@@ -62,12 +63,12 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("LoggedIn", (a) => a.RequireAuthenticatedUser());
-            options.AddPolicy("CreateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "CreateUser")));
-            options.AddPolicy("GetUsers", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "GetUsers")));
-            options.AddPolicy("DeactivateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "DeactivateUser")));
-            options.AddPolicy("UpdateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "UpdateUser")));
-            options.AddPolicy("ManageHolidays", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "ManageHolidays")));
+            options.AddPolicy(PermissionsEnum.LoggedIn.ToString(), (a) => a.RequireAuthenticatedUser());
+            options.AddPolicy(PermissionsEnum.CreateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.CreateUser.ToString())));
+            options.AddPolicy(PermissionsEnum.GetUsers.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetUsers.ToString())));
+            options.AddPolicy(PermissionsEnum.DeactivateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.DeactivateUser.ToString())));
+            options.AddPolicy(PermissionsEnum.UpdateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.UpdateUser.ToString())));
+            options.AddPolicy(PermissionsEnum.ManageHolidays.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ManageHolidays.ToString())));
         });
 
         builder.Services.AddGraphQL(builder => builder

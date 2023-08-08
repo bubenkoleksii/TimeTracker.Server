@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using TimeTracker.Server.Data.Abstractions;
-using TimeTracker.Server.Data.Models.Pagination;
 using TimeTracker.Server.Data.Models.Vacation;
 
 namespace TimeTracker.Server.Data.Repositories;
@@ -24,57 +23,31 @@ public class VacationRepository : IVacationRepository
         return vacationDataResponse;
     }
 
-    public async Task<PaginationDataResponse<VacationDataResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc, int offset, int limit)
+    public async Task<IEnumerable<VacationDataResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc)
     {
         var query = $"SELECT * FROM [Vacation]";
-        var countQuery = $"SELECT COUNT(*) FROM [Vacation]";
 
         var userWhereSection = $" WHERE [{nameof(VacationDataResponse.UserId)}] = @{nameof(userId)}";
         query += userWhereSection;
-        countQuery += userWhereSection;
         if (onlyApproved is not null)
         {
             var approvedWhereSection = $" AND [{nameof(VacationDataResponse.IsApproved)}] = {((bool)onlyApproved ? "1" : "0")}";
             query += approvedWhereSection;
-            countQuery += approvedWhereSection;
         }
 
         var orderByPostfix = orderByDesc ? "DESC" : "ASC";
         query += $" ORDER BY [{nameof(VacationDataResponse.Start)}] {orderByPostfix}, [{nameof(VacationDataResponse.End)}] {orderByPostfix}";
 
-        query += $" OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY;";
-        countQuery += ";";
-
-        query += countQuery;
-
         using var connection = _context.GetConnection();
         await using var multiQuery = await connection.QueryMultipleAsync(query, new { userId });
 
         var vacationsDataResponse = await multiQuery.ReadAsync<VacationDataResponse>();
-        var count = await multiQuery.ReadSingleAsync<int>();
-
-        var vacationPaginationDataResponse = new PaginationDataResponse<VacationDataResponse>()
-        {
-            Count = count,
-            Items = vacationsDataResponse
-        };
-
-        return vacationPaginationDataResponse;
+        return vacationsDataResponse;
     }
 
     public async Task<IEnumerable<VacationDataResponse>> GetVacationRequestsAsync()
     {
         const string query = $"SELECT * FROM [Vacation] WHERE [{nameof(VacationDataResponse.IsApproved)}] is NULL;";
-
-        using var connection = _context.GetConnection();
-        var vacationsDataResponse = await connection.QueryAsync<VacationDataResponse>(query);
-
-        return vacationsDataResponse;
-    }
-
-    public async Task<IEnumerable<VacationDataResponse>> GetActiveVacationsAsync()
-    {
-        const string query = $"SELECT * FROM [Vacation] WHERE [{nameof(VacationDataResponse.IsApproved)}] = 1;";
 
         using var connection = _context.GetConnection();
         var vacationsDataResponse = await connection.QueryAsync<VacationDataResponse>(query);

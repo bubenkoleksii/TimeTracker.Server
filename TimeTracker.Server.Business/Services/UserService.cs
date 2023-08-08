@@ -266,6 +266,15 @@ public class UserService : IUserService
         await _userRepository.AddSetPasswordLinkAsync(setPasswordLink, expired.ToUniversalTime(), user.Id);
     }
 
+    public async Task<UserBusinessResponse> GetCurrentUserFromClaimsAsync()
+    {
+        var userClaims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
+        var userIdClaim = userClaims.FirstOrDefault(c => c.Type == "Id");
+        var userDataResponse = await _userRepository.GetUserByIdAsync(Guid.Parse(userIdClaim.Value));
+        var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
+        return userBusinessResponse;
+    }
+
     private string HashPassword(string password)
     {
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);

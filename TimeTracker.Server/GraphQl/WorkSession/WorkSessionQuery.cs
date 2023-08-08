@@ -6,6 +6,7 @@ using TimeTracker.Server.GraphQl.WorkSession.Types;
 using GraphQL;
 using TimeTracker.Server.Models.Pagination;
 using TimeTracker.Server.Models.WorkSession;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.GraphQl.WorkSession
 {
@@ -36,7 +37,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
 
                     return workSessionPaginationResponse;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
             Field<WorkSessionType>("getWorkSessionById")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -49,7 +50,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.GetWorkSessionByIdAsync(id);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
             Field<WorkSessionType>("getActiveWorkSessionByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
@@ -62,7 +63,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.GetActiveWorkSessionByUserIdAsync(userId);
                     var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSession;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
         }
     }
 }

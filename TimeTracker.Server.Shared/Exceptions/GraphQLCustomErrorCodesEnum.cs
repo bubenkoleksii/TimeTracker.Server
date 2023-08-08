@@ -17,6 +17,7 @@
         USER_NOT_FOUND,
         WORK_SESSION_NOT_FOUND,
         HOLIDAY_NOT_FOUND,
-        NO_PERMISSION
+        NO_PERMISSION,
+        VACATION_NOT_FOUND
     }
 }
