@@ -172,17 +172,36 @@ public class VacationService : IVacationService
 
     public async Task ApproverUpdateVacationAsync(VacationApproveBusinessRequest vacationApproveBusinessRequest)
     {
-        //if vacation has not started yet, approver can update it again
+        var vacationDataResponse = await _vacationRepository.GetVacationByIdAsync(vacationApproveBusinessRequest.Id);
+
+        if (DateTime.Compare(vacationDataResponse.Start, DateTime.UtcNow) >= 0)
+        {
+            throw new ExecutionError("Vacation has already started")
+            {
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
+            };
+        }
+
         var vacationApproveDataRequest = _mapper.Map<VacationApproveDataRequest>(vacationApproveBusinessRequest);
         await _vacationRepository.ApproverUpdateVacationAsync(vacationApproveDataRequest);
 
-        if (vacationApproveDataRequest.IsApproved)
-        {
-            var vacationDataResponse = await _vacationRepository.GetVacationByIdAsync(vacationApproveDataRequest.Id);
-            var vacationDurationInDays = (vacationDataResponse.End - vacationDataResponse.Start).TotalDays + 1;
-            await _vacationInfoRepository.AddDaysSpentAsync(vacationDataResponse.UserId, (int)vacationDurationInDays);
+        var vacationDurationInDays = (vacationDataResponse.End - vacationDataResponse.Start).TotalDays + 1;
 
-            await _userRepository.SetUserStatusAsync(vacationDataResponse.UserId, "vacation");
+        if (vacationDataResponse.IsApproved is null || !(bool)vacationDataResponse.IsApproved)
+        {
+            if (vacationApproveBusinessRequest.IsApproved)
+            {
+                await _vacationInfoRepository.AddDaysSpentAsync(vacationDataResponse.UserId, (int)vacationDurationInDays);
+                await _userRepository.SetUserStatusAsync(vacationDataResponse.UserId, "vacation");
+            }
+        }
+        else
+        {
+            if (!vacationApproveBusinessRequest.IsApproved)
+            {
+                await _vacationInfoRepository.AddDaysSpentAsync(vacationDataResponse.UserId, -(int)vacationDurationInDays);
+                await _userRepository.SetUserStatusAsync(vacationDataResponse.UserId, "working");
+            }
         }
     }
 
