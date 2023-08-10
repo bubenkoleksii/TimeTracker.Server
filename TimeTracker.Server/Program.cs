@@ -103,17 +103,31 @@ public class Program
         {
             q.UseMicrosoftDependencyInjectionJobFactory();
 
-            var jobKey = new JobKey("AutoWorkSessionsJob");
-            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(jobKey));
+            var AutoWorkSessionsJobKey = new JobKey("AutoWorkSessionsJob");
+            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(AutoWorkSessionsJobKey));
+
+            var VacationJobKey = new JobKey("VacationJobKey");
+            q.AddJob<VacationJob>(opts => opts.WithIdentity(VacationJobKey));
 
             q.AddTrigger(opts => opts
-                .ForJob(jobKey)
+                .ForJob(AutoWorkSessionsJobKey)
                 .WithIdentity("AutoWorkSessionsJobTrigger")
                 .WithDailyTimeIntervalSchedule(s => s
                     .WithIntervalInHours(24)
                     .OnEveryDay()
                     //starts at 01:00
                     .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(1, 0))
+                )
+            );
+
+            q.AddTrigger(opts => opts
+                .ForJob(VacationJobKey)
+                .WithIdentity("VacationJobTrigger")
+                .WithDailyTimeIntervalSchedule(s => s
+                    .WithIntervalInHours(24)
+                    .OnEveryDay()
+                    //starts at 01:00
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(18, 1))
                 )
             );
         });

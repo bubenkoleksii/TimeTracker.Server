@@ -67,6 +67,19 @@ public class VacationRepository : IVacationRepository
         return vacationsDataResponse;
     }
 
+    public async Task<IEnumerable<VacationDataResponse>> GetApprovedNotFinishedVacationsAsync()
+    {
+        const string query = $"SELECT * FROM [Vacation] WHERE " +
+            $"[{nameof(VacationDataResponse.IsApproved)}] = 1" +
+            $" AND [{nameof(VacationDataResponse.End)}] >= GETDATE()" +
+            $";";
+
+        using var connection = _context.GetConnection();
+        var vacationsDataResponse = await connection.QueryAsync<VacationDataResponse>(query);
+
+        return vacationsDataResponse;
+    }
+
     public async Task<VacationDataResponse> CreateVacationAsync(VacationDataRequest vacationDataRequest)
     {
         var id = Guid.NewGuid();

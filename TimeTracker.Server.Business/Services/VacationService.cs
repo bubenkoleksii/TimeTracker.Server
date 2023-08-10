@@ -185,25 +185,6 @@ public class VacationService : IVacationService
 
         var vacationApproveDataRequest = _mapper.Map<VacationApproveDataRequest>(vacationApproveBusinessRequest);
         await _vacationRepository.ApproverUpdateVacationAsync(vacationApproveDataRequest);
-
-        var vacationDurationInDays = (vacationDataResponse.End - vacationDataResponse.Start).TotalDays + 1;
-
-        if (vacationDataResponse.IsApproved is null || !(bool)vacationDataResponse.IsApproved)
-        {
-            if (vacationApproveBusinessRequest.IsApproved)
-            {
-                await _vacationInfoRepository.AddDaysSpentAsync(vacationDataResponse.UserId, (int)vacationDurationInDays);
-                await _userRepository.SetUserStatusAsync(vacationDataResponse.UserId, "vacation");
-            }
-        }
-        else
-        {
-            if (!vacationApproveBusinessRequest.IsApproved)
-            {
-                await _vacationInfoRepository.AddDaysSpentAsync(vacationDataResponse.UserId, -(int)vacationDurationInDays);
-                await _userRepository.SetUserStatusAsync(vacationDataResponse.UserId, "working");
-            }
-        }
     }
 
     public async Task DeleteVacationAsync(Guid id)

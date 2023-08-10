@@ -8,6 +8,7 @@ using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.User;
+using TimeTracker.Server.Shared;
 using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
@@ -48,7 +49,7 @@ public class UserService : IUserService
             };
         }
 
-        if (existingUser.Status == "deactivated")
+        if (existingUser.Status == UserStatusEnum.deactivated.ToString())
         {
             throw new ExecutionError($"User with id {id} cannot be updated because they are deactivated")
             {
@@ -92,13 +93,13 @@ public class UserService : IUserService
             };
         }
 
-        if (candidate.Status == "deactivated")
+        if (candidate.Status == UserStatusEnum.deactivated.ToString())
             return;
 
         await _userRepository.DeactivateUserAsync(id);
 
         var user = await _userRepository.GetUserByIdAsync(id);
-        if (user.Status != "deactivated")
+        if (user.Status != UserStatusEnum.deactivated.ToString())
         {
             throw new ExecutionError($"User with id {id} not deactivated")
             {

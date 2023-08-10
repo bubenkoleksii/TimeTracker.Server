@@ -8,5 +8,5 @@ public interface IVacationInfoRepository
 
     public Task<VacationInfoDataResponse> CreateVacationInfoAsync(Guid userId);
 
-    public Task AddDaysSpentAsync(Guid userId, int daysSpent);
+    public Task AddDaysSpentAsync(List<VacationInfoAddDaysSpendDataRequest> daysSpentData);
 }
