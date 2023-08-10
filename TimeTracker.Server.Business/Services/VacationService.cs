@@ -34,7 +34,7 @@ public class VacationService : IVacationService
     public async Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc)
     {
         var curUser = await _userService.GetCurrentUserFromClaimsAsync();
-        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacation.ToString()))
+        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacations.ToString()))
         {
             if (curUser.Id != userId)
             {
@@ -137,7 +137,7 @@ public class VacationService : IVacationService
     public async Task<VacationInfoBusinessResponse> GetVacationInfoByUserIdAsync(Guid userId)
     {
         var curUser = await _userService.GetCurrentUserFromClaimsAsync();
-        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacation.ToString()))
+        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacations.ToString()))
         {
             if (curUser.Id != userId)
             {
@@ -212,7 +212,7 @@ public class VacationService : IVacationService
         {
             if (vacationDataResponse.IsApproved is not null)
             {
-                throw new ExecutionError("Can not delete approved vacation")
+                throw new ExecutionError("Can not delete vacation which was updated by Approver")
                 {
                     Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
                 };

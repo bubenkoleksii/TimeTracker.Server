@@ -12,6 +12,6 @@ public enum PermissionsEnum
     UpdateWorkSessions,
     DeleteWorkSessions,
     GetWorkSession,
-    GetVacation,
-    ApproveVacation
+    GetVacations,
+    ApproveVacations
 }

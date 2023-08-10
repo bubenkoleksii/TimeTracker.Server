@@ -29,7 +29,7 @@ public class VacationMutation : ObjectGraphType
                     return true;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
-        Field<BooleanGraphType>("updateByUpprover")
+        Field<BooleanGraphType>("updateByApprover")
                 .Argument<NonNullGraphType<VacationApproveInputType>>("approverUpdate")
                 .Resolve()
                 .WithScope()
@@ -43,6 +43,20 @@ public class VacationMutation : ObjectGraphType
 
                     return true;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString())
-                  .AuthorizeWithPolicy(PermissionsEnum.ApproveVacation.ToString());
+                  .AuthorizeWithPolicy(PermissionsEnum.ApproveVacations.ToString());
+
+        Field<BooleanGraphType>("delete")
+                .Argument<NonNullGraphType<IdGraphType>>("id")
+                .Resolve()
+                .WithScope()
+                .WithService<IVacationService>()
+                .ResolveAsync(async (context, service) =>
+                {
+                    var id = context.GetArgument<Guid>("id");
+
+                    await service.DeleteVacationAsync(id);
+
+                    return true;
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
     }
 }
