@@ -156,7 +156,8 @@ public class VacationService : IVacationService
     public async Task<VacationBusinessResponse> CreateVacationAsync(VacationBusinessRequest vacationBusinessRequest)
     {
         //also need to check if user is not in vacation now / not on sick leave / not fired
-        if (DateTime.Compare(vacationBusinessRequest.Start, vacationBusinessRequest.End) > 0)
+        if (DateTime.Compare(vacationBusinessRequest.Start, DateTime.UtcNow) <= 0 ||
+            DateTime.Compare(vacationBusinessRequest.Start, vacationBusinessRequest.End) > 0)
         {
             throw new ExecutionError("Invalid dates input")
             {
@@ -174,7 +175,7 @@ public class VacationService : IVacationService
     {
         var vacationDataResponse = await _vacationRepository.GetVacationByIdAsync(vacationApproveBusinessRequest.Id);
 
-        if (DateTime.Compare(vacationDataResponse.Start, DateTime.UtcNow) >= 0)
+        if (DateTime.Compare(vacationDataResponse.Start, DateTime.UtcNow) <= 0)
         {
             throw new ExecutionError("Vacation has already started")
             {

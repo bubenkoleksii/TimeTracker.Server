@@ -44,7 +44,7 @@ public class Migration_20230627112400 : Migration
                 HasPassword = true,
                 FullName = "Admin Admin",
                 EmploymentRate = 100,
-                EmploymentDate = DateTime.Now.ToUniversalTime(),
+                EmploymentDate = new DateTime(2023, 8, 7),
                 Status = $"working",
                 Permissions = "ALL"
             }

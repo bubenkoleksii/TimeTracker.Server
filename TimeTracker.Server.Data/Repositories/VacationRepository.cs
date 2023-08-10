@@ -58,7 +58,7 @@ public class VacationRepository : IVacationRepository
     {
         const string query = $"SELECT * FROM [Vacation] WHERE " +
             $"[{nameof(VacationDataResponse.IsApproved)}] IS NOT NULL" +
-            $"[{nameof(VacationDataResponse.Start)}] < GETDATE()" +
+            $" AND [{nameof(VacationDataResponse.Start)}] > GETDATE()" +
             $";";
 
         using var connection = _context.GetConnection();
