@@ -37,5 +37,27 @@ public class UserQuery : ObjectGraphType
                 var usersResponse = mapper.Map<PaginationResponse<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
             }).AuthorizeWithPolicy("GetUsers");
+
+        Field<PaginationProfileType>("getAllProfiles")
+            .Argument<IntGraphType>("offset")
+            .Argument<IntGraphType>("limit")
+            .Argument<StringGraphType>("search")
+            .Argument<StringGraphType>("filteringStatus")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var offset = context.GetArgument<int?>("offset");
+                var limit = context.GetArgument<int?>("limit");
+                var search = context.GetArgument<string>("search");
+                var filteringStatus = context.GetArgument<string?>("filteringStatus");
+
+                var usersBusinessResponse = await service.GetAllUsersAsync(offset, limit, search,
+                    filteringEmploymentRate: null, filteringStatus, sortingColumn: null);
+
+                var usersResponse = mapper.Map<PaginationResponse<ProfileResponse>>(usersBusinessResponse);
+                return usersResponse;
+            });
     }
 }
