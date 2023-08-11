@@ -286,7 +286,7 @@ public class UserRepository : IUserRepository
     public async Task SetUserStatusAsync(List<UserSetStatusDataRequest> userSetStatusDataRequests)
     {
         var query = $"UPDATE [User] SET [{nameof(UserSetStatusDataRequest.Status)}] = @{nameof(UserSetStatusDataRequest.Status)} " +
-            $"WHERE [{nameof(UserSetStatusDataRequest.UserId)}] = @{nameof(UserSetStatusDataRequest.UserId)}";
+            $"WHERE [{nameof(UserSetStatusDataRequest.Id)}] = @{nameof(UserSetStatusDataRequest.Id)}";
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, userSetStatusDataRequests);

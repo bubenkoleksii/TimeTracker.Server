@@ -155,7 +155,15 @@ public class VacationService : IVacationService
 
     public async Task<VacationBusinessResponse> CreateVacationAsync(VacationBusinessRequest vacationBusinessRequest)
     {
-        //also need to check if user is not in vacation now / not on sick leave / not fired
+        var user = await _userRepository.GetUserByIdAsync(vacationBusinessRequest.UserId);
+        if (user.Status != UserStatusEnum.working.ToString())
+        {
+            throw new ExecutionError("Invalid user status")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_USER_STATUS.ToString()
+            };
+        }
+
         if (DateTime.Compare(vacationBusinessRequest.Start, DateTime.UtcNow) <= 0 ||
             DateTime.Compare(vacationBusinessRequest.Start, vacationBusinessRequest.End) > 0)
         {

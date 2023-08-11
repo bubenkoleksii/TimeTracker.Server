@@ -71,7 +71,7 @@ public class VacationRepository : IVacationRepository
     {
         const string query = $"SELECT * FROM [Vacation] WHERE " +
             $"[{nameof(VacationDataResponse.IsApproved)}] = 1" +
-            $" AND [{nameof(VacationDataResponse.End)}] >= GETDATE()" +
+            $" AND DATEDIFF(DAY, [{nameof(VacationDataResponse.End)}], GETDATE()) <= 0" +
             $";";
 
         using var connection = _context.GetConnection();

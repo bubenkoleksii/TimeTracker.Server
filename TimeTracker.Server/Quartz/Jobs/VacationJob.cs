@@ -41,14 +41,14 @@ namespace TimeTracker.Server.Quartz.Jobs
                 }
             }
 
-            if (vacationsToStartList.Count > 0)
-            {
-                await StartVacations(vacationsToStartList);
-            }
-
             if (vacationsToEndList.Count > 0)
             {
                 await EndVacations(vacationsToEndList);
+            }
+
+            if (vacationsToStartList.Count > 0)
+            {
+                await StartVacations(vacationsToStartList);
             }
         }
 
@@ -66,7 +66,7 @@ namespace TimeTracker.Server.Quartz.Jobs
                 var user = await _userRepository.GetUserByIdAsync(vacation.UserId);
                 usersStatusesToSet.Add(new UserSetStatusDataRequest()
                 {
-                    UserId = user.Id,
+                    Id = user.Id,
                     Status = UserStatusEnum.vacation.ToString(),
                 });
 
@@ -78,8 +78,9 @@ namespace TimeTracker.Server.Quartz.Jobs
                 });
 
                 DateTime workSessionStart = DateTime.Today + new TimeSpan(workDayDefaultStartHour, 0, 0);
-                //date loss because of int type
-                DateTime workSessionEnd = DateTime.Today + new TimeSpan(workDayDefaultStartHour + ((user.EmploymentRate / 100) * workDayDefaultHoursToWork), 0, 0);
+
+                double endTimeToWorkInMinutes = (workDayDefaultStartHour * 60) + ((user.EmploymentRate / 100.0) * (workDayDefaultHoursToWork * 60));
+                DateTime workSessionEnd = DateTime.Today + new TimeSpan((long)endTimeToWorkInMinutes * TimeSpan.TicksPerMinute);
 
                 for (int i = 0; i < vacationDurationInDays; i++)
                 {
@@ -108,7 +109,19 @@ namespace TimeTracker.Server.Quartz.Jobs
 
         public async Task EndVacations(List<VacationDataResponse> vacations)
         {
+            var usersStatusesToSet = new List<UserSetStatusDataRequest>();
+            foreach (var vacation in vacations)
+            {
+                var user = await _userRepository.GetUserByIdAsync(vacation.UserId);
+                usersStatusesToSet.Add(new UserSetStatusDataRequest()
+                {
+                    Id = user.Id,
+                    Status = UserStatusEnum.working.ToString(),
+                });
+            }
+
             //set user status to 'working'
+            await _userRepository.SetUserStatusAsync(usersStatusesToSet);
         }
     }
 }

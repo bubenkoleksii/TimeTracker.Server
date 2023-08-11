@@ -115,8 +115,8 @@ public class Program
                 .WithDailyTimeIntervalSchedule(s => s
                     .WithIntervalInHours(24)
                     .OnEveryDay()
-                    //starts at 01:00
-                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(1, 0))
+                    //starts at 00:10
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(0, 10))
                 )
             );
 
@@ -126,8 +126,8 @@ public class Program
                 .WithDailyTimeIntervalSchedule(s => s
                     .WithIntervalInHours(24)
                     .OnEveryDay()
-                    //starts at 01:00
-                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(18, 1))
+                    //starts at 00:05
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(0, 5))
                 )
             );
         });

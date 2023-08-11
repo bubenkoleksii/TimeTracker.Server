@@ -2,7 +2,7 @@
 
 public class UserSetStatusDataRequest
 {
-    public Guid UserId { get; set; }
+    public Guid Id { get; set; }
 
     public string Status { get; set; } = string.Empty;
 }
