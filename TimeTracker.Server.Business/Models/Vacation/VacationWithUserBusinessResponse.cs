@@ -8,5 +8,5 @@ public class VacationWithUserBusinessResponse
 
     public UserBusinessResponse User { get; set; } = new UserBusinessResponse();
 
-    public UserBusinessResponse? Aprover { get; set; } = null;
+    public UserBusinessResponse? Approver { get; set; } = null;
 }
