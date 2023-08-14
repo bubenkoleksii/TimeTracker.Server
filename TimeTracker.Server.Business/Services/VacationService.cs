@@ -80,7 +80,7 @@ public class VacationService : IVacationService
             {
                 Vacation = vacation,
                 User = userBusinessResponse,
-                Aprover = approver
+                Approver = approver
             });
         }
 
@@ -127,7 +127,7 @@ public class VacationService : IVacationService
             {
                 Vacation = vacation,
                 User = user,
-                Aprover = approver
+                Approver = approver
             });
         }
 

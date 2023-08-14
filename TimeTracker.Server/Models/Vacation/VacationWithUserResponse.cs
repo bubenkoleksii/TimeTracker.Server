@@ -8,5 +8,5 @@ public class VacationWithUserResponse
 
     public UserResponse User { get; set; } = new UserResponse();
 
-    public UserResponse? Aprover { get; set; } = null;
+    public UserResponse? Approver { get; set; } = null;
 }

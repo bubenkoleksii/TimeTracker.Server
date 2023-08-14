@@ -12,7 +12,7 @@ public class VacationWithUserType : ObjectGraphType<VacationWithUserResponse>
                 .Description("Vacation field for vacation object");
         Field(v => v.User, type: typeof(UserType), nullable: false)
                 .Description("Vacation user field for vacation object");
-        Field(v => v.Aprover, type: typeof(UserType), nullable: true)
+        Field(v => v.Approver, type: typeof(UserType), nullable: true)
                 .Description("Approver user field for vacation object");
     }
 }
