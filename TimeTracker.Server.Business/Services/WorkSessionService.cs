@@ -8,6 +8,7 @@ using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
+using TimeTracker.Server.Shared;
 using TimeTracker.Server.Shared.Exceptions;
 using TimeTracker.Server.Shared.Helpers;
 
@@ -44,13 +45,6 @@ public class WorkSessionService : IWorkSessionService
             throw new ExecutionError("User not found")
             {
                 Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
-            };
-        }
-        if ((PermissionHelper.HasPermit(user.Permissions, "GetWorkSessions") == false && userId != user.Id))
-        {
-            throw new ExecutionError("User does not have access to read other user's work sessions")
-            {
-                Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
             };
         }
 
@@ -93,7 +87,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if ((PermissionHelper.HasPermit(user.Permissions, "CreateWorkSessions") == false && workSessionBusinessRequest.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.CreateWorkSessions.ToString()) == false && workSessionBusinessRequest.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {
@@ -202,7 +196,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if ((PermissionHelper.HasPermit(user.Permissions, "UpdateWorkSessions") == false && workSession.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.UpdateWorkSessions.ToString()) == false && workSession.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {
@@ -247,7 +241,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if ((PermissionHelper.HasPermit(user.Permissions, "DeleteWorkSessions") == false && workSession.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.DeleteWorkSessions.ToString()) == false && workSession.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {

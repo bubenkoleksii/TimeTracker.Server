@@ -6,6 +6,7 @@ using TimeTracker.Server.GraphQl.WorkSession.Types;
 using GraphQL;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Models.WorkSession;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.GraphQl.WorkSession
 {
@@ -25,7 +26,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessResponse = await service.CreateWorkSessionAsync(workSessionBusinessRequest);
                     var workSessionResponse = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
                     return workSessionResponse;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
             Field<BooleanGraphType>("setEnd")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -39,7 +40,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var endDateTime = context.GetArgument<DateTime>("endDateTime");
                     await service.SetWorkSessionEndAsync(id, endDateTime);
                     return true;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
             Field<BooleanGraphType>("update")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -54,7 +55,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var workSessionBusinessRequest = mapper.Map<WorkSessionBusinessUpdateRequest>(workSession);
                     await service.UpdateWorkSessionAsync(id, workSessionBusinessRequest);
                     return true;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
             Field<BooleanGraphType>("delete")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -66,7 +67,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var id = context.GetArgument<Guid>("id");
                     await service.DeleteWorkSessionAsync(id);
                     return true;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
         }
     }
 }

@@ -5,6 +5,7 @@ using TimeTracker.Server.Business.Abstractions;
 using AutoMapper;
 using TimeTracker.Server.GraphQl.Holiday.Types;
 using TimeTracker.Server.Models.Holiday;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.GraphQl.Holiday;
 
@@ -25,7 +26,7 @@ public class HolidayQuery : ObjectGraphType
                     var holidayResponse = mapper.Map<HolidayResponse>(holidayBusinessResponse);
 
                     return holidayResponse;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
         Field<ListGraphType<HolidayType>>("getHolidays")
                 .Resolve()
@@ -37,6 +38,6 @@ public class HolidayQuery : ObjectGraphType
                     var holidaysResponse = mapper.Map<IEnumerable<HolidayResponse>>(holidaysBusinessResponse);
 
                     return holidaysResponse;
-                }).AuthorizeWithPolicy("LoggedIn");
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
     }
 }

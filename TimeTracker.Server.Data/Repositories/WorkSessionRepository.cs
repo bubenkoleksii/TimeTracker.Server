@@ -162,7 +162,48 @@ public class WorkSessionRepository : IWorkSessionRepository
 
         return workSessionResponse;
     }
-    
+
+    public async Task CreateWorkSessionsAsync(List<WorkSessionDataRequest> workSessionsList)
+    {
+        const string query =
+            $"INSERT INTO [WorkSession] (Id, " +
+            $"{nameof(WorkSessionDataResponse.UserId)}, " +
+            $"{nameof(WorkSessionDataResponse.LastModifierId)}, " +
+            $"{nameof(WorkSessionDataResponse.Start)}, " +
+            $"[{nameof(WorkSessionDataResponse.End)}], " +
+            $"{nameof(WorkSessionDataResponse.Type)}, " +
+            $"{nameof(WorkSessionDataResponse.Title)}, " +
+            $"{nameof(WorkSessionDataResponse.Description)}) " +
+            $"VALUES (@{nameof(WorkSessionDataResponse.Id)}, " +
+            $"@{nameof(WorkSessionDataResponse.UserId)}, " +
+            $"@{nameof(WorkSessionDataResponse.LastModifierId)}, " +
+            $"@{nameof(WorkSessionDataResponse.Start)}, " +
+            $"@{nameof(WorkSessionDataResponse.End)}, " +
+            $"@{nameof(WorkSessionDataResponse.Type)}, " +
+            $"@{nameof(WorkSessionDataResponse.Title)}, " +
+            $"@{nameof(WorkSessionDataResponse.Description)})";
+
+        using var connection = _context.GetConnection();
+
+        var listToInsert = new List<WorkSessionDataResponse>();
+        foreach (var workSession in workSessionsList)
+        {
+            listToInsert.Add(new WorkSessionDataResponse()
+            {
+                Id = Guid.NewGuid(),
+                UserId = workSession.UserId,
+                LastModifierId = workSession.LastModifierId,
+                Start = workSession.Start,
+                End = workSession.End,
+                Type = workSession.Type,
+                Title = workSession.Title,
+                Description = workSession.Description
+            });
+        }
+
+        await connection.ExecuteAsync(query, listToInsert);
+    }
+
     public async Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime)
     {
         const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)}," +
