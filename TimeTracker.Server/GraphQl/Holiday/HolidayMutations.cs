@@ -6,6 +6,7 @@ using TimeTracker.Server.GraphQl.Holiday.Types;
 using TimeTracker.Server.Models.Holiday;
 using AutoMapper;
 using TimeTracker.Server.Business.Models.Holiday;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.GraphQl.Holiday;
 
@@ -27,7 +28,7 @@ public class HolidayMutations : ObjectGraphType
                     var holidayResponse = mapper.Map<HolidayResponse>(holidayBusinessResponse);
 
                     return holidayResponse;
-                }).AuthorizeWithPolicy("ManageHolidays");
+                }).AuthorizeWithPolicy(PermissionsEnum.ManageHolidays.ToString());
 
         Field<BooleanGraphType>("update")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -44,7 +45,7 @@ public class HolidayMutations : ObjectGraphType
                     await service.UpdateHolidayAsync(id, holidayBusinessRequest);
 
                     return true;
-                }).AuthorizeWithPolicy("ManageHolidays");
+                }).AuthorizeWithPolicy(PermissionsEnum.ManageHolidays.ToString());
 
         Field<BooleanGraphType>("delete")
                 .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -56,6 +57,6 @@ public class HolidayMutations : ObjectGraphType
                     var id = context.GetArgument<Guid>("id");
                     await service.DeleteHolidayAsync(id);
                     return true;
-                }).AuthorizeWithPolicy("ManageHolidays");
+                }).AuthorizeWithPolicy(PermissionsEnum.ManageHolidays.ToString());
     }
 }

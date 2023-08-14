@@ -6,6 +6,7 @@ using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.GraphQl.User.Types;
 using TimeTracker.Server.Models.User;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.GraphQl.User;
 
@@ -28,7 +29,7 @@ public sealed class UserMutation : ObjectGraphType
 
                 var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
                 return userResponse;
-            }).AuthorizeWithPolicy("CreateUser");
+            }).AuthorizeWithPolicy(PermissionsEnum.CreateUser.ToString());
 
         Field<UserType>("update")
             .Argument<NonNullGraphType<CreateUpdateUserInputType>>("user")
@@ -47,7 +48,7 @@ public sealed class UserMutation : ObjectGraphType
 
                 var userResponse = mapper.Map<UserResponse>(userBusinessResponse);
                 return userResponse;
-            }).AuthorizeWithPolicy("UpdateUser");
+            }).AuthorizeWithPolicy(PermissionsEnum.UpdateUser.ToString());
 
         Field<bool>("deactivate")
             .Argument<NonNullGraphType<IdGraphType>>("id")
@@ -60,7 +61,7 @@ public sealed class UserMutation : ObjectGraphType
 
                 await service.DeactivateUserAsync(id);
                 return true;
-            }).AuthorizeWithPolicy("DeactivateUser");
+            }).AuthorizeWithPolicy(PermissionsEnum.DeactivateUser.ToString());
 
         Field<bool>("addSetPasswordLink")
             .Argument<NonNullGraphType<StringGraphType>>("email")
@@ -74,8 +75,8 @@ public sealed class UserMutation : ObjectGraphType
                 await service.AddSetPasswordLinkAsync(email);
 
                 return true;
-            }).AuthorizeWithPolicy("CreateUser")
-              .AuthorizeWithPolicy("UpdateUser");
+            }).AuthorizeWithPolicy(PermissionsEnum.CreateUser.ToString())
+              .AuthorizeWithPolicy(PermissionsEnum.UpdateUser.ToString());
 
         Field<bool>("setPassword")
             .Argument<NonNullGraphType<SetPasswordUserInputType>>("user")
@@ -101,6 +102,6 @@ public sealed class UserMutation : ObjectGraphType
                 await service.ResetPasswordAsync();
 
                 return true;
-            }).AuthorizeWithPolicy("LoggedIn");
+            }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
     }
 }

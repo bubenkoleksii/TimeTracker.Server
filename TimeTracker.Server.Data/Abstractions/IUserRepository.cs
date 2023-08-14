@@ -12,6 +12,8 @@ public interface IUserRepository
     public Task<IEnumerable<UserDataResponse>> GetFullTimeUsersAsync();
 
     public Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn);
+    
+    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync();
 
     public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 
@@ -26,6 +28,10 @@ public interface IUserRepository
     public Task AddSetPasswordLinkAsync(Guid setPasswordLink, DateTime expired, Guid id);
 
     public Task SetPasswordAsync(SetPasswordUserDataRequest user);
+
+    public Task SetUserStatusAsync(Guid id, string status);
+
+    public Task SetUserStatusAsync(List<UserSetStatusDataRequest> userSetStatusDataRequests);
 
     public Task RemovePasswordAsync(Guid id);
 }

@@ -16,6 +16,7 @@ using TimeTracker.Server.Middleware;
 using TimeTracker.Server.Shared.Helpers;
 using Quartz;
 using TimeTracker.Server.Quartz.Jobs;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server;
 
@@ -32,11 +33,14 @@ public class Program
         builder.Services.AddScoped<IMailService, MailService>();
         builder.Services.AddScoped<IWorkSessionService, WorkSessionService>();
         builder.Services.AddScoped<IHolidayService, HolidayService>();
+        builder.Services.AddScoped<IVacationService, VacationService>();
 
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IWorkSessionRepository, WorkSessionRepository>();
         builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
+        builder.Services.AddScoped<IVacationInfoRepository, VacationInfoRepository>();
+        builder.Services.AddScoped<IVacationRepository, VacationRepository>();
 
         builder.Services.AddAuthentication(conf =>
         {
@@ -62,12 +66,14 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("LoggedIn", (a) => a.RequireAuthenticatedUser());
-            options.AddPolicy("CreateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "CreateUser")));
-            options.AddPolicy("GetUsers", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "GetUsers")));
-            options.AddPolicy("DeactivateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "DeactivateUser")));
-            options.AddPolicy("UpdateUser", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "UpdateUser")));
-            options.AddPolicy("ManageHolidays", (a) => a.RequireAssertion(context => HasPermissionClaim(context, "ManageHolidays")));
+            options.AddPolicy(PermissionsEnum.LoggedIn.ToString(), (a) => a.RequireAuthenticatedUser());
+            options.AddPolicy(PermissionsEnum.CreateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.CreateUser.ToString())));
+            options.AddPolicy(PermissionsEnum.GetUsers.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetUsers.ToString())));
+            options.AddPolicy(PermissionsEnum.DeactivateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.DeactivateUser.ToString())));
+            options.AddPolicy(PermissionsEnum.UpdateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.UpdateUser.ToString())));
+            options.AddPolicy(PermissionsEnum.ManageHolidays.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ManageHolidays.ToString())));
+            options.AddPolicy(PermissionsEnum.ApproveVacations.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ApproveVacations.ToString())));
+            options.AddPolicy(PermissionsEnum.GetVacations.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetVacations.ToString())));
         });
 
         builder.Services.AddGraphQL(builder => builder
@@ -97,17 +103,31 @@ public class Program
         {
             q.UseMicrosoftDependencyInjectionJobFactory();
 
-            var jobKey = new JobKey("AutoWorkSessionsJob");
-            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(jobKey));
+            var AutoWorkSessionsJobKey = new JobKey("AutoWorkSessionsJob");
+            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(AutoWorkSessionsJobKey));
+
+            var VacationJobKey = new JobKey("VacationJobKey");
+            q.AddJob<VacationJob>(opts => opts.WithIdentity(VacationJobKey));
 
             q.AddTrigger(opts => opts
-                .ForJob(jobKey)
+                .ForJob(AutoWorkSessionsJobKey)
                 .WithIdentity("AutoWorkSessionsJobTrigger")
                 .WithDailyTimeIntervalSchedule(s => s
                     .WithIntervalInHours(24)
                     .OnEveryDay()
-                    //starts at 01:00
-                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(1, 0))
+                    //starts at 00:10
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(0, 10))
+                )
+            );
+
+            q.AddTrigger(opts => opts
+                .ForJob(VacationJobKey)
+                .WithIdentity("VacationJobTrigger")
+                .WithDailyTimeIntervalSchedule(s => s
+                    .WithIntervalInHours(24)
+                    .OnEveryDay()
+                    //starts at 00:05
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(0, 5))
                 )
             );
         });

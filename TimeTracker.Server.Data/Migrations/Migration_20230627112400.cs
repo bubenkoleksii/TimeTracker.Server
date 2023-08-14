@@ -7,13 +7,15 @@ namespace TimeTracker.Server.Data.Migrations;
 [Migration(20230627112400)]
 public class Migration_20230627112400 : Migration
 {
+    private readonly string _rootUserId;
+
     private readonly string _rootUserEmail;
 
     private readonly string _rootUserHashPassword;
 
-
     public Migration_20230627112400(IConfiguration configuration)
     {
+        _rootUserId = configuration["RootUser:Id"];
         _rootUserEmail = configuration["RootUser:Email"];
         _rootUserHashPassword = configuration["RootUser:HashPassword"];
     }
@@ -34,16 +36,15 @@ public class Migration_20230627112400 : Migration
             .WithColumn(nameof(UserDataResponse.SetPasswordLink)).AsGuid().Nullable()
             .WithColumn(nameof(UserDataResponse.SetPasswordLinkExpired)).AsDateTime().Nullable();
 
-        var rootUserId = Guid.NewGuid();
         Insert.IntoTable("User").Row(new 
             {
-                Id = rootUserId,
+                Id = Guid.Parse(_rootUserId),
                 Email = _rootUserEmail,
                 HashPassword = _rootUserHashPassword,
                 HasPassword = true,
                 FullName = "Admin Admin",
                 EmploymentRate = 100,
-                EmploymentDate = DateTime.Now.ToUniversalTime(),
+                EmploymentDate = new DateTime(2023, 8, 7),
                 Status = $"working",
                 Permissions = "ALL"
             }

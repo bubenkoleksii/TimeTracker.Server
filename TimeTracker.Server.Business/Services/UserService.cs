@@ -8,6 +8,7 @@ using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.User;
+using TimeTracker.Server.Shared;
 using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
@@ -20,15 +21,19 @@ public class UserService : IUserService
 
     private readonly IUserRepository _userRepository;
 
+    private readonly IVacationInfoRepository _vacationInfoRepository;
+
     private readonly IConfiguration _configuration;
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public UserService(IMailService mailService, IUserRepository userRepository, IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+    public UserService(IMailService mailService, IUserRepository userRepository, IVacationInfoRepository vacationInfoRepository, IMapper mapper, 
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
     {
         _mailService = mailService;
         _userRepository = userRepository;
         _mapper = mapper;
+        _vacationInfoRepository = vacationInfoRepository;
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
     }
@@ -44,7 +49,7 @@ public class UserService : IUserService
             };
         }
 
-        if (existingUser.Status == "deactivated")
+        if (existingUser.Status == UserStatusEnum.deactivated.ToString())
         {
             throw new ExecutionError($"User with id {id} cannot be updated because they are deactivated")
             {
@@ -88,13 +93,13 @@ public class UserService : IUserService
             };
         }
 
-        if (candidate.Status == "deactivated")
+        if (candidate.Status == UserStatusEnum.deactivated.ToString())
             return;
 
         await _userRepository.DeactivateUserAsync(id);
 
         var user = await _userRepository.GetUserByIdAsync(id);
-        if (user.Status != "deactivated")
+        if (user.Status != UserStatusEnum.deactivated.ToString())
         {
             throw new ExecutionError($"User with id {id} not deactivated")
             {
@@ -217,6 +222,8 @@ public class UserService : IUserService
         userDataRequest.HashPassword = HashPassword(userRequest.Password);
 
         await _userRepository.SetPasswordAsync(userDataRequest);
+
+        await _vacationInfoRepository.CreateVacationInfoAsync(candidate.Id);
     }
 
     public async Task ResetPasswordAsync()
@@ -264,6 +271,15 @@ public class UserService : IUserService
         await _userRepository.RemovePasswordAsync(user.Id);
 
         await _userRepository.AddSetPasswordLinkAsync(setPasswordLink, expired.ToUniversalTime(), user.Id);
+    }
+
+    public async Task<UserBusinessResponse> GetCurrentUserFromClaimsAsync()
+    {
+        var userClaims = ((ClaimsIdentity)_httpContextAccessor.HttpContext.User.Identity).Claims;
+        var userIdClaim = userClaims.FirstOrDefault(c => c.Type == "Id");
+        var userDataResponse = await _userRepository.GetUserByIdAsync(Guid.Parse(userIdClaim.Value));
+        var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
+        return userBusinessResponse;
     }
 
     private string HashPassword(string password)

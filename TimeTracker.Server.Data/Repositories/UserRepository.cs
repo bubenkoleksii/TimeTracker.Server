@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using System.Collections.Generic;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.Pagination;
 using TimeTracker.Server.Data.Models.User;
@@ -92,7 +93,7 @@ public class UserRepository : IUserRepository
         }
         else
         {
-            query += " Id";
+            query += $" {nameof(UserDataResponse.FullName)}";
         }
 
         query += $" OFFSET @{nameof(offset)} ROWS FETCH NEXT @{nameof(limit)} ROWS ONLY";
@@ -121,6 +122,25 @@ public class UserRepository : IUserRepository
         };
 
         return response;
+    }
+
+    public async Task<IEnumerable<UserDataResponse>> GetAllUsersAsync()
+    {
+        var query = "SELECT * FROM [User]";
+
+        using var connection = _context.GetConnection();
+        var users = await connection.QueryAsync<UserDataResponse>(query);
+
+        if (users != null)
+        {
+            foreach (var user in users)
+            {
+                user.HasValidSetPasswordLink =
+                    user.SetPasswordLink != null && user.SetPasswordLinkExpired > DateTime.UtcNow;
+            }
+        }
+
+        return users;
     }
 
     public async Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest)
@@ -249,6 +269,27 @@ public class UserRepository : IUserRepository
            user.HashPassword,
            user.Email
         });
+    }
+
+    public async Task SetUserStatusAsync(Guid id, string status)
+    {
+        var query = $"UPDATE [User] SET {nameof(UserDataResponse.Status)} = @{nameof(status)} WHERE [{nameof(UserDataResponse.Id)}] = @{nameof(id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            status,
+            id
+        });
+    }
+
+    public async Task SetUserStatusAsync(List<UserSetStatusDataRequest> userSetStatusDataRequests)
+    {
+        var query = $"UPDATE [User] SET [{nameof(UserSetStatusDataRequest.Status)}] = @{nameof(UserSetStatusDataRequest.Status)} " +
+            $"WHERE [{nameof(UserSetStatusDataRequest.Id)}] = @{nameof(UserSetStatusDataRequest.Id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, userSetStatusDataRequests);
     }
 
     public async Task RemovePasswordAsync(Guid id)
