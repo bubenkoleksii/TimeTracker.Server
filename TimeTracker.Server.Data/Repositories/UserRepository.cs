@@ -93,7 +93,7 @@ public class UserRepository : IUserRepository
         }
         else
         {
-            query += " Id";
+            query += $" {nameof(UserDataResponse.FullName)}";
         }
 
         query += $" OFFSET @{nameof(offset)} ROWS FETCH NEXT @{nameof(limit)} ROWS ONLY";
