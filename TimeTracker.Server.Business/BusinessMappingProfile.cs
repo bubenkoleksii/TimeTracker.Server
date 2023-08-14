@@ -8,6 +8,8 @@ using TimeTracker.Server.Data.Models.Pagination;
 using TimeTracker.Server.Data.Models.User;
 using TimeTracker.Server.Business.Models.Holiday;
 using TimeTracker.Server.Data.Models.Holidays;
+using TimeTracker.Server.Business.Models.Vacation;
+using TimeTracker.Server.Data.Models.Vacation;
 
 namespace TimeTracker.Server.Business;
 
@@ -31,5 +33,11 @@ public class BusinessMappingProfile : Profile
 
         CreateMap<HolidayBusinessRequest, HolidayDataRequest>();
         CreateMap<HolidayDataResponse, HolidayBusinessResponse>();
+
+        CreateMap<VacationBusinessRequest, VacationDataRequest>();
+        CreateMap<VacationApproveBusinessRequest, VacationApproveDataRequest>();
+        CreateMap<VacationDataResponse, VacationBusinessResponse>();
+
+        CreateMap<VacationInfoDataResponse, VacationInfoBusinessResponse>();
     }
 }

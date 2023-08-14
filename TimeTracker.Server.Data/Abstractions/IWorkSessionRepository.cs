@@ -14,6 +14,8 @@ namespace TimeTracker.Server.Data.Abstractions
 
         public Task<WorkSessionDataResponse> CreateWorkSessionAsync(WorkSessionDataRequest workSession);
 
+        public Task CreateWorkSessionsAsync(List<WorkSessionDataRequest> workSessionsList);
+
         public Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime);
 
         public Task UpdateWorkSessionAsync(Guid id, WorkSessionDataUpdateRequest workSession);

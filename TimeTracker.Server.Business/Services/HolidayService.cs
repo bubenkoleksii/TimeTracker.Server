@@ -82,7 +82,7 @@ public class HolidayService : IHolidayService
             };
         }
 
-        if (holidayBusinessRequest is not null && DateTime.Compare(holidayBusinessRequest.Date, (DateTime)holidayBusinessRequest.EndDate) > 0)
+        if (holidayBusinessRequest.EndDate is not null && DateTime.Compare(holidayBusinessRequest.Date, (DateTime)holidayBusinessRequest.EndDate) > 0)
         {
             throw new ExecutionError("Invalid dates input")
             {

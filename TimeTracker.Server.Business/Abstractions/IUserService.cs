@@ -18,4 +18,6 @@ public interface IUserService
     public Task SetPasswordAsync(SetPasswordUserBusinessRequest userRequest);
 
     public Task ResetPasswordAsync();
+
+    public Task<UserBusinessResponse> GetCurrentUserFromClaimsAsync();
 }

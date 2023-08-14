@@ -6,6 +6,7 @@ using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.GraphQl.User.Types;
 using TimeTracker.Server.Models.Pagination;
 using TimeTracker.Server.Models.User;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.GraphQl.User;
 
@@ -36,7 +37,7 @@ public class UserQuery : ObjectGraphType
 
                 var usersResponse = mapper.Map<PaginationResponse<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
-            }).AuthorizeWithPolicy("GetUsers");
+            }).AuthorizeWithPolicy(PermissionsEnum.GetUsers.ToString());
 
         Field<PaginationProfileType>("getAllProfiles")
             .Argument<IntGraphType>("offset")
