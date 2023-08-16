@@ -67,10 +67,10 @@ public class VacationRepository : IVacationRepository
         return vacationsDataResponse;
     }
 
-    public async Task<IEnumerable<VacationDataResponse>> GetApprovedNotFinishedVacationsAsync()
+    public async Task<IEnumerable<VacationDataResponse>> GetNotDeclinedNotFinishedVacationsAsync()
     {
         const string query = $"SELECT * FROM [Vacation] WHERE " +
-            $"[{nameof(VacationDataResponse.IsApproved)}] = 1" +
+            $"([{nameof(VacationDataResponse.IsApproved)}] = 1 OR [{nameof(VacationDataResponse.IsApproved)}] IS NULL)" +
             $" AND DATEDIFF(DAY, [{nameof(VacationDataResponse.End)}], GETDATE()) <= 0" +
             $";";
 
@@ -142,6 +142,18 @@ public class VacationRepository : IVacationRepository
             vacationApproveDataRequest.ApproverComment,
             vacationApproveDataRequest.Id
         });
+    }
+
+    public async Task DeclineVacationsAsync(List<VacationDataResponse> vacationDataResponses)
+    {
+        const string AutoDeclinedApproverComment = "This vacation request was automatically rejected because none of the approvers updated it in time";
+
+        var query = $"UPDATE [Vacation] SET [{nameof(VacationDataResponse.IsApproved)}] = 0, " +
+            $"[{nameof(VacationDataResponse.ApproverComment)}] =  '{AutoDeclinedApproverComment}'" +
+            $"WHERE [{nameof(VacationDataResponse.Id)}] = @{nameof(VacationDataResponse.Id)}";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, vacationDataResponses);
     }
 
     public async Task DeleteVacationAsync(Guid id)

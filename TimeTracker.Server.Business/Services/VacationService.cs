@@ -182,10 +182,17 @@ public class VacationService : IVacationService
     public async Task ApproverUpdateVacationAsync(VacationApproveBusinessRequest vacationApproveBusinessRequest)
     {
         var vacationDataResponse = await _vacationRepository.GetVacationByIdAsync(vacationApproveBusinessRequest.Id);
+        if (vacationDataResponse is null)
+        {
+            throw new ExecutionError("Vacation not found")
+            {
+                Code = GraphQLCustomErrorCodesEnum.VACATION_NOT_FOUND.ToString()
+            };
+        }
 
         if (DateTime.Compare(vacationDataResponse.Start, DateTime.UtcNow) <= 0)
         {
-            throw new ExecutionError("Vacation has already started")
+            throw new ExecutionError("Vacation is expired")
             {
                 Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
