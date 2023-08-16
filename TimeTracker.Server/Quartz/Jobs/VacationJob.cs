@@ -25,15 +25,23 @@ namespace TimeTracker.Server.Quartz.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var approvedNotStartedVacations = await _vacationRepository.GetApprovedNotFinishedVacationsAsync();
+            var approvedNotStartedVacations = await _vacationRepository.GetNotDeclinedNotFinishedVacationsAsync();
 
             var vacationsToStartList = new List<VacationDataResponse>();
+            var vacationsToDecline = new List<VacationDataResponse>();
             var vacationsToEndList = new List<VacationDataResponse>();
             foreach (var vacation in approvedNotStartedVacations)
             {
                 if (vacation.Start.Date == DateTime.Today)
                 {
-                    vacationsToStartList.Add(vacation);
+                    if (vacation.IsApproved is null)
+                    {
+                        vacationsToDecline.Add(vacation);
+                    }
+                    else if ((bool)vacation.IsApproved)
+                    {
+                        vacationsToStartList.Add(vacation);
+                    }
                 }
                 else if (vacation.End.Date == DateTime.Today)
                 {
@@ -49,6 +57,11 @@ namespace TimeTracker.Server.Quartz.Jobs
             if (vacationsToStartList.Count > 0)
             {
                 await StartVacations(vacationsToStartList);
+            }
+
+            if (vacationsToDecline.Count > 0)
+            {
+                await DeclineVacations(vacationsToDecline);
             }
         }
 
@@ -105,6 +118,11 @@ namespace TimeTracker.Server.Quartz.Jobs
 
             //set user status to 'vacation'
             await _userRepository.SetUserStatusAsync(usersStatusesToSet);
+        }
+
+        public async Task DeclineVacations(List<VacationDataResponse> vacations)
+        {
+            await _vacationRepository.DeclineVacationsAsync(vacations);
         }
 
         public async Task EndVacations(List<VacationDataResponse> vacations)
