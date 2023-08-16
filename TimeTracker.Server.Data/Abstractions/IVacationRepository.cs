@@ -12,11 +12,13 @@ public interface IVacationRepository
 
     public Task<IEnumerable<VacationDataResponse>> GetNotStartedUpdatedVacationsAsync();
 
-    public Task<IEnumerable<VacationDataResponse>> GetApprovedNotFinishedVacationsAsync();
+    public Task<IEnumerable<VacationDataResponse>> GetNotDeclinedNotFinishedVacationsAsync();
 
     public Task<VacationDataResponse> CreateVacationAsync(VacationDataRequest vacationDataRequest);
 
     public Task ApproverUpdateVacationAsync(VacationApproveDataRequest vacationApproveDataRequest);
+
+    public Task DeclineVacationsAsync(List<VacationDataResponse> vacationDataResponses);
 
     public Task DeleteVacationAsync(Guid id);
 }
