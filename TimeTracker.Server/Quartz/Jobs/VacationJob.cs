@@ -4,6 +4,7 @@ using TimeTracker.Server.Data.Models.User;
 using TimeTracker.Server.Data.Models.Vacation;
 using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Shared;
+using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server.Quartz.Jobs
 {
@@ -67,9 +68,6 @@ namespace TimeTracker.Server.Quartz.Jobs
 
         public async Task StartVacations(List<VacationDataResponse> vacations)
         {
-            const int workDayDefaultStartHour = 5;
-            const int workDayDefaultHoursToWork = 8;
-
             var workSessionsToAutoAdd = new List<WorkSessionDataRequest>();
             var daysSpentToAdd = new List<VacationInfoAddDaysSpendDataRequest>();
             var usersStatusesToSet = new List<UserSetStatusDataRequest>();
@@ -90,10 +88,8 @@ namespace TimeTracker.Server.Quartz.Jobs
                     DaysSpent = (int)vacationDurationInDays
                 });
 
-                DateTime workSessionStart = DateTime.Today + new TimeSpan(workDayDefaultStartHour, 0, 0);
-
-                double endTimeToWorkInMinutes = (workDayDefaultStartHour * 60) + ((user.EmploymentRate / 100.0) * (workDayDefaultHoursToWork * 60));
-                DateTime workSessionEnd = DateTime.Today + new TimeSpan((long)endTimeToWorkInMinutes * TimeSpan.TicksPerMinute);
+                var workSessionStart = WorkSessionHelper.GetDefaultWorkSessionStart();
+                var workSessionEnd = WorkSessionHelper.GetDefaultWorkSessionEnd(user.EmploymentRate);
 
                 for (int i = 0; i < vacationDurationInDays; i++)
                 {
@@ -104,7 +100,7 @@ namespace TimeTracker.Server.Quartz.Jobs
                         End = workSessionEnd.AddDays(i),
                         Title = null,
                         Description = null,
-                        Type = "Vacation",
+                        Type = WorkSessionStatusEnum.Vacation.ToString(),
                         LastModifierId = user.Id
                     });
                 }

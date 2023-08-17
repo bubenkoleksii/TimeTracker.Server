@@ -1,5 +1,6 @@
 ﻿using TimeTracker.Server.Data.Models.Pagination;
 using TimeTracker.Server.Data.Models.WorkSession;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.Data.Abstractions
 {
@@ -7,6 +8,8 @@ namespace TimeTracker.Server.Data.Abstractions
     {
         public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, 
             int offset, int limit, DateTime? startDate, DateTime? endDate);
+
+        public Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null);
 
         public Task<WorkSessionDataResponse> GetWorkSessionByIdAsync(Guid id);
 
@@ -21,5 +24,7 @@ namespace TimeTracker.Server.Data.Abstractions
         public Task UpdateWorkSessionAsync(Guid id, WorkSessionDataUpdateRequest workSession);
 
         public Task DeleteWorkSessionAsync(Guid id);
+
+        public Task DeleteWorkSessionsAsync(List<WorkSessionDataResponse> workSessionDataResponses);
     }
 }

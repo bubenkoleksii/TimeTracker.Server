@@ -3,6 +3,7 @@ using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.Pagination;
 using TimeTracker.Server.Data.Models.User;
 using TimeTracker.Server.Data.Models.WorkSession;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.Data.Repositories;
 
@@ -50,7 +51,7 @@ public class WorkSessionRepository : IWorkSessionRepository
             countQuery += endDateQuery;
         }
 
-        var withoutPlannedQuery = $" AND {nameof(WorkSessionDataResponse.Type)} != 'planned'";
+        var withoutPlannedQuery = $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionStatusEnum.Planned}'";
         query += withoutPlannedQuery;
         countQuery += withoutPlannedQuery;
 
@@ -77,6 +78,27 @@ public class WorkSessionRepository : IWorkSessionRepository
         };
 
         return workSessionPaginationDataResponse;
+    }
+
+    public async Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null)
+    {
+        var query = $"SELECT * FROM [WorkSession] WHERE" +
+            $" [{nameof(WorkSessionDataResponse.UserId)}] = '{userId}'" +
+            $" AND ([{nameof(WorkSessionDataResponse.Start)}] >= @{nameof(start)} AND [{nameof(WorkSessionDataResponse.Start)}] <= @{nameof(end)})";
+
+        if (type is not null)
+        {
+            query += $" AND [{nameof(WorkSessionDataResponse.Type)}] = '{type}'";
+        }
+
+        using var connection = _context.GetConnection();
+        var workSessionsDataResponse = await connection.QueryAsync<WorkSessionDataResponse>(query, new
+        {
+            start,
+            end
+        });
+
+        return workSessionsDataResponse.ToList();
     }
 
     public async Task<WorkSessionDataResponse> GetWorkSessionByIdAsync(Guid id)
@@ -206,8 +228,8 @@ public class WorkSessionRepository : IWorkSessionRepository
 
     public async Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime)
     {
-        const string query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)}," +
-                             $" {nameof(WorkSessionDataResponse.Type)} = 'completed'" +
+        var query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)}," +
+                             $" {nameof(WorkSessionDataResponse.Type)} = '{WorkSessionStatusEnum.Completed}'" +
                              $" WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
 
         using var connection = _context.GetConnection();
@@ -241,5 +263,13 @@ public class WorkSessionRepository : IWorkSessionRepository
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, new { id });
+    }
+
+    public async Task DeleteWorkSessionsAsync(List<WorkSessionDataResponse> workSessionDataResponses)
+    {
+        const string query = $"DELETE FROM [WorkSession] WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(WorkSessionDataResponse.Id)};";
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, workSessionDataResponses);
     }
 }

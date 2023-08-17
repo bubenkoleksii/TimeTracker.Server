@@ -97,12 +97,12 @@ public class WorkSessionService : IWorkSessionService
 
         switch (workSessionBusinessRequest.Type)
         {
-            case "planned" or "completed" when workSessionBusinessRequest.End == null:
+            case nameof(WorkSessionStatusEnum.Planned) or nameof(WorkSessionStatusEnum.Completed) when workSessionBusinessRequest.End == null:
                 throw new ExecutionError("End date of work session cannot be null")
                 {
                     Code = GraphQLCustomErrorCodesEnum.DATE_NULL.ToString()
                 };
-            case "active":
+            case nameof(WorkSessionStatusEnum.Active):
             {
                 var activeSession = await _workSessionRepository.GetActiveWorkSessionByUserIdAsync(workSessionBusinessRequest.UserId);
 
@@ -179,7 +179,9 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if (workSessionCheck.Type is "planned" or "completed" && workSession.End == null)
+        if ((workSessionCheck.Type == WorkSessionStatusEnum.Planned.ToString() 
+            || workSessionCheck.Type == WorkSessionStatusEnum.Completed.ToString())
+            && workSession.End == null)
         {
             throw new ExecutionError("End date of work session cannot be null")
             {
