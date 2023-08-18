@@ -216,7 +216,7 @@ public class SickLeaveService : ISickLeaveService
         {
             var currentWorkSessionStart = workSessionStart.AddDays(i);
             var currentWorkSessionEnd = workSessionEnd.AddDays(i);
-            if (WorkSessionHelper.IsWeekendDay(currentWorkSessionStart))
+            if (WorkSessionHelper.IsNotWeekendDay(currentWorkSessionStart))
             {
                 workSessionsToAdd.Add(new WorkSessionDataRequest()
                 {

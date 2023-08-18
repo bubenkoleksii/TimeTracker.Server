@@ -23,17 +23,19 @@ public class SickLeaveRepository : ISickLeaveRepository
         return sickLeaveDataResponse;
     }
 
-    public async Task<List<SickLeaveDataResponse>> GetSickLeavesAsync(DateTime date, Guid? userId, bool searchByYear = false)
+    public async Task<List<SickLeaveDataResponse>> GetSickLeavesAsync(DateTime? date = null, Guid? userId = null, bool searchByYear = false)
     {
-        var query = $"SELECT * FROM [SickLeave] WHERE";
+        var query = $"SELECT * FROM [SickLeave] WHERE 1 = 1";
 
-        query += $" DATEDIFF({(searchByYear ? "YEAR" : "MONTH")}, [{nameof(SickLeaveDataResponse.Start)}], @{nameof(date)}) = 0";
+        if (date is not null)
+        {
+            query += $" AND DATEDIFF({(searchByYear ? "YEAR" : "MONTH")}, [{nameof(SickLeaveDataResponse.Start)}], @{nameof(date)}) = 0";
+        }
 
         if (userId is not null)
         {
             query += $" AND [{nameof(SickLeaveDataResponse.UserId)}] = '{userId}'";
         }
-        query += ";";
 
         using var connection = _context.GetConnection();
         var sickLeavesDataResponse = await connection.QueryAsync<SickLeaveDataResponse>(query, new { date });

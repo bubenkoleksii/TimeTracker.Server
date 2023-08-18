@@ -18,7 +18,7 @@ public static class WorkSessionHelper
         return startDate + new TimeSpan((long)endTimeToWorkInMinutes * TimeSpan.TicksPerMinute);
     }
 
-    public static bool IsWeekendDay(DateTime date)
+    public static bool IsNotWeekendDay(DateTime date)
     {
         return date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday;
     }

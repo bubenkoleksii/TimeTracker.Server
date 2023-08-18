@@ -8,14 +8,14 @@ using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server.Quartz.Jobs
 {
-    public class VacationJob : IJob
+    public class VacationStartJob : IJob
     {
         private readonly IWorkSessionRepository _workSessionRepository;
         private readonly IUserRepository _userRepository;
         private readonly IVacationRepository _vacationRepository;
         private readonly IVacationInfoRepository _vacationInfoRepository;
 
-        public VacationJob(IWorkSessionRepository workSessionRepository, IUserRepository userRepository, IVacationRepository vacationRepository, 
+        public VacationStartJob(IWorkSessionRepository workSessionRepository, IUserRepository userRepository, IVacationRepository vacationRepository, 
             IVacationInfoRepository vacationInfoRepository)
         {
             _workSessionRepository = workSessionRepository;
@@ -30,7 +30,6 @@ namespace TimeTracker.Server.Quartz.Jobs
 
             var vacationsToStartList = new List<VacationDataResponse>();
             var vacationsToDecline = new List<VacationDataResponse>();
-            var vacationsToEndList = new List<VacationDataResponse>();
             foreach (var vacation in approvedNotStartedVacations)
             {
                 if (vacation.Start.Date == DateTime.Today)
@@ -44,15 +43,6 @@ namespace TimeTracker.Server.Quartz.Jobs
                         vacationsToStartList.Add(vacation);
                     }
                 }
-                else if (vacation.End.Date == DateTime.Today)
-                {
-                    vacationsToEndList.Add(vacation);
-                }
-            }
-
-            if (vacationsToEndList.Count > 0)
-            {
-                await EndVacations(vacationsToEndList);
             }
 
             if (vacationsToStartList.Count > 0)
@@ -93,16 +83,21 @@ namespace TimeTracker.Server.Quartz.Jobs
 
                 for (int i = 0; i < vacationDurationInDays; i++)
                 {
-                    workSessionsToAutoAdd.Add(new WorkSessionDataRequest()
+                    var curDayWorkSessionStart = workSessionStart.AddDays(i);
+                    var curDayWorkSessionEnd = workSessionEnd.AddDays(i);
+                    if (WorkSessionHelper.IsNotWeekendDay(curDayWorkSessionStart))
                     {
-                        UserId = vacation.UserId,
-                        Start = workSessionStart.AddDays(i),
-                        End = workSessionEnd.AddDays(i),
-                        Title = null,
-                        Description = null,
-                        Type = WorkSessionStatusEnum.Vacation.ToString(),
-                        LastModifierId = user.Id
-                    });
+                        workSessionsToAutoAdd.Add(new WorkSessionDataRequest()
+                        {
+                            UserId = vacation.UserId,
+                            Start = curDayWorkSessionStart,
+                            End = curDayWorkSessionEnd,
+                            Title = null,
+                            Description = null,
+                            Type = WorkSessionStatusEnum.Vacation.ToString(),
+                            LastModifierId = user.Id
+                        });
+                    }
                 }
             }
 
@@ -119,23 +114,6 @@ namespace TimeTracker.Server.Quartz.Jobs
         public async Task DeclineVacations(List<VacationDataResponse> vacations)
         {
             await _vacationRepository.DeclineVacationsAsync(vacations);
-        }
-
-        public async Task EndVacations(List<VacationDataResponse> vacations)
-        {
-            var usersStatusesToSet = new List<UserSetStatusDataRequest>();
-            foreach (var vacation in vacations)
-            {
-                var user = await _userRepository.GetUserByIdAsync(vacation.UserId);
-                usersStatusesToSet.Add(new UserSetStatusDataRequest()
-                {
-                    Id = user.Id,
-                    Status = UserStatusEnum.working.ToString(),
-                });
-            }
-
-            //set user status to 'working'
-            await _userRepository.SetUserStatusAsync(usersStatusesToSet);
         }
     }
 }

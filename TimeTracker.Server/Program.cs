@@ -106,15 +106,24 @@ public class Program
         {
             q.UseMicrosoftDependencyInjectionJobFactory();
 
-            var AutoWorkSessionsJobKey = new JobKey("AutoWorkSessionsJob");
-            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(AutoWorkSessionsJobKey));
-
-            var VacationJobKey = new JobKey("VacationJobKey");
-            q.AddJob<VacationJob>(opts => opts.WithIdentity(VacationJobKey));
-
+            var SickLeaveStartJobKey = new JobKey("SickLeaveStartJobKey");
+            q.AddJob<SickLeaveStartJob>(opts => opts.WithIdentity(SickLeaveStartJobKey));
             q.AddTrigger(opts => opts
-                .ForJob(AutoWorkSessionsJobKey)
-                .WithIdentity("AutoWorkSessionsJobTrigger")
+                .ForJob(SickLeaveStartJobKey)
+                .WithIdentity("SickLeaveStartJobTrigger")
+                .WithDailyTimeIntervalSchedule(s => s
+                    .WithIntervalInHours(24)
+                    .OnEveryDay()
+                    //starts at 00:05
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(0, 5))
+                )
+            );
+
+            var VacationStartJobKey = new JobKey("VacationStartJobKey");
+            q.AddJob<VacationStartJob>(opts => opts.WithIdentity(VacationStartJobKey));
+            q.AddTrigger(opts => opts
+                .ForJob(VacationStartJobKey)
+                .WithIdentity("VacationStartJobTrigger")
                 .WithDailyTimeIntervalSchedule(s => s
                     .WithIntervalInHours(24)
                     .OnEveryDay()
@@ -123,14 +132,43 @@ public class Program
                 )
             );
 
+            var AutoWorkSessionsJobKey = new JobKey("AutoWorkSessionsJob");
+            q.AddJob<AutoWorkSessionsJob>(opts => opts.WithIdentity(AutoWorkSessionsJobKey));
             q.AddTrigger(opts => opts
-                .ForJob(VacationJobKey)
-                .WithIdentity("VacationJobTrigger")
+                .ForJob(AutoWorkSessionsJobKey)
+                .WithIdentity("AutoWorkSessionsJobTrigger")
                 .WithDailyTimeIntervalSchedule(s => s
                     .WithIntervalInHours(24)
                     .OnEveryDay()
-                    //starts at 00:05
-                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(0, 5))
+                    //starts at 00:15
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(0, 15))
+                )
+            );
+
+            
+            var VacationEndJobKey = new JobKey("VacationEndJobKey");
+            q.AddJob<VacationEndJob>(opts => opts.WithIdentity(VacationEndJobKey));
+            q.AddTrigger(opts => opts
+                .ForJob(VacationEndJobKey)
+                .WithIdentity("VacationEndJobTrigger")
+                .WithDailyTimeIntervalSchedule(s => s
+                    .WithIntervalInHours(24)
+                    .OnEveryDay()
+                    //starts at 23:55
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(23, 55))
+                )
+            );
+
+            var SickLeaveEndJobKey = new JobKey("SickLeaveEndJobKey");
+            q.AddJob<SickLeaveEndJob>(opts => opts.WithIdentity(SickLeaveEndJobKey));
+            q.AddTrigger(opts => opts
+                .ForJob(SickLeaveEndJobKey)
+                .WithIdentity("SickLeaveEndJobTrigger")
+                .WithDailyTimeIntervalSchedule(s => s
+                    .WithIntervalInHours(24)
+                    .OnEveryDay()
+                    //starts at 23:50
+                    .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(23, 50))
                 )
             );
         });

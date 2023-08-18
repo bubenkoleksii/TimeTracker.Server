@@ -6,7 +6,7 @@ public interface ISickLeaveRepository
 {
     public Task<SickLeaveDataResponse> GetSickLeaveByIdAsync(Guid id);
 
-    public Task<List<SickLeaveDataResponse>> GetSickLeavesAsync(DateTime date, Guid? userId, bool searchByYear = false);
+    public Task<List<SickLeaveDataResponse>> GetSickLeavesAsync(DateTime? date = null, Guid? userId = null, bool searchByYear = false);
 
     public Task<SickLeaveDataResponse> CreateSickLeaveAsync(SickLeaveDataRequest sickLeaveDataRequest);
 
