@@ -5,14 +5,16 @@ public static class WorkSessionHelper
     const int workDayDefaultStartHour = 5;
     const int workDayDefaultHoursToWork = 8;
 
-    public static DateTime GetDefaultWorkSessionStart()
+    public static DateTime GetDefaultWorkSessionStart(DateTime? start = null)
     {
-        return DateTime.Today + new TimeSpan(workDayDefaultStartHour, 0, 0);
+        DateTime startDate = start is not null ? (DateTime)start : DateTime.Today;
+        return startDate + new TimeSpan(workDayDefaultStartHour, 0, 0);
     }
 
-    public static DateTime GetDefaultWorkSessionEnd(int employmentRate)
+    public static DateTime GetDefaultWorkSessionEnd(int employmentRate, DateTime? start = null)
     {
+        DateTime startDate = start is not null ? (DateTime)start : DateTime.Today;
         double endTimeToWorkInMinutes = (workDayDefaultStartHour * 60) + ((employmentRate / 100.0) * (workDayDefaultHoursToWork * 60));
-        return DateTime.Today + new TimeSpan((long)endTimeToWorkInMinutes * TimeSpan.TicksPerMinute);
+        return startDate + new TimeSpan((long)endTimeToWorkInMinutes * TimeSpan.TicksPerMinute);
     }
 }

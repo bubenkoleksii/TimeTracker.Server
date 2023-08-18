@@ -87,7 +87,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.CreateWorkSessions.ToString()) == false && workSessionBusinessRequest.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.CreateWorkSessions) == false && workSessionBusinessRequest.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {
@@ -198,7 +198,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.UpdateWorkSessions.ToString()) == false && workSession.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.UpdateWorkSessions) == false && workSession.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {
@@ -243,7 +243,7 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.DeleteWorkSessions.ToString()) == false && workSession.UserId != user.Id))
+        if ((PermissionHelper.HasPermit(user.Permissions, PermissionsEnum.DeleteWorkSessions) == false && workSession.UserId != user.Id))
         {
             throw new ExecutionError("User does not have access to read other user's work sessions")
             {

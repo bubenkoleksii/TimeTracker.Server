@@ -34,6 +34,7 @@ public class Program
         builder.Services.AddScoped<IWorkSessionService, WorkSessionService>();
         builder.Services.AddScoped<IHolidayService, HolidayService>();
         builder.Services.AddScoped<IVacationService, VacationService>();
+        builder.Services.AddScoped<ISickLeaveService, SickLeaveService>();
 
         builder.Services.AddSingleton<DapperContext>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -41,6 +42,7 @@ public class Program
         builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
         builder.Services.AddScoped<IVacationInfoRepository, VacationInfoRepository>();
         builder.Services.AddScoped<IVacationRepository, VacationRepository>();
+        builder.Services.AddScoped<ISickLeaveRepository, SickLeaveRepository>();
 
         builder.Services.AddAuthentication(conf =>
         {
@@ -66,14 +68,15 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy(PermissionsEnum.LoggedIn.ToString(), (a) => a.RequireAuthenticatedUser());
-            options.AddPolicy(PermissionsEnum.CreateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.CreateUser.ToString())));
-            options.AddPolicy(PermissionsEnum.GetUsers.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetUsers.ToString())));
-            options.AddPolicy(PermissionsEnum.DeactivateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.DeactivateUser.ToString())));
-            options.AddPolicy(PermissionsEnum.UpdateUser.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.UpdateUser.ToString())));
-            options.AddPolicy(PermissionsEnum.ManageHolidays.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ManageHolidays.ToString())));
-            options.AddPolicy(PermissionsEnum.ApproveVacations.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ApproveVacations.ToString())));
-            options.AddPolicy(PermissionsEnum.GetVacations.ToString(), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetVacations.ToString())));
+            options.AddPolicy(nameof(PermissionsEnum.LoggedIn), (a) => a.RequireAuthenticatedUser());
+            options.AddPolicy(nameof(PermissionsEnum.CreateUser), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.CreateUser)));
+            options.AddPolicy(nameof(PermissionsEnum.GetUsers), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetUsers)));
+            options.AddPolicy(nameof(PermissionsEnum.DeactivateUser), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.DeactivateUser)));
+            options.AddPolicy(nameof(PermissionsEnum.UpdateUser), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.UpdateUser)));
+            options.AddPolicy(nameof(PermissionsEnum.ManageHolidays), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ManageHolidays)));
+            options.AddPolicy(nameof(PermissionsEnum.ApproveVacations), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ApproveVacations)));
+            options.AddPolicy(nameof(PermissionsEnum.GetVacations), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetVacations)));
+            options.AddPolicy(nameof(PermissionsEnum.ManageSickLeaves), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ManageSickLeaves)));
         });
 
         builder.Services.AddGraphQL(builder => builder
@@ -163,7 +166,7 @@ public class Program
         app.Run();
     }
 
-    private static bool HasPermissionClaim(AuthorizationHandlerContext context, string permission)
+    private static bool HasPermissionClaim(AuthorizationHandlerContext context, PermissionsEnum permission)
     {
         if (context.User.Identity is ClaimsIdentity claimsIdentity)
         {

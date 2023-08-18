@@ -26,5 +26,7 @@ namespace TimeTracker.Server.Data.Abstractions
         public Task DeleteWorkSessionAsync(Guid id);
 
         public Task DeleteWorkSessionsAsync(List<WorkSessionDataResponse> workSessionDataResponses);
+
+        public Task DeleteWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null);
     }
 }

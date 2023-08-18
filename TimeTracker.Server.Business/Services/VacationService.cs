@@ -34,7 +34,7 @@ public class VacationService : IVacationService
     public async Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc)
     {
         var curUser = await _userService.GetCurrentUserFromClaimsAsync();
-        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacations.ToString()))
+        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacations))
         {
             if (curUser.Id != userId)
             {
@@ -137,7 +137,7 @@ public class VacationService : IVacationService
     public async Task<VacationInfoBusinessResponse> GetVacationInfoByUserIdAsync(Guid userId)
     {
         var curUser = await _userService.GetCurrentUserFromClaimsAsync();
-        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacations.ToString()))
+        if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacations))
         {
             if (curUser.Id != userId)
             {

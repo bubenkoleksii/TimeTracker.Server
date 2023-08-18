@@ -84,7 +84,8 @@ public class WorkSessionRepository : IWorkSessionRepository
     {
         var query = $"SELECT * FROM [WorkSession] WHERE" +
             $" [{nameof(WorkSessionDataResponse.UserId)}] = '{userId}'" +
-            $" AND ([{nameof(WorkSessionDataResponse.Start)}] >= @{nameof(start)} AND [{nameof(WorkSessionDataResponse.Start)}] <= @{nameof(end)})";
+            $" AND (DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(start)}) <= 0" +
+            $" AND DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(end)}) >= 0)";
 
         if (type is not null)
         {
@@ -271,5 +272,25 @@ public class WorkSessionRepository : IWorkSessionRepository
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, workSessionDataResponses);
+    }
+
+    public async Task DeleteWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null)
+    {
+        var query = $"DELETE FROM [WorkSession] WHERE" +
+            $" [{nameof(WorkSessionDataResponse.UserId)}] = '{userId}'" +
+            $" AND (DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(start)}) <= 0" +
+            $" AND DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(end)}) >= 0)";
+
+        if (type is not null)
+        {
+            query += $" AND [{nameof(WorkSessionDataResponse.Type)}] = '{type}'";
+        }
+
+        using var connection = _context.GetConnection();
+        await connection.ExecuteAsync(query, new
+        {
+            start,
+            end
+        });
     }
 }
