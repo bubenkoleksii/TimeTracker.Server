@@ -17,4 +17,14 @@ public static class WorkSessionHelper
         double endTimeToWorkInMinutes = (workDayDefaultStartHour * 60) + ((employmentRate / 100.0) * (workDayDefaultHoursToWork * 60));
         return startDate + new TimeSpan((long)endTimeToWorkInMinutes * TimeSpan.TicksPerMinute);
     }
+
+    public static bool IsWeekendDay(DateTime date)
+    {
+        return date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday;
+    }
+
+    public static bool IsDateInRange(DateTime date, DateTime rangeStart, DateTime rangeEnd)
+    {
+        return date >= rangeStart && date <= rangeEnd;
+    }
 }

@@ -93,6 +93,8 @@ public class SickLeaveService : ISickLeaveService
         }
 
         var sickLeaveDataRequest = _mapper.Map<SickLeaveDataRequest>(sickLeaveBusinessRequest);
+
+        //create sick leave data
         await _sickLeaveRepository.CreateSickLeaveAsync(sickLeaveDataRequest);
 
         var workSessionsToDelete = await _workSessionRepository.GetUserWorkSessionsInRangeAsync(sickLeaveDataRequest.UserId,
@@ -105,8 +107,17 @@ public class SickLeaveService : ISickLeaveService
         //clear clear place for new sick leave work sessions
         await _workSessionRepository.DeleteWorkSessionsInRangeAsync(sickLeaveDataRequest.UserId, sickLeaveDataRequest.Start, sickLeaveDataRequest.End);
 
+        var user = await _userRepository.GetUserByIdAsync(sickLeaveDataRequest.UserId);
+
         //create new sick leave work sessions
-        await CreateSickLeaveWorkSessionsAsync(sickLeaveDataRequest);
+        await CreateSickLeaveWorkSessionsAsync(sickLeaveDataRequest, user.EmploymentRate);
+
+        //set user status
+        if (WorkSessionHelper.IsDateInRange(DateTime.UtcNow, sickLeaveDataRequest.Start, sickLeaveDataRequest.End)
+            && user.Status != nameof(UserStatusEnum.ill))
+        {
+            await _userRepository.SetUserStatusAsync(user.Id, nameof(UserStatusEnum.ill));
+        }
     }
 
     public async Task UpdateSickLeaveAsync(Guid id, SickLeaveBusinessRequest sickLeaveBusinessRequest)
@@ -131,6 +142,7 @@ public class SickLeaveService : ISickLeaveService
         }
 
         var sickLeaveDataRequest = _mapper.Map<SickLeaveDataRequest>(sickLeaveBusinessRequest);
+        //update sick leave data
         await _sickLeaveRepository.UpdateSickLeaveAsync(id, sickLeaveDataRequest);
 
         //delete old sick leave work sessions
@@ -139,22 +151,44 @@ public class SickLeaveService : ISickLeaveService
         //clear clear place for new sick leave work sessions
         await _workSessionRepository.DeleteWorkSessionsInRangeAsync(sickLeaveDataRequest.UserId, sickLeaveDataRequest.Start, sickLeaveDataRequest.End);
 
+        var user = await _userRepository.GetUserByIdAsync(sickLeaveDataRequest.UserId);
         //create new sick leave work sessions
-        await CreateSickLeaveWorkSessionsAsync(sickLeaveDataRequest);
+        await CreateSickLeaveWorkSessionsAsync(sickLeaveDataRequest, user.EmploymentRate);
+
+        //set user status
+        if (WorkSessionHelper.IsDateInRange(DateTime.UtcNow, sickLeaveDataRequest.Start, sickLeaveDataRequest.End)
+            && user.Status != nameof(UserStatusEnum.ill))
+        {
+            await _userRepository.SetUserStatusAsync(user.Id, nameof(UserStatusEnum.ill));
+        }
+        else if (!WorkSessionHelper.IsDateInRange(DateTime.UtcNow, sickLeaveDataRequest.Start, sickLeaveDataRequest.End)
+                && user.Status == nameof(UserStatusEnum.ill))
+        {
+            await _userRepository.SetUserStatusAsync(user.Id, nameof(UserStatusEnum.working));
+        }
     }
 
     public async Task DeleteSickLeaveAsync(Guid id)
     {
-        var sickLeaveDataRequest = await _sickLeaveRepository.GetSickLeaveByIdAsync(id);
-        if (sickLeaveDataRequest is not null)
+        var sickLeaveDataResponse = await _sickLeaveRepository.GetSickLeaveByIdAsync(id);
+        if (sickLeaveDataResponse is not null)
         {
-            await ValidateOtherUserEditSickLeave(sickLeaveDataRequest.UserId);
+            await ValidateOtherUserEditSickLeave(sickLeaveDataResponse.UserId);
 
             await _sickLeaveRepository.DeleteSickLeaveAsync(id);
 
             //delete sick leave work sessions
-            await _workSessionRepository.DeleteWorkSessionsInRangeAsync(sickLeaveDataRequest.UserId, sickLeaveDataRequest.Start, 
-                sickLeaveDataRequest.End, WorkSessionStatusEnum.SickLeave);
+            await _workSessionRepository.DeleteWorkSessionsInRangeAsync(sickLeaveDataResponse.UserId, sickLeaveDataResponse.Start,
+                sickLeaveDataResponse.End, WorkSessionStatusEnum.SickLeave);
+
+            var user = await _userRepository.GetUserByIdAsync(sickLeaveDataResponse.UserId);
+
+            //set user status
+            if (WorkSessionHelper.IsDateInRange(DateTime.UtcNow, sickLeaveDataResponse.Start, sickLeaveDataResponse.End)
+                && user.Status == nameof(UserStatusEnum.ill))
+            {
+                await _userRepository.SetUserStatusAsync(user.Id, nameof(UserStatusEnum.working));
+            }
         }
     }
 
@@ -170,22 +204,19 @@ public class SickLeaveService : ISickLeaveService
         }
     }
 
-    protected async Task CreateSickLeaveWorkSessionsAsync(SickLeaveDataRequest sickLeaveDataRequest)
+    protected async Task CreateSickLeaveWorkSessionsAsync(SickLeaveDataRequest sickLeaveDataRequest, int employmentRate)
     {
-        var user = await _userRepository.GetUserByIdAsync(sickLeaveDataRequest.UserId);
-
         var sickLeaveDurationInDays = (sickLeaveDataRequest.End - sickLeaveDataRequest.Start).TotalDays + 1;
 
         var workSessionStart = WorkSessionHelper.GetDefaultWorkSessionStart(sickLeaveDataRequest.Start);
-        var workSessionEnd = WorkSessionHelper.GetDefaultWorkSessionEnd(user.EmploymentRate, sickLeaveDataRequest.Start);
+        var workSessionEnd = WorkSessionHelper.GetDefaultWorkSessionEnd(employmentRate, sickLeaveDataRequest.Start);
 
         var workSessionsToAdd = new List<WorkSessionDataRequest>();
         for (int i = 0; i < sickLeaveDurationInDays; i++)
         {
             var currentWorkSessionStart = workSessionStart.AddDays(i);
             var currentWorkSessionEnd = workSessionEnd.AddDays(i);
-            if (currentWorkSessionStart.DayOfWeek != DayOfWeek.Saturday
-               && currentWorkSessionStart.DayOfWeek != DayOfWeek.Sunday)
+            if (WorkSessionHelper.IsWeekendDay(currentWorkSessionStart))
             {
                 workSessionsToAdd.Add(new WorkSessionDataRequest()
                 {
