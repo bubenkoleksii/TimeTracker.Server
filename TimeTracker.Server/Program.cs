@@ -143,6 +143,8 @@ public class Program
                 .ClearProviders()
                 .AddFluentMigratorConsole());
 
+        builder.Logging.AddConsole();
+
         var app = builder.Build();
 
         app.UseCors("MyAllowSpecificOrigins");

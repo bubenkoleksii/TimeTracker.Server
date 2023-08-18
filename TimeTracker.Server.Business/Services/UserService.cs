@@ -3,6 +3,7 @@ using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
@@ -27,8 +28,10 @@ public class UserService : IUserService
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
+    private readonly ILogger<UserService> _logger;
+
     public UserService(IMailService mailService, IUserRepository userRepository, IVacationInfoRepository vacationInfoRepository, IMapper mapper, 
-        IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<UserService> logger)
     {
         _mailService = mailService;
         _userRepository = userRepository;
@@ -36,6 +39,7 @@ public class UserService : IUserService
         _vacationInfoRepository = vacationInfoRepository;
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
     public async Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id)
@@ -85,7 +89,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogInformation(ex.Message);
         }
 
         return null;
