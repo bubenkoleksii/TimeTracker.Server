@@ -76,10 +76,19 @@ public class UserService : IUserService
         var validatedOffset = offset is >= 0 ? offset.Value : default;
         var validatedLimit = limit is > 0 ? limit.Value : limitDefault;
 
-        var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
+        try
+        {
+            var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
 
-        var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
-        return usersBusinessResponse;
+            var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
+            return usersBusinessResponse;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        return null;
     }
 
     public async Task DeactivateUserAsync(Guid id)

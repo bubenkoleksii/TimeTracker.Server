@@ -13,5 +13,6 @@ public enum PermissionsEnum
     DeleteWorkSessions,
     GetWorkSession,
     GetVacations,
-    ApproveVacations
+    ApproveVacations,
+    ManageSickLeaves
 }

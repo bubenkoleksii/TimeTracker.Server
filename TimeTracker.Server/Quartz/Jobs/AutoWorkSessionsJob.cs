@@ -2,6 +2,7 @@
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Shared;
+using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server.Quartz.Jobs;
 
@@ -18,7 +19,7 @@ public class AutoWorkSessionsJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        var users = await _userRepository.GetFullTimeUsersAsync();
+        var users = await _userRepository.GetFullTimeWorkingUsersAsync();
 
         DateTime workSessionStart = DateTime.Today + new TimeSpan(5, 0, 0);
         DateTime workSessionEnd = DateTime.Today + new TimeSpan(13, 0, 0);
@@ -27,7 +28,7 @@ public class AutoWorkSessionsJob : IJob
 
         foreach (var user in users)
         {
-            if (user.Status == UserStatusEnum.working.ToString())
+            if (WorkSessionHelper.IsNotWeekendDay(workSessionStart))
             {
                 workSessionsToAutoAdd.Add(new WorkSessionDataRequest()
                 {
@@ -36,7 +37,7 @@ public class AutoWorkSessionsJob : IJob
                     End = workSessionEnd,
                     Title = null,
                     Description = null,
-                    Type = "Auto",
+                    Type = WorkSessionStatusEnum.Auto.ToString(),
                     LastModifierId = user.Id
                 });
             }

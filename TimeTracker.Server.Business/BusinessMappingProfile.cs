@@ -10,6 +10,8 @@ using TimeTracker.Server.Business.Models.Holiday;
 using TimeTracker.Server.Data.Models.Holidays;
 using TimeTracker.Server.Business.Models.Vacation;
 using TimeTracker.Server.Data.Models.Vacation;
+using TimeTracker.Server.Business.Models.SickLeave;
+using TimeTracker.Server.Data.Models.SickLeave;
 
 namespace TimeTracker.Server.Business;
 
@@ -39,5 +41,8 @@ public class BusinessMappingProfile : Profile
         CreateMap<VacationDataResponse, VacationBusinessResponse>();
 
         CreateMap<VacationInfoDataResponse, VacationInfoBusinessResponse>();
+
+        CreateMap<SickLeaveBusinessRequest, SickLeaveDataRequest>();
+        CreateMap<SickLeaveDataResponse, SickLeaveBusinessResponse>();
     }
 }
