@@ -84,6 +84,15 @@ public class SickLeaveService : ISickLeaveService
     {
         await ValidateOtherUserEditSickLeave(sickLeaveBusinessRequest.UserId);
 
+        var user = await _userRepository.GetUserByIdAsync(sickLeaveBusinessRequest.UserId);
+        if (user.Status != nameof(UserStatusEnum.working))
+        {
+            throw new ExecutionError("Invalid user status")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_USER_STATUS.ToString()
+            };
+        }
+
         if (DateTime.Compare(sickLeaveBusinessRequest.Start, sickLeaveBusinessRequest.End) > 0)
         {
             throw new ExecutionError("Invalid dates input")
@@ -106,8 +115,6 @@ public class SickLeaveService : ISickLeaveService
 
         //clear clear place for new sick leave work sessions
         await _workSessionRepository.DeleteWorkSessionsInRangeAsync(sickLeaveDataRequest.UserId, sickLeaveDataRequest.Start, sickLeaveDataRequest.End);
-
-        var user = await _userRepository.GetUserByIdAsync(sickLeaveDataRequest.UserId);
 
         //create new sick leave work sessions
         await CreateSickLeaveWorkSessionsAsync(sickLeaveDataRequest, user.EmploymentRate);
@@ -148,7 +155,7 @@ public class SickLeaveService : ISickLeaveService
         //delete old sick leave work sessions
         await _workSessionRepository.DeleteWorkSessionsInRangeAsync(oldSickLeave.UserId, oldSickLeave.Start, oldSickLeave.End, WorkSessionStatusEnum.SickLeave);
 
-        //clear clear place for new sick leave work sessions
+        //clear place for new sick leave work sessions
         await _workSessionRepository.DeleteWorkSessionsInRangeAsync(sickLeaveDataRequest.UserId, sickLeaveDataRequest.Start, sickLeaveDataRequest.End);
 
         var user = await _userRepository.GetUserByIdAsync(sickLeaveDataRequest.UserId);

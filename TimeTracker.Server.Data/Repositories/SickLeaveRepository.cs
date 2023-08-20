@@ -37,6 +37,8 @@ public class SickLeaveRepository : ISickLeaveRepository
             query += $" AND [{nameof(SickLeaveDataResponse.UserId)}] = '{userId}'";
         }
 
+        query += $" ORDER BY [{nameof(SickLeaveDataResponse.Start)}] DESC";
+
         using var connection = _context.GetConnection();
         var sickLeavesDataResponse = await connection.QueryAsync<SickLeaveDataResponse>(query, new { date });
 
@@ -83,6 +85,7 @@ public class SickLeaveRepository : ISickLeaveRepository
     public async Task UpdateSickLeaveAsync(Guid id, SickLeaveDataRequest sickLeaveDataRequest)
     {
         const string query = $"UPDATE [SickLeave] SET " +
+            $"[{nameof(SickLeaveDataResponse.UserId)}] = @{nameof(SickLeaveDataResponse.UserId)}, " +
             $"[{nameof(SickLeaveDataResponse.LastModifierId)}] = @{nameof(SickLeaveDataResponse.LastModifierId)}, " +
             $"[{nameof(SickLeaveDataResponse.Start)}] = @{nameof(SickLeaveDataResponse.Start)}, " +
             $"[{nameof(SickLeaveDataResponse.End)}] = @{nameof(SickLeaveDataResponse.End)} " +
@@ -93,6 +96,7 @@ public class SickLeaveRepository : ISickLeaveRepository
         await connection.ExecuteAsync(query, new
         {
             Id = id,
+            sickLeaveDataRequest.UserId,
             sickLeaveDataRequest.LastModifierId,
             sickLeaveDataRequest.Start,
             sickLeaveDataRequest.End
