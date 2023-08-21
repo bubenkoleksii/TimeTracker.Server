@@ -56,7 +56,7 @@ public class HolidayRepository : IHolidayRepository
         var hoilidayResponse = await GetHolidayByIdAsync(id);
         if (hoilidayResponse is null)
         {
-            throw new InvalidOperationException("Work session has not been added");
+            throw new InvalidOperationException("Holiday has not been added");
         }
 
         return hoilidayResponse;

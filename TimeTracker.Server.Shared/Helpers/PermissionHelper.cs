@@ -5,7 +5,7 @@ namespace TimeTracker.Server.Shared.Helpers;
 
 public static class PermissionHelper
 {
-    public static bool HasPermit(string? permissionJson, string permission)
+    public static bool HasPermit(string? permissionJson, PermissionsEnum permission)
     {
         try
         {
@@ -13,8 +13,7 @@ public static class PermissionHelper
                 return true;
 
             var permissions = JObject.Parse(permissionJson.ToLower());
-
-            if (permissions.TryGetValue(permission.ToLower(), out var permit))
+            if (permissions.TryGetValue(permission.ToString().ToLower(), out var permit))
             {
                 return permit.Value<bool>();
             }

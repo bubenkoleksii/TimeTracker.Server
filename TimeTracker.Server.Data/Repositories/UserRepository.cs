@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.Pagination;
 using TimeTracker.Server.Data.Models.User;
+using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server.Data.Repositories;
 
@@ -35,9 +36,11 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<IEnumerable<UserDataResponse>> GetFullTimeUsersAsync()
+    public async Task<IEnumerable<UserDataResponse>> GetFullTimeWorkingUsersAsync()
     {
-        const string query = $"SELECT * FROM [User] WHERE {nameof(UserDataResponse.EmploymentRate)} = 100";
+        var query = $"SELECT * FROM [User] WHERE" +
+            $" {nameof(UserDataResponse.EmploymentRate)} = 100" +
+            $" AND {nameof(UserDataResponse.Status)} = '{UserStatusEnum.working}'";
 
         using var connection = _context.GetConnection();
         var users = await connection.QueryAsync<UserDataResponse>(query);
