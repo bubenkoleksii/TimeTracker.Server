@@ -127,9 +127,14 @@ public class UserRepository : IUserRepository
         return response;
     }
 
-    public async Task<IEnumerable<UserDataResponse>> GetAllUsersAsync()
+    public async Task<IEnumerable<UserDataResponse>> GetAllUsersAsync(bool showFired = false)
     {
         var query = "SELECT * FROM [User]";
+
+        if (showFired)
+        {
+            query += $" WHERE [{nameof(UserDataResponse.Status)}] != '{UserStatusEnum.deactivated}'";
+        }
 
         using var connection = _context.GetConnection();
         var users = await connection.QueryAsync<UserDataResponse>(query);

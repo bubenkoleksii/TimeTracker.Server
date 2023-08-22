@@ -9,7 +9,7 @@ namespace TimeTracker.Server.Data.Abstractions
         public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, 
             int offset, int limit, DateTime? startDate, DateTime? endDate);
 
-        public Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null);
+        public Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid[] userIds, DateTime start, DateTime end);
 
         public Task<WorkSessionDataResponse> GetWorkSessionByIdAsync(Guid id);
 

@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.Pagination;
-using TimeTracker.Server.Data.Models.User;
 using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Shared;
 
@@ -19,20 +18,7 @@ public class WorkSessionRepository : IWorkSessionRepository
     public async Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc,
         int offset, int limit, DateTime? startDate, DateTime? endDate)
     {
-        var query = $@"
-            SELECT ws.{nameof(WorkSessionDataResponse.Id)}
-                  ,{nameof(WorkSessionDataResponse.UserId)}
-                  ,{nameof(WorkSessionDataResponse.Start)}
-                  ,[{nameof(WorkSessionDataResponse.End)}]
-                  ,{nameof(WorkSessionDataResponse.Type)}
-                  ,{nameof(WorkSessionDataResponse.Title)}
-                  ,{nameof(WorkSessionDataResponse.Description)}
-                  ,{nameof(WorkSessionDataResponse.LastModifierId)}
-                  ,u.{nameof(UserDataResponse.FullName)} AS {nameof(WorkSessionDataResponse.LastModifierName)}
-            FROM [TimeTrackerDb].[dbo].[WorkSession] ws
-            INNER JOIN [TimeTrackerDb].[dbo].[User] u ON ws.{nameof(WorkSessionDataResponse.LastModifierId)} = u.{nameof(UserDataResponse.Id)}
-            WHERE ws.{nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}
-        ";
+        var query = $"SELECT * FROM [WorkSession]";
         var countQuery = $"SELECT COUNT(*) FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
 
         if (startDate is not null)
@@ -80,16 +66,26 @@ public class WorkSessionRepository : IWorkSessionRepository
         return workSessionPaginationDataResponse;
     }
 
-    public async Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null)
+    public async Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid[] userIds, DateTime start, DateTime end)
     {
         var query = $"SELECT * FROM [WorkSession] WHERE" +
-            $" [{nameof(WorkSessionDataResponse.UserId)}] = '{userId}'" +
-            $" AND (DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(start)}) <= 0" +
+            $" (DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(start)}) <= 0" +
             $" AND DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(end)}) >= 0)";
 
-        if (type is not null)
+        if (userIds.Any())
         {
-            query += $" AND [{nameof(WorkSessionDataResponse.Type)}] = '{type}'";
+            query += " AND (";
+            var idsWhereRows = new List<string>();
+            foreach (var id in userIds)
+            {
+                idsWhereRows.Add($"[{nameof(WorkSessionDataResponse.UserId)}] = '{id}'");
+            }
+            query += String.Join(" OR ", idsWhereRows.ToArray());
+            query += ")";
+        }
+        else
+        {
+            return new List<WorkSessionDataResponse>();
         }
 
         using var connection = _context.GetConnection();
@@ -104,20 +100,7 @@ public class WorkSessionRepository : IWorkSessionRepository
 
     public async Task<WorkSessionDataResponse> GetWorkSessionByIdAsync(Guid id)
     {
-        var query = $@"
-            SELECT ws.{nameof(WorkSessionDataResponse.Id)}
-                  ,{nameof(WorkSessionDataResponse.UserId)}
-                  ,{nameof(WorkSessionDataResponse.Start)}
-                  ,[{nameof(WorkSessionDataResponse.End)}]
-                  ,{nameof(WorkSessionDataResponse.Type)}
-                  ,{nameof(WorkSessionDataResponse.Title)}
-                  ,{nameof(WorkSessionDataResponse.Description)}
-                  ,{nameof(WorkSessionDataResponse.LastModifierId)}
-                  ,u.{nameof(UserDataResponse.FullName)} AS {nameof(WorkSessionDataResponse.LastModifierName)}
-            FROM [TimeTrackerDb].[dbo].[WorkSession] ws
-            INNER JOIN [TimeTrackerDb].[dbo].[User] u ON ws.{nameof(WorkSessionDataResponse.LastModifierId)} = u.{nameof(UserDataResponse.Id)}
-            WHERE ws.{nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}
-        ";
+        const string query = $"SELECT * FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
 
         using var connection = _context.GetConnection();
         var workSession = await connection.QuerySingleOrDefaultAsync<WorkSessionDataResponse>(query, new { id });
@@ -127,20 +110,9 @@ public class WorkSessionRepository : IWorkSessionRepository
 
     public async Task<WorkSessionDataResponse> GetActiveWorkSessionByUserIdAsync(Guid userId)
     {
-        var query = $@"
-            SELECT ws.{nameof(WorkSessionDataResponse.Id)}
-                  ,{nameof(WorkSessionDataResponse.UserId)}
-                  ,{nameof(WorkSessionDataResponse.Start)}
-                  ,[{nameof(WorkSessionDataResponse.End)}]
-                  ,{nameof(WorkSessionDataResponse.Type)}
-                  ,{nameof(WorkSessionDataResponse.Title)}
-                  ,{nameof(WorkSessionDataResponse.Description)}
-                  ,{nameof(WorkSessionDataResponse.LastModifierId)}
-                  ,u.{nameof(UserDataResponse.FullName)} AS {nameof(WorkSessionDataResponse.LastModifierName)}
-            FROM [TimeTrackerDb].[dbo].[WorkSession] ws
-            INNER JOIN [TimeTrackerDb].[dbo].[User] u ON ws.{nameof(WorkSessionDataResponse.LastModifierId)} = u.{nameof(UserDataResponse.Id)}
-            WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)} AND [{nameof(WorkSessionDataResponse.End)}] is NULL
-        ";
+        var query = $"SELECT * FROM [WorkSession] WHERE" +
+            $" {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}" +
+            $" AND [{nameof(WorkSessionDataResponse.End)}] is NULL";
 
         using var connection = _context.GetConnection();
         var workSession = await connection.QuerySingleOrDefaultAsync<WorkSessionDataResponse>(query, new { userId });
@@ -152,22 +124,22 @@ public class WorkSessionRepository : IWorkSessionRepository
     {
         var id = Guid.NewGuid();
 
-        var query =
-            $"INSERT INTO [WorkSession] (Id, {nameof(WorkSessionDataRequest.UserId)}, {nameof(WorkSessionDataRequest.LastModifierId)}, {nameof(WorkSessionDataRequest.Start)}, [{nameof(WorkSessionDataRequest.End)}], {nameof(WorkSessionDataRequest.Type)}, {nameof(WorkSessionDataRequest.Title)}, {nameof(WorkSessionDataRequest.Description)}) " +
-            $"VALUES (@{nameof(id)}, " +
-            $"@{nameof(WorkSessionDataRequest.UserId)}, " +
-            $"@{nameof(WorkSessionDataRequest.LastModifierId)}, " +
-            $"@{nameof(WorkSessionDataRequest.Start)}, " +
-            $"{(workSession.End != null ? $"@{nameof(WorkSessionDataRequest.End)}" : "NULL")}, " +
-            $"@{nameof(WorkSessionDataRequest.Type)}, " +
-            $"{(workSession.Title != null ? $"@{nameof(WorkSessionDataRequest.Title)}" : "NULL")}, " +
-            $"{(workSession.Description != null ? $"@{nameof(WorkSessionDataRequest.Description)}" : "NULL")})";
+        const string query =
+            $"INSERT INTO [WorkSession] " +
+            $"VALUES (@{nameof(WorkSessionDataResponse.Id)}, " +
+            $"@{nameof(WorkSessionDataResponse.UserId)}, " +
+            $"@{nameof(WorkSessionDataResponse.LastModifierId)}, " +
+            $"@{nameof(WorkSessionDataResponse.Start)}, " +
+            $"@{nameof(WorkSessionDataResponse.End)}, " +
+            $"@{nameof(WorkSessionDataResponse.Type)}, " +
+            $"@{nameof(WorkSessionDataResponse.Title)}, " +
+            $"@{nameof(WorkSessionDataResponse.Description)})";
 
         using var connection = _context.GetConnection();
 
         await connection.ExecuteAsync(query, new
         {
-            id,
+            Id = id,
             workSession.UserId,
             workSession.LastModifierId,
             workSession.Start,
@@ -239,12 +211,13 @@ public class WorkSessionRepository : IWorkSessionRepository
 
     public async Task UpdateWorkSessionAsync(Guid id, WorkSessionDataUpdateRequest workSession)
     {
-        var query = "UPDATE [WorkSession] " +
-                    $"SET [{nameof(WorkSessionDataResponse.Start)}] = @{nameof(workSession.Start)},  [{nameof(WorkSessionDataResponse.LastModifierId)}] = @{nameof(workSession.LastModifierId)}, " +
-                    $"[{nameof(WorkSessionDataResponse.Title)}] = {(workSession.Title != null ? $"@{nameof(workSession.Title)}" : "NULL")}, " +
-                    $"[{nameof(WorkSessionDataResponse.Description)}] = {(workSession.Description != null ? $"@{nameof(workSession.Description)}" : "NULL")}, " +
-                    $"[{nameof(WorkSessionDataResponse.End)}] = {(workSession.End != null ? $"@{nameof(workSession.End)}" : "NULL")} " +
-                    $"WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)}";
+        var query = $"UPDATE [WorkSession] SET" +
+            $" [{nameof(WorkSessionDataUpdateRequest.Start)}] = @{nameof(workSession.Start)}," +
+            $" [{nameof(WorkSessionDataUpdateRequest.End)}] = @{nameof(workSession.End)}," +
+            $" [{nameof(WorkSessionDataUpdateRequest.LastModifierId)}] = @{nameof(workSession.LastModifierId)}," +
+            $" [{nameof(WorkSessionDataUpdateRequest.Title)}] = @{nameof(workSession.Title)}," +
+            $" [{nameof(WorkSessionDataUpdateRequest.Description)}] = @{nameof(workSession.Description)} " +
+            $" WHERE [{nameof(WorkSessionDataResponse.Id)}] = @{nameof(id)}";
 
         using var connection = _context.GetConnection();
         await connection.ExecuteAsync(query, new

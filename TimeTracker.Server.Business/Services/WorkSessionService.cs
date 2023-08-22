@@ -72,6 +72,15 @@ public class WorkSessionService : IWorkSessionService
         }
 
         var workSessionDataResponse = await _workSessionRepository.GetActiveWorkSessionByUserIdAsync(userId);
+
+        if (workSessionDataResponse is not null && user.Id != workSessionDataResponse.UserId)
+        {
+            throw new ExecutionError("Only Owner can get active work session")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_USER.ToString()
+            };
+        }
+
         var workSessionBusinessResponse = _mapper.Map<WorkSessionBusinessResponse>(workSessionDataResponse);
         return workSessionBusinessResponse;
     }
