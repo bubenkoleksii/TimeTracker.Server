@@ -67,7 +67,7 @@ public class VacationRepository : IVacationRepository
         return vacationsDataResponse;
     }
 
-    public async Task<IEnumerable<VacationDataResponse>> GetNotDeclinedNotFinishedVacationsAsync()
+    public async Task<List<VacationDataResponse>> GetNotDeclinedNotFinishedVacationsAsync()
     {
         const string query = $"SELECT * FROM [Vacation] WHERE " +
             $"([{nameof(VacationDataResponse.IsApproved)}] = 1 OR [{nameof(VacationDataResponse.IsApproved)}] IS NULL)" +
@@ -77,7 +77,7 @@ public class VacationRepository : IVacationRepository
         using var connection = _context.GetConnection();
         var vacationsDataResponse = await connection.QueryAsync<VacationDataResponse>(query);
 
-        return vacationsDataResponse;
+        return vacationsDataResponse.ToList();
     }
 
     public async Task<VacationDataResponse> CreateVacationAsync(VacationDataRequest vacationDataRequest)

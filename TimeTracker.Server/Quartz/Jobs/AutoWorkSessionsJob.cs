@@ -19,16 +19,20 @@ public class AutoWorkSessionsJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        var users = await _userRepository.GetFullTimeWorkingUsersAsync();
-
-        DateTime workSessionStart = DateTime.Today + new TimeSpan(5, 0, 0);
-        DateTime workSessionEnd = DateTime.Today + new TimeSpan(13, 0, 0);
-
-        var workSessionsToAutoAdd = new List<WorkSessionDataRequest>();
-
-        foreach (var user in users)
+        if (WorkSessionHelper.IsNotWeekendDay(DateTime.UtcNow))
         {
-            if (WorkSessionHelper.IsNotWeekendDay(workSessionStart))
+            var users = await _userRepository.GetFullTimeWorkingUsersAsync();
+
+            if (users is null || !users.Any())
+            {
+                return;
+            }
+            DateTime workSessionStart = WorkSessionHelper.GetDefaultWorkSessionStart();
+            DateTime workSessionEnd = WorkSessionHelper.GetDefaultWorkSessionEnd(users.First().EmploymentRate);
+
+            var workSessionsToAutoAdd = new List<WorkSessionDataRequest>();
+
+            foreach (var user in users)
             {
                 workSessionsToAutoAdd.Add(new WorkSessionDataRequest()
                 {
@@ -41,8 +45,8 @@ public class AutoWorkSessionsJob : IJob
                     LastModifierId = user.Id
                 });
             }
-        }
 
-        await _workSessionRepository.CreateWorkSessionsAsync(workSessionsToAutoAdd);
+            await _workSessionRepository.CreateWorkSessionsAsync(workSessionsToAutoAdd);
+        }
     }
 }

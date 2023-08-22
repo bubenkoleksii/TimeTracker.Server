@@ -36,7 +36,7 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<IEnumerable<UserDataResponse>> GetFullTimeWorkingUsersAsync()
+    public async Task<List<UserDataResponse>> GetFullTimeWorkingUsersAsync()
     {
         var query = $"SELECT * FROM [User] WHERE" +
             $" {nameof(UserDataResponse.EmploymentRate)} = 100" +
@@ -45,7 +45,7 @@ public class UserRepository : IUserRepository
         using var connection = _context.GetConnection();
         var users = await connection.QueryAsync<UserDataResponse>(query);
 
-        return users;
+        return users.ToList();
     }
 
     public async Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)

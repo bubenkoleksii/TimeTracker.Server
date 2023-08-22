@@ -5,7 +5,5 @@ public enum WorkSessionStatusEnum
     Auto,
     Planned,
     Active,
-    Completed,
-    Vacation,
-    SickLeave
+    Completed
 }
