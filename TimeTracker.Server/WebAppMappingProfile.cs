@@ -28,12 +28,13 @@ public class WebAppMappingProfile : Profile
         CreateMap<UserBusinessResponse, ProfileResponse>();
         CreateMap<PaginationBusinessResponse<UserBusinessResponse>, PaginationResponse<UserResponse>>();
         CreateMap<PaginationBusinessResponse<UserBusinessResponse>, PaginationResponse<ProfileResponse>>();
+        CreateMap<SetPasswordUserRequest, SetPasswordUserBusinessRequest>();
 
         CreateMap<WorkSessionRequest, WorkSessionBusinessRequest>();
         CreateMap<WorkSessionUpdateRequest, WorkSessionBusinessUpdateRequest>();
         CreateMap<WorkSessionBusinessResponse, WorkSessionResponse>();
-        CreateMap<PaginationBusinessResponse<WorkSessionBusinessResponse>, PaginationResponse<WorkSessionResponse>>();
-        CreateMap<SetPasswordUserRequest, SetPasswordUserBusinessRequest>();
+        CreateMap<WorkSessionWithRelationsBusinessResponse, WorkSessionWithRelationsResponse>();
+        CreateMap<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>, PaginationResponse<WorkSessionWithRelationsResponse>>();
 
         CreateMap<HolidayRequest, HolidayBusinessRequest>();
         CreateMap<HolidayBusinessResponse, HolidayResponse>();

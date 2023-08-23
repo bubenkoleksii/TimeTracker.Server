@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
+using TimeTracker.Server.Business.Models.SickLeave;
+using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
@@ -53,6 +55,27 @@ public class WorkSessionService : IWorkSessionService
 
         var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserIdAsync(userId, orderByDesc, validatedOffset, validatedLimit, startDate, endDate);
         var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>>(workSessionPaginationDataResponse);
+
+        var userDict = new Dictionary<Guid, UserBusinessResponse>();
+        userDict.Add(user.Id, _mapper.Map<UserBusinessResponse>(user));
+        foreach (var workSessionData in workSessionPaginationBusinessResponse.Items)
+        {
+            var lastModifierToFind = new UserBusinessResponse();
+            if (userDict.ContainsKey(workSessionData.WorkSession.LastModifierId))
+            {
+                lastModifierToFind = userDict[workSessionData.WorkSession.LastModifierId];
+            }
+            else
+            {
+                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync(workSessionData.WorkSession.LastModifierId);
+                lastModifierToFind = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
+
+                userDict.Add(lastModifierToFind.Id, lastModifierToFind);
+            }
+
+            workSessionData.User = userDict[user.Id];
+            workSessionData.LastModifier = lastModifierToFind;
+        }
         return workSessionPaginationBusinessResponse;
     }
 
@@ -106,25 +129,59 @@ public class WorkSessionService : IWorkSessionService
 
         switch (workSessionBusinessRequest.Type)
         {
-            case nameof(WorkSessionStatusEnum.Planned) or nameof(WorkSessionStatusEnum.Completed) when workSessionBusinessRequest.End == null:
-                throw new ExecutionError("End date of work session cannot be null")
+            case nameof(WorkSessionTypeEnum.Planned) or nameof(WorkSessionTypeEnum.Completed):
                 {
-                    Code = GraphQLCustomErrorCodesEnum.DATE_NULL.ToString()
-                };
-            case nameof(WorkSessionStatusEnum.Active):
-            {
-                var activeSession = await _workSessionRepository.GetActiveWorkSessionByUserIdAsync(workSessionBusinessRequest.UserId);
-
-                if (activeSession != null)
-                {
-                    throw new ExecutionError("You already have an active running session")
+                    if (workSessionBusinessRequest.End is null)
                     {
-                        Code = GraphQLCustomErrorCodesEnum.INVALID_WORK_SESSION_TYPE.ToString()
+                        throw new ExecutionError("End date of work session cannot be null")
+                        {
+                            Code = GraphQLCustomErrorCodesEnum.DATE_NULL.ToString()
+                        };
+                    }
+                    if (DateTime.Compare(workSessionBusinessRequest.Start, (DateTime)workSessionBusinessRequest.End) >= 0)
+                    {
+                        throw new ExecutionError("Invalid date input")
+                        {
+                            Code = GraphQLCustomErrorCodesEnum.INVALID_INPUT_DATA.ToString()
+                        };
+                    }
+                    break;
+                }
+            case nameof(WorkSessionTypeEnum.Active):
+                {
+                    var activeSession = await _workSessionRepository.GetActiveWorkSessionByUserIdAsync(workSessionBusinessRequest.UserId);
+
+                    if (activeSession != null)
+                    {
+                        throw new ExecutionError("You already have an active running session")
+                        {
+                            Code = GraphQLCustomErrorCodesEnum.INVALID_WORK_SESSION_TYPE.ToString()
+                        };
+                    }
+                    if (workSessionBusinessRequest.End is not null)
+                    {
+                        throw new ExecutionError($"Can't set end date in work session with type {WorkSessionTypeEnum.Active}")
+                        {
+                            Code = GraphQLCustomErrorCodesEnum.INVALID_INPUT_DATA.ToString()
+                        };
+                    }
+                    if (user.Id != curUser.Id) 
+                    { 
+                        throw new ExecutionError("User has ho permission for this action")
+                        {
+                            Code = GraphQLCustomErrorCodesEnum.NO_PERMISSION.ToString()
+                        };
+                    }
+
+                    break;
+                };
+                default:
+                {
+                    throw new ExecutionError("Type is required")
+                    {
+                        Code = GraphQLCustomErrorCodesEnum.INVALID_INPUT_DATA.ToString()
                     };
                 }
-
-                break;
-            }
         }
 
         var workSessionDataRequest = _mapper.Map<WorkSessionDataRequest>(workSessionBusinessRequest);
@@ -173,6 +230,13 @@ public class WorkSessionService : IWorkSessionService
             throw new ExecutionError("This work session doesn't exist")
             {
                 Code = GraphQLCustomErrorCodesEnum.WORK_SESSION_NOT_FOUND.ToString()
+            };
+        }
+        if (workSessionCheck.Type == nameof(WorkSessionTypeEnum.Active))
+        {
+            throw new ExecutionError($"Cant update work session with type '{WorkSessionTypeEnum.Active}'")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_INPUT_DATA.ToString()
             };
         }
 

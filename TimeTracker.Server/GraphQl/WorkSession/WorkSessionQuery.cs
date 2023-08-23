@@ -34,7 +34,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var endDate = context.GetArgument<DateTime?>("endDate");
 
                     var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, startDate, endDate);
-                    var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
+                    var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionWithRelationsResponse>>(workSessionPaginationBusinessResponse);
 
                     return workSessionPaginationResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());

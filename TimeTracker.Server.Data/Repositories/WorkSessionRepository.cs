@@ -18,8 +18,12 @@ public class WorkSessionRepository : IWorkSessionRepository
     public async Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc,
         int offset, int limit, DateTime? startDate, DateTime? endDate)
     {
-        var query = $"SELECT * FROM [WorkSession]";
-        var countQuery = $"SELECT COUNT(*) FROM [WorkSession] WHERE {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
+        var query = $"SELECT * FROM [WorkSession] WHERE";
+        var countQuery = $"SELECT COUNT(*) FROM [WorkSession] WHERE";
+
+        var withUserPart = $" {nameof(WorkSessionDataResponse.UserId)} = @{nameof(userId)}";
+        query += withUserPart;
+        countQuery += withUserPart;
 
         if (startDate is not null)
         {
@@ -37,7 +41,8 @@ public class WorkSessionRepository : IWorkSessionRepository
             countQuery += endDateQuery;
         }
 
-        var withoutPlannedQuery = $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionStatusEnum.Planned}'";
+        var withoutPlannedQuery = $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionTypeEnum.Planned}'" +
+            $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionTypeEnum.Active}'";
         query += withoutPlannedQuery;
         countQuery += withoutPlannedQuery;
 
@@ -125,7 +130,14 @@ public class WorkSessionRepository : IWorkSessionRepository
         var id = Guid.NewGuid();
 
         const string query =
-            $"INSERT INTO [WorkSession] " +
+            $"INSERT INTO [WorkSession] (Id, " +
+            $"{nameof(WorkSessionDataResponse.UserId)}, " +
+            $"{nameof(WorkSessionDataResponse.LastModifierId)}, " +
+            $"{nameof(WorkSessionDataResponse.Start)}, " +
+            $"[{nameof(WorkSessionDataResponse.End)}], " +
+            $"{nameof(WorkSessionDataResponse.Type)}, " +
+            $"{nameof(WorkSessionDataResponse.Title)}, " +
+            $"{nameof(WorkSessionDataResponse.Description)}) " +
             $"VALUES (@{nameof(WorkSessionDataResponse.Id)}, " +
             $"@{nameof(WorkSessionDataResponse.UserId)}, " +
             $"@{nameof(WorkSessionDataResponse.LastModifierId)}, " +
@@ -202,7 +214,7 @@ public class WorkSessionRepository : IWorkSessionRepository
     public async Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime)
     {
         var query = $"UPDATE [WorkSession] SET [{nameof(WorkSessionDataResponse.End)}] = @{nameof(endDateTime)}," +
-                             $" {nameof(WorkSessionDataResponse.Type)} = '{WorkSessionStatusEnum.Completed}'" +
+                             $" {nameof(WorkSessionDataResponse.Type)} = '{WorkSessionTypeEnum.Completed}'" +
                              $" WHERE {nameof(WorkSessionDataResponse.Id)} = @{nameof(id)}";
 
         using var connection = _context.GetConnection();
@@ -247,7 +259,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         await connection.ExecuteAsync(query, workSessionDataResponses);
     }
 
-    public async Task DeleteWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null)
+    public async Task DeleteWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionTypeEnum? type = null)
     {
         var query = $"DELETE FROM [WorkSession] WHERE" +
             $" [{nameof(WorkSessionDataResponse.UserId)}] = '{userId}'" +

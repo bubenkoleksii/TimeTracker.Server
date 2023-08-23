@@ -41,7 +41,7 @@ public class AutoWorkSessionsJob : IJob
                     End = workSessionEnd,
                     Title = null,
                     Description = null,
-                    Type = WorkSessionStatusEnum.Auto.ToString(),
+                    Type = WorkSessionTypeEnum.Auto.ToString(),
                     LastModifierId = user.Id
                 });
             }
