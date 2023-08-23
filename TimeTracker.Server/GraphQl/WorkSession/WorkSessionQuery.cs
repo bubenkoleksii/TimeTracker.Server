@@ -39,19 +39,6 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     return workSessionPaginationResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
-            Field<WorkSessionType>("getWorkSessionById")
-                .Argument<NonNullGraphType<IdGraphType>>("id")
-                .Resolve()
-                .WithScope()
-                .WithService<IWorkSessionService>()
-                .ResolveAsync(async (context, service) =>
-                {
-                    var id = context.GetArgument<Guid>("id");
-                    var workSessionBusinessResponse = await service.GetWorkSessionByIdAsync(id);
-                    var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
-                    return workSession;
-                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
-
             Field<WorkSessionType>("getActiveWorkSessionByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
                 .Resolve()
