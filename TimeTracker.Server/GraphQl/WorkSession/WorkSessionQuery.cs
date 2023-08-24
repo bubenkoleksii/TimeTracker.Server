@@ -41,6 +41,23 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     return workSessionPaginationResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
+            Field<ListGraphType<WorkSessionWithRelationsType>>("getWorkSessionsByUserIdsByMonth")
+                .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
+                .Argument<NonNullGraphType<DateGraphType>>("monthDate")
+                .Resolve()
+                .WithScope()
+                .WithService<IWorkSessionService>()
+                .ResolveAsync(async (context, service) =>
+                {
+                    var userIds = context.GetArgument<List<Guid>>("userIds");
+                    var monthDate = context.GetArgument<DateTime>("monthDate");
+
+                    var workSessionWithRelationsBusinessResponseList = await service.GetWorkSessionsByUserIdsByMonthAsync(userIds, monthDate);
+                    var workSessionWithRelationsResponseList = mapper.Map<List<WorkSessionWithRelationsResponse>>(workSessionWithRelationsBusinessResponseList);
+
+                    return workSessionWithRelationsResponseList;
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
+
             Field<WorkSessionType>("getActiveWorkSessionByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
                 .Resolve()

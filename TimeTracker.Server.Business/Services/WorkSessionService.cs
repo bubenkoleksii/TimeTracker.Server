@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
-using TimeTracker.Server.Business.Models.SickLeave;
 using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
@@ -57,8 +56,10 @@ public class WorkSessionService : IWorkSessionService
             startDate, endDate, showPlanned);
         var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>>(workSessionPaginationDataResponse);
 
-        var userDict = new Dictionary<Guid, UserBusinessResponse>();
-        userDict.Add(user.Id, _mapper.Map<UserBusinessResponse>(user));
+        var userDict = new Dictionary<Guid, UserBusinessResponse>
+        {
+            { user.Id, _mapper.Map<UserBusinessResponse>(user) }
+        };
         foreach (var workSessionData in workSessionPaginationBusinessResponse.Items)
         {
             var lastModifierToFind = new UserBusinessResponse();
@@ -78,6 +79,51 @@ public class WorkSessionService : IWorkSessionService
             workSessionData.LastModifier = lastModifierToFind;
         }
         return workSessionPaginationBusinessResponse;
+    }
+
+    public async Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate)
+    {
+        var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(7);
+        startDate = startDate.AddDays(-7);
+
+        var workSessionDataResponseList = await _workSessionRepository.GetUserWorkSessionsInRangeAsync(userIds, startDate, endDate);
+        var workSessionWithRelationBusinessResponse = _mapper.Map<List<WorkSessionWithRelationsBusinessResponse>>(workSessionDataResponseList);
+
+        var userDict = new Dictionary<Guid, UserBusinessResponse>();
+        foreach (var workSessionData in workSessionWithRelationBusinessResponse)
+        {
+            UserBusinessResponse userToFind;
+            if (userDict.ContainsKey(workSessionData.WorkSession.UserId))
+            {
+                userToFind = userDict[workSessionData.WorkSession.UserId];
+            }
+            else
+            {
+                var userDataResponse = await _userRepository.GetUserByIdAsync(workSessionData.WorkSession.UserId);
+                userToFind = _mapper.Map<UserBusinessResponse>(userDataResponse);
+
+                userDict.Add(userToFind.Id, userToFind);
+            }
+
+            UserBusinessResponse lastModifierToFind;
+            if (userDict.ContainsKey(workSessionData.WorkSession.LastModifierId))
+            {
+                lastModifierToFind = userDict[workSessionData.WorkSession.LastModifierId];
+            }
+            else
+            {
+                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync(workSessionData.WorkSession.LastModifierId);
+                lastModifierToFind = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
+
+                userDict.Add(lastModifierToFind.Id, lastModifierToFind);
+            }
+
+            workSessionData.User = userToFind;
+            workSessionData.LastModifier = lastModifierToFind;
+        }
+
+        return workSessionWithRelationBusinessResponse;
     }
 
     public async Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserIdAsync(Guid userId)
