@@ -6,8 +6,8 @@ namespace TimeTracker.Server.Data.Abstractions
 {
     public interface IWorkSessionRepository
     {
-        public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, 
-            int offset, int limit, DateTime? startDate, DateTime? endDate);
+        public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc,
+            int offset, int limit, DateTime? startDate, DateTime? endDate, bool? showPlanned = false);
 
         public Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid[] userIds, DateTime start, DateTime end);
 

@@ -16,7 +16,7 @@ public class WorkSessionRepository : IWorkSessionRepository
     }
 
     public async Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc,
-        int offset, int limit, DateTime? startDate, DateTime? endDate)
+        int offset, int limit, DateTime? startDate, DateTime? endDate, bool? showPlanned = false)
     {
         var query = $"SELECT * FROM [WorkSession] WHERE";
         var countQuery = $"SELECT COUNT(*) FROM [WorkSession] WHERE";
@@ -27,7 +27,8 @@ public class WorkSessionRepository : IWorkSessionRepository
 
         if (startDate is not null)
         {
-            var startDateQuery = $" AND {nameof(WorkSessionDataResponse.Start)} >= @{nameof(startDate)}";
+            string startDateQuery = $" AND {(endDate is not null && startDate is not null ? "(" : "")}DATEDIFF(DAY, " +
+                $"[{nameof(WorkSessionDataResponse.Start)}], @{nameof(startDate)}) <= 0";
 
             query += startDateQuery;
             countQuery += startDateQuery;
@@ -35,16 +36,23 @@ public class WorkSessionRepository : IWorkSessionRepository
 
         if (endDate is not null)
         {
-            var endDateQuery = $" AND {nameof(WorkSessionDataResponse.Start)} <= DATEADD(day, 1, @{nameof(endDate)})";
+            var endDateQuery = $" AND DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], " +
+                $"@{nameof(endDate)}) >= 0{(endDate is not null && startDate is not null ? ")" : "")}";
 
             query += endDateQuery;
             countQuery += endDateQuery;
         }
 
-        var withoutPlannedQuery = $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionTypeEnum.Planned}'" +
-            $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionTypeEnum.Active}'";
-        query += withoutPlannedQuery;
-        countQuery += withoutPlannedQuery;
+        if (showPlanned is not null && !(bool)showPlanned)
+        {
+            var withoutPlannedQuery = $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionTypeEnum.Planned}'";
+            query += withoutPlannedQuery;
+            countQuery += withoutPlannedQuery;
+        }
+
+        var withoutActive = $" AND {nameof(WorkSessionDataResponse.Type)} != '{WorkSessionTypeEnum.Active}'";
+        query += withoutActive;
+        countQuery += withoutActive;
 
         query += $" ORDER BY [{nameof(WorkSessionDataResponse.Start)}] {(orderByDesc is true ? "desc" : "")}" + 
                  $" OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY;";

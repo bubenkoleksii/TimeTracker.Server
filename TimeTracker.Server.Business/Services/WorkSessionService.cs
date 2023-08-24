@@ -37,7 +37,7 @@ public class WorkSessionService : IWorkSessionService
     }
 
     public async Task<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset,
-        int? limit, DateTime? startDate, DateTime? endDate)
+        int? limit, DateTime? startDate, DateTime? endDate, bool? showPlanned = false)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:WorkSessionLimit").Value);
 
@@ -53,7 +53,8 @@ public class WorkSessionService : IWorkSessionService
             };
         }
 
-        var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserIdAsync(userId, orderByDesc, validatedOffset, validatedLimit, startDate, endDate);
+        var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserIdAsync(userId, orderByDesc, validatedOffset, validatedLimit,
+            startDate, endDate, showPlanned);
         var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>>(workSessionPaginationDataResponse);
 
         var userDict = new Dictionary<Guid, UserBusinessResponse>();

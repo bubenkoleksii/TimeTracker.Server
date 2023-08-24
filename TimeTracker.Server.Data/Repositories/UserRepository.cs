@@ -133,8 +133,9 @@ public class UserRepository : IUserRepository
 
         if (showFired)
         {
-            query += $" WHERE [{nameof(UserDataResponse.Status)}] != '{UserStatusEnum.deactivated}'";
+            query += $" WHERE [{nameof(UserDataResponse.Status)}] = '{UserStatusEnum.deactivated}'";
         }
+        query += $" ORDER BY [{nameof(UserDataResponse.FullName)}]";
 
         using var connection = _context.GetConnection();
         var users = await connection.QueryAsync<UserDataResponse>(query);
