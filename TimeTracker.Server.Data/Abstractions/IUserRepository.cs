@@ -9,11 +9,11 @@ public interface IUserRepository
 
     public Task<UserDataResponse> GetUserByEmailAsync(string email);
 
-    public Task<IEnumerable<UserDataResponse>> GetFullTimeWorkingUsersAsync();
+    public Task<List<UserDataResponse>> GetFullTimeWorkingUsersAsync();
 
     public Task<PaginationDataResponse<UserDataResponse>> GetAllUsersAsync(int offset, int limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn);
     
-    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync();
+    public Task<IEnumerable<UserDataResponse>> GetAllUsersAsync(bool showFired = false);
 
     public Task<UserDataResponse> CreateUserAsync(UserDataRequest userRequest);
 

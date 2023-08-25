@@ -3,6 +3,7 @@ using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
@@ -27,8 +28,10 @@ public class UserService : IUserService
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
+    private readonly ILogger<UserService> _logger;
+
     public UserService(IMailService mailService, IUserRepository userRepository, IVacationInfoRepository vacationInfoRepository, IMapper mapper, 
-        IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<UserService> logger)
     {
         _mailService = mailService;
         _userRepository = userRepository;
@@ -36,6 +39,7 @@ public class UserService : IUserService
         _vacationInfoRepository = vacationInfoRepository;
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
     public async Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id)
@@ -69,26 +73,24 @@ public class UserService : IUserService
         return userBusinessResponse;
     }
 
-    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
+    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetPaginatedUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
 
         var validatedOffset = offset is >= 0 ? offset.Value : default;
         var validatedLimit = limit is > 0 ? limit.Value : limitDefault;
 
-        try
-        {
-            var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
+        var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
 
-            var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
-            return usersBusinessResponse;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+        var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
+        return usersBusinessResponse;
+    }
 
-        return null;
+    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(bool showFired = false)
+    {
+        var userDataResponseList = await _userRepository.GetAllUsersAsync(showFired);
+        var userBusinessResponseList = _mapper.Map<IEnumerable<UserBusinessResponse>>(userDataResponseList);
+        return userBusinessResponseList;
     }
 
     public async Task DeactivateUserAsync(Guid id)

@@ -19,8 +19,9 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                 .Argument<BooleanGraphType>("orderByDesc")
                 .Argument<IntGraphType>("offset")
                 .Argument<IntGraphType>("limit")
-                .Argument<DateTimeGraphType>("startDate")
-                .Argument<DateTimeGraphType>("endDate")
+                .Argument<DateGraphType>("startDate")
+                .Argument<DateGraphType>("endDate")
+                .Argument<BooleanGraphType>("showPlanned")
                 .Resolve()
                 .WithScope()
                 .WithService<IWorkSessionService>()
@@ -32,24 +33,29 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var limit = context.GetArgument<int?>("limit");
                     var startDate = context.GetArgument<DateTime?>("startDate");
                     var endDate = context.GetArgument<DateTime?>("endDate");
+                    var showPlanned = context.GetArgument<bool?>("showPlanned");
 
-                    var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, startDate, endDate);
-                    var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
+                    var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, startDate, endDate, showPlanned);
+                    var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionWithRelationsResponse>>(workSessionPaginationBusinessResponse);
 
                     return workSessionPaginationResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
-            Field<WorkSessionType>("getWorkSessionById")
-                .Argument<NonNullGraphType<IdGraphType>>("id")
+            Field<ListGraphType<WorkSessionWithRelationsType>>("getWorkSessionsByUserIdsByMonth")
+                .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
+                .Argument<NonNullGraphType<DateGraphType>>("monthDate")
                 .Resolve()
                 .WithScope()
                 .WithService<IWorkSessionService>()
                 .ResolveAsync(async (context, service) =>
                 {
-                    var id = context.GetArgument<Guid>("id");
-                    var workSessionBusinessResponse = await service.GetWorkSessionByIdAsync(id);
-                    var workSession = mapper.Map<WorkSessionResponse>(workSessionBusinessResponse);
-                    return workSession;
+                    var userIds = context.GetArgument<List<Guid>>("userIds");
+                    var monthDate = context.GetArgument<DateTime>("monthDate");
+
+                    var workSessionWithRelationsBusinessResponseList = await service.GetWorkSessionsByUserIdsByMonthAsync(userIds, monthDate);
+                    var workSessionWithRelationsResponseList = mapper.Map<List<WorkSessionWithRelationsResponse>>(workSessionWithRelationsBusinessResponseList);
+
+                    return workSessionWithRelationsResponseList;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
             Field<WorkSessionType>("getActiveWorkSessionByUserId")

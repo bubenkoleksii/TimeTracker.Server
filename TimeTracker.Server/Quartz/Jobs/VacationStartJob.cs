@@ -2,23 +2,18 @@
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.User;
 using TimeTracker.Server.Data.Models.Vacation;
-using TimeTracker.Server.Data.Models.WorkSession;
 using TimeTracker.Server.Shared;
-using TimeTracker.Server.Shared.Helpers;
 
 namespace TimeTracker.Server.Quartz.Jobs
 {
     public class VacationStartJob : IJob
     {
-        private readonly IWorkSessionRepository _workSessionRepository;
         private readonly IUserRepository _userRepository;
         private readonly IVacationRepository _vacationRepository;
         private readonly IVacationInfoRepository _vacationInfoRepository;
 
-        public VacationStartJob(IWorkSessionRepository workSessionRepository, IUserRepository userRepository, IVacationRepository vacationRepository, 
-            IVacationInfoRepository vacationInfoRepository)
+        public VacationStartJob(IUserRepository userRepository, IVacationRepository vacationRepository, IVacationInfoRepository vacationInfoRepository)
         {
-            _workSessionRepository = workSessionRepository;
             _userRepository = userRepository;
             _vacationRepository = vacationRepository;
             _vacationInfoRepository = vacationInfoRepository;
@@ -27,6 +22,11 @@ namespace TimeTracker.Server.Quartz.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             var approvedNotStartedVacations = await _vacationRepository.GetNotDeclinedNotFinishedVacationsAsync();
+
+            if (approvedNotStartedVacations is null || !approvedNotStartedVacations.Any())
+            {
+                return;
+            }
 
             var vacationsToStartList = new List<VacationDataResponse>();
             var vacationsToDecline = new List<VacationDataResponse>();
@@ -58,7 +58,6 @@ namespace TimeTracker.Server.Quartz.Jobs
 
         public async Task StartVacations(List<VacationDataResponse> vacations)
         {
-            var workSessionsToAutoAdd = new List<WorkSessionDataRequest>();
             var daysSpentToAdd = new List<VacationInfoAddDaysSpendDataRequest>();
             var usersStatusesToSet = new List<UserSetStatusDataRequest>();
 
@@ -77,32 +76,7 @@ namespace TimeTracker.Server.Quartz.Jobs
                     UserId = vacation.UserId,
                     DaysSpent = (int)vacationDurationInDays
                 });
-
-                var workSessionStart = WorkSessionHelper.GetDefaultWorkSessionStart();
-                var workSessionEnd = WorkSessionHelper.GetDefaultWorkSessionEnd(user.EmploymentRate);
-
-                for (int i = 0; i < vacationDurationInDays; i++)
-                {
-                    var curDayWorkSessionStart = workSessionStart.AddDays(i);
-                    var curDayWorkSessionEnd = workSessionEnd.AddDays(i);
-                    if (WorkSessionHelper.IsNotWeekendDay(curDayWorkSessionStart))
-                    {
-                        workSessionsToAutoAdd.Add(new WorkSessionDataRequest()
-                        {
-                            UserId = vacation.UserId,
-                            Start = curDayWorkSessionStart,
-                            End = curDayWorkSessionEnd,
-                            Title = null,
-                            Description = null,
-                            Type = WorkSessionStatusEnum.Vacation.ToString(),
-                            LastModifierId = user.Id
-                        });
-                    }
-                }
             }
-
-            //create workSessions on every vacation day
-            await _workSessionRepository.CreateWorkSessionsAsync(workSessionsToAutoAdd);
 
             //add daysSpent into user's vacationInfo
             await _vacationInfoRepository.AddDaysSpentAsync(daysSpentToAdd);
