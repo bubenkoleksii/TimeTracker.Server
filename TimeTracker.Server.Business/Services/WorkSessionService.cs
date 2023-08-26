@@ -81,13 +81,13 @@ public class WorkSessionService : IWorkSessionService
         return workSessionPaginationBusinessResponse;
     }
 
-    public async Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate)
+    public async Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate, bool hidePlanned = false)
     {
         var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
         var endDate = startDate.AddMonths(1).AddDays(7);
         startDate = startDate.AddDays(-7);
 
-        var workSessionDataResponseList = await _workSessionRepository.GetUserWorkSessionsInRangeAsync(userIds, startDate, endDate);
+        var workSessionDataResponseList = await _workSessionRepository.GetUserWorkSessionsInRangeAsync(userIds, startDate, endDate, hidePlanned);
         var workSessionWithRelationBusinessResponse = _mapper.Map<List<WorkSessionWithRelationsBusinessResponse>>(workSessionDataResponseList);
 
         var userDict = new Dictionary<Guid, UserBusinessResponse>();
