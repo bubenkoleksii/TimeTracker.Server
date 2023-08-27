@@ -33,6 +33,16 @@ public class HolidayRepository : IHolidayRepository
         return holidays;
     }
 
+    public async Task<IEnumerable<HolidayDataResponse>> GetHolidaysByDateRangeAsync(DateOnly start, DateOnly end)
+    {
+        const string query = $"SELECT * FROM [Holidays] WHERE [{nameof(HolidayDataResponse.Date)}] >= @StartDate AND [{nameof(HolidayDataResponse.Date)}] <= @EndDate ORDER BY [{nameof(HolidayDataResponse.Date)}];";
+
+        using var connection = _context.GetConnection();
+        var holidays = await connection.QueryAsync<HolidayDataResponse>(query, new {StartDate = start.ToDateTime(new TimeOnly(0, 0)), EndDate = end.ToDateTime(new TimeOnly(0, 0)) });
+
+        return holidays;
+    }
+
     public async Task<HolidayDataResponse> CreateHolidayAsync(HolidayDataRequest holidayDataRequest)
     {
         var id = Guid.NewGuid();
