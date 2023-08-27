@@ -44,6 +44,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
             Field<ListGraphType<WorkSessionWithRelationsType>>("getWorkSessionsByUserIdsByMonth")
                 .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
                 .Argument<NonNullGraphType<DateGraphType>>("monthDate")
+                .Argument<NonNullGraphType<BooleanGraphType>>("hidePlanned")
                 .Resolve()
                 .WithScope()
                 .WithService<IWorkSessionService>()
@@ -51,8 +52,9 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                 {
                     var userIds = context.GetArgument<List<Guid>>("userIds");
                     var monthDate = context.GetArgument<DateTime>("monthDate");
+                    var hidePlanned = context.GetArgument<bool>("hidePlanned");
 
-                    var workSessionWithRelationsBusinessResponseList = await service.GetWorkSessionsByUserIdsByMonthAsync(userIds, monthDate);
+                    var workSessionWithRelationsBusinessResponseList = await service.GetWorkSessionsByUserIdsByMonthAsync(userIds, monthDate, hidePlanned);
                     var workSessionWithRelationsResponseList = mapper.Map<List<WorkSessionWithRelationsResponse>>(workSessionWithRelationsBusinessResponseList);
 
                     return workSessionWithRelationsResponseList;

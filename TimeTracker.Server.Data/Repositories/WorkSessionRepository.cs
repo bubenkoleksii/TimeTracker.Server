@@ -79,7 +79,7 @@ public class WorkSessionRepository : IWorkSessionRepository
         return workSessionPaginationDataResponse;
     }
 
-    public async Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(List<Guid> userIds, DateTime start, DateTime end)
+    public async Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(List<Guid> userIds, DateTime start, DateTime end, bool hidePlanned = false)
     {
         var query = $"SELECT * FROM [WorkSession] WHERE" +
             $" (DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(start)}) <= 0" +
@@ -99,6 +99,11 @@ public class WorkSessionRepository : IWorkSessionRepository
         else
         {
             return new List<WorkSessionDataResponse>();
+        }
+
+        if (hidePlanned)
+        {
+            query += $" AND [{nameof(WorkSessionDataResponse.Type)}] != '{WorkSessionTypeEnum.Planned}'";
         }
 
         using var connection = _context.GetConnection();

@@ -10,7 +10,7 @@ public interface IWorkSessionService
 
     public Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserIdAsync(Guid userId);
 
-    public Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate);
+    public Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate, bool hidePlanned = false);
 
     public Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSession);
 
