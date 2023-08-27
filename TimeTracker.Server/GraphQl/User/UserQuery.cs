@@ -33,7 +33,7 @@ public class UserQuery : ObjectGraphType
                 var filteringStatus = context.GetArgument<string?>("filteringStatus");
                 var sortingColumn = context.GetArgument<string?>("sortingColumn");
 
-                var usersBusinessResponse = await service.GetAllUsersAsync(offset, limit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
+                var usersBusinessResponse = await service.GetPaginatedUsersAsync(offset, limit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
 
                 var usersResponse = mapper.Map<PaginationResponse<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
@@ -49,10 +49,6 @@ public class UserQuery : ObjectGraphType
             .Argument<DateTimeGraphType>("start")
             .Argument<DateTimeGraphType>("end")
             .Argument<BooleanGraphType>("withoutPagination")
-            .Resolve()
-            .WithScope()
-            .WithService<IUserService>()
-            .ResolveAsync(async (context, service) =>
             {
                 var offset = context.GetArgument<int?>("offset");
                 var limit = context.GetArgument<int?>("limit");
@@ -93,6 +89,21 @@ public class UserQuery : ObjectGraphType
                 return excelBytes;
             }).AuthorizeWithPolicy(PermissionsEnum.GetUsers.ToString());
 
+       Field<ListGraphType<UserType>>("getAllWithoutPagination")
+            .Argument<NonNullGraphType<BooleanGraphType>>("showFired")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var showFired = context.GetArgument<bool>("showFired");
+
+                var usersBusinessResponse = await service.GetAllUsersAsync(showFired);
+
+                var usersResponse = mapper.Map<IEnumerable<UserResponse>>(usersBusinessResponse);
+                return usersResponse;
+            }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
+            
         Field<PaginationProfileType>("getAllProfiles")
             .Argument<IntGraphType>("offset")
             .Argument<IntGraphType>("limit")
@@ -108,7 +119,7 @@ public class UserQuery : ObjectGraphType
                 var search = context.GetArgument<string>("search");
                 var filteringStatus = context.GetArgument<string?>("filteringStatus");
 
-                var usersBusinessResponse = await service.GetAllUsersAsync(offset, limit, search,
+                var usersBusinessResponse = await service.GetPaginatedUsersAsync(offset, limit, search,
                     filteringEmploymentRate: null, filteringStatus, sortingColumn: null);
 
                 var usersResponse = mapper.Map<PaginationResponse<ProfileResponse>>(usersBusinessResponse);

@@ -11,6 +11,7 @@ using TimeTracker.Server.GraphQl;
 using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging.AzureAppServices;
 using Microsoft.IdentityModel.Tokens;
 using TimeTracker.Server.Middleware;
 using TimeTracker.Server.Shared.Helpers;
@@ -184,7 +185,20 @@ public class Program
                 .ClearProviders()
                 .AddFluentMigratorConsole());
 
-        var app = builder.Build();
+        builder.Logging.AddConsole();
+
+        builder.Host.ConfigureLogging(l => l.AddAzureWebAppDiagnostics())
+            .ConfigureServices(s => s.Configure<AzureFileLoggerOptions>(options =>
+            {
+                options.FileName = "azure-diagnostics-";
+                options.FileSizeLimit = 50 * 1024;
+                options.RetainedFileCountLimit = 5;
+            }).Configure<AzureBlobLoggerOptions>(options =>
+            {
+                options.BlobName = "log.txt";
+            }));
+
+            var app = builder.Build();
 
         app.UseCors("MyAllowSpecificOrigins");
 

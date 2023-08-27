@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Microsoft.Extensions.Logging;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
@@ -78,7 +79,7 @@ public class UserService : IUserService
         return userBusinessResponse;
     }
 
-    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
+    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetPaginatedUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
 
@@ -220,6 +221,16 @@ public class UserService : IUserService
 
         var excelBytes = await package.GetAsByteArrayAsync();
         return excelBytes;
+
+        var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
+        return usersBusinessResponse;
+    }
+
+    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(bool showFired = false)
+    {
+        var userDataResponseList = await _userRepository.GetAllUsersAsync(showFired);
+        var userBusinessResponseList = _mapper.Map<IEnumerable<UserBusinessResponse>>(userDataResponseList);
+        return userBusinessResponseList;
     }
 
     public async Task DeactivateUserAsync(Guid id)

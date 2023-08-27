@@ -9,7 +9,9 @@ public interface IUserService
 
     public Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id);
 
-    public Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn);
+    public Task<PaginationBusinessResponse<UserBusinessResponse>> GetPaginatedUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn);
+
+    public Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(bool showFired = false);
 
     public Task<PaginationBusinessResponse<UserWorkInfoBusinessResponse>> GetAllUsersWorkInfoAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, 
         string? sortingColumn, DateTime? start, DateTime? end, bool? withoutPagination = false);
