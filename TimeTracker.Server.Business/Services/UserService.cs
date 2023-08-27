@@ -33,10 +33,10 @@ public class UserService : IUserService
 
     private readonly IHolidayService _holidayService;
 
-    private readonly IWorkSessionService _workSessionService;
+    private readonly IWorkSessionRepository _workSessionRepository;
 
     public UserService(IMailService mailService, IUserRepository userRepository, IVacationInfoRepository vacationInfoRepository, IMapper mapper, 
-        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHolidayService holidayService, IWorkSessionService workSessionService)
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHolidayService holidayService, IWorkSessionRepository workSessionRepository)
     {
         _mailService = mailService;
         _userRepository = userRepository;
@@ -45,7 +45,7 @@ public class UserService : IUserService
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
         _holidayService = holidayService;
-        _workSessionService = workSessionService;
+        _workSessionRepository = workSessionRepository;
     }
 
     public async Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id)
@@ -132,8 +132,17 @@ public class UserService : IUserService
         {
             var userWorkInfoResponse = _mapper.Map<UserWorkInfoBusinessResponse>(user);
 
+            var workSessionsDataResponse = await _workSessionRepository.GetOneUserWorkSessionsInRangeAsync(user.Id, validatedStart.ToDateTime(new TimeOnly(0, 0)), validatedEnd.ToDateTime(new TimeOnly(0, 0)), type: WorkSessionTypeEnum.Completed);
+            if (user.EmploymentRate == 100)
+            {
+                var autoWorkSessionsDataResponse = await _workSessionRepository.GetOneUserWorkSessionsInRangeAsync(user.Id, validatedStart.ToDateTime(new TimeOnly(0, 0)), validatedEnd.ToDateTime(new TimeOnly(0, 0)), type: WorkSessionTypeEnum.Auto);
+                workSessionsDataResponse.AddRange(autoWorkSessionsDataResponse);
+            }
+
+            var countOfWorkingHours = Math.Round(workSessionsDataResponse.Sum(workSession => (workSession.End - workSession.Start).Value.TotalHours), 2);
+
             userWorkInfoResponse.PlannedWorkingHours = Math.Round(fullTimeSummaryHours * user.EmploymentRate / 100.0, 2);
-            userWorkInfoResponse.WorkedHours = await _workSessionService.GetWorkingHoursByUserId(user.Id, validatedStart, validatedEnd);
+            userWorkInfoResponse.WorkedHours = countOfWorkingHours;
 
             userWorkInfoResponse.SickLeaveHours = 0;
             userWorkInfoResponse.VacationHours = 0;
@@ -221,9 +230,6 @@ public class UserService : IUserService
 
         var excelBytes = await package.GetAsByteArrayAsync();
         return excelBytes;
-
-        var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
-        return usersBusinessResponse;
     }
 
     public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(bool showFired = false)

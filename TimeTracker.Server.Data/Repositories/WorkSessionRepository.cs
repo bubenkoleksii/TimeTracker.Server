@@ -79,6 +79,28 @@ public class WorkSessionRepository : IWorkSessionRepository
         return workSessionPaginationDataResponse;
     }
 
+    public async Task<List<WorkSessionDataResponse>> GetOneUserWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionTypeEnum? type = null)
+    {
+        var query = $"SELECT * FROM [WorkSession] WHERE" +
+                    $" [{nameof(WorkSessionDataResponse.UserId)}] = '{userId}'" +
+                    $" AND (DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(start)}) <= 0" +
+                    $" AND DATEDIFF(DAY, [{nameof(WorkSessionDataResponse.Start)}], @{nameof(end)}) >= 0)";
+
+        if (type is not null)
+        {
+            query += $" AND [{nameof(WorkSessionDataResponse.Type)}] = '{type}'";
+        }
+
+        using var connection = _context.GetConnection();
+        var workSessionsDataResponse = await connection.QueryAsync<WorkSessionDataResponse>(query, new
+        {
+            start,
+            end
+        });
+
+        return workSessionsDataResponse.ToList();
+    }
+
     public async Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(List<Guid> userIds, DateTime start, DateTime end, bool hidePlanned = false)
     {
         var query = $"SELECT * FROM [WorkSession] WHERE" +

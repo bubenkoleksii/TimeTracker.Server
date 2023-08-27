@@ -49,7 +49,11 @@ public class UserQuery : ObjectGraphType
             .Argument<DateTimeGraphType>("start")
             .Argument<DateTimeGraphType>("end")
             .Argument<BooleanGraphType>("withoutPagination")
-            {
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+             {
                 var offset = context.GetArgument<int?>("offset");
                 var limit = context.GetArgument<int?>("limit");
                 var search = context.GetArgument<string?>("search");
