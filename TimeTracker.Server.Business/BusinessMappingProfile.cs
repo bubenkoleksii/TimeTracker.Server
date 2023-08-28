@@ -21,6 +21,8 @@ public class BusinessMappingProfile : Profile
     {
         CreateMap<UserBusinessRequest, UserDataRequest>();
         CreateMap<UserDataResponse, UserBusinessResponse>();
+        CreateMap<UserDataResponse, UserWorkInfoBusinessResponse>()
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id));
         CreateMap<PaginationDataResponse<UserDataResponse>, PaginationBusinessResponse<UserBusinessResponse>>();
 
         CreateMap<SetPasswordUserBusinessRequest, SetPasswordUserDataRequest>();

@@ -39,7 +39,61 @@ public class UserQuery : ObjectGraphType
                 return usersResponse;
             }).AuthorizeWithPolicy(PermissionsEnum.GetUsers.ToString());
 
-        Field<ListGraphType<UserType>>("getAllWithoutPagination")
+        Field<PaginationUserWorkInfoType>("getAllWorkInfo")
+            .Argument<IntGraphType>("offset")
+            .Argument<IntGraphType>("limit")
+            .Argument<StringGraphType>("search")
+            .Argument<StringGraphType>("sortingColumn")
+            .Argument<IntGraphType>("filteringEmploymentRate")
+            .Argument<StringGraphType>("filteringStatus")
+            .Argument<DateTimeGraphType>("start")
+            .Argument<DateTimeGraphType>("end")
+            .Argument<BooleanGraphType>("withoutPagination")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+             {
+                var offset = context.GetArgument<int?>("offset");
+                var limit = context.GetArgument<int?>("limit");
+                var search = context.GetArgument<string?>("search");
+                var filteringEmploymentRate = context.GetArgument<int?>("filteringEmploymentRate");
+                var filteringStatus = context.GetArgument<string?>("filteringStatus");
+                var sortingColumn = context.GetArgument<string?>("sortingColumn");
+                var start = context.GetArgument<DateTime?>("start");
+                var end = context.GetArgument<DateTime?>("end");
+                var withoutPagination = context.GetArgument<bool?>("withoutPagination");
+
+                var usersBusinessResponse = await service.GetAllUsersWorkInfoAsync(offset, limit, search, filteringEmploymentRate, filteringStatus, sortingColumn, start, end, withoutPagination);
+                
+                var usersResponse = mapper.Map<PaginationResponse<UserWorkInfoResponse>>(usersBusinessResponse);
+                return usersResponse;
+            }).AuthorizeWithPolicy(PermissionsEnum.GetUsers.ToString());
+        
+        Field<ListGraphType<ByteGraphType>>("exportWorkInfoToExcel")
+            .Argument<StringGraphType>("search")
+            .Argument<StringGraphType>("sortingColumn")
+            .Argument<IntGraphType>("filteringEmploymentRate")
+            .Argument<StringGraphType>("filteringStatus")
+            .Argument<DateTimeGraphType>("start")
+            .Argument<DateTimeGraphType>("end")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var search = context.GetArgument<string?>("search");
+                var filteringEmploymentRate = context.GetArgument<int?>("filteringEmploymentRate");
+                var filteringStatus = context.GetArgument<string?>("filteringStatus");
+                var sortingColumn = context.GetArgument<string?>("sortingColumn");
+                var start = context.GetArgument<DateTime?>("start");
+                var end = context.GetArgument<DateTime?>("end");
+
+                var excelBytes = await service.ExportUsersWorkInfoToExcel(search, filteringEmploymentRate, filteringStatus, sortingColumn, start, end);
+                return excelBytes;
+            }).AuthorizeWithPolicy(PermissionsEnum.GetUsers.ToString());
+
+       Field<ListGraphType<UserType>>("getAllWithoutPagination")
             .Argument<NonNullGraphType<BooleanGraphType>>("showFired")
             .Resolve()
             .WithScope()
@@ -53,7 +107,7 @@ public class UserQuery : ObjectGraphType
                 var usersResponse = mapper.Map<IEnumerable<UserResponse>>(usersBusinessResponse);
                 return usersResponse;
             }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
-
+            
         Field<PaginationProfileType>("getAllProfiles")
             .Argument<IntGraphType>("offset")
             .Argument<IntGraphType>("limit")

@@ -152,6 +152,28 @@ public class WorkSessionService : IWorkSessionService
         return workSessionBusinessResponse;
     }
 
+    public async Task<double> GetWorkingHoursByUserId(Guid userId, DateOnly start, DateOnly end)
+    {
+        var user = await _userRepository.GetUserByIdAsync(userId);
+        if (user is null)
+        {
+            throw new ExecutionError("User not found")
+            {
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+            };
+        }
+
+        var workSessionsDataResponse = await _workSessionRepository.GetOneUserWorkSessionsInRangeAsync(userId, start.ToDateTime(new TimeOnly(0, 0)), end.ToDateTime(new TimeOnly(0, 0)), type: WorkSessionTypeEnum.Completed);
+        if (user.EmploymentRate == 100)
+        {
+            var autoWorkSessionsDataResponse = await _workSessionRepository.GetOneUserWorkSessionsInRangeAsync(userId, start.ToDateTime(new TimeOnly(0, 0)), end.ToDateTime(new TimeOnly(0, 0)), type: WorkSessionTypeEnum.Auto);
+            workSessionsDataResponse.AddRange(autoWorkSessionsDataResponse);
+        }
+
+        var countOfWorkingHours = Math.Round(workSessionsDataResponse.Sum(workSession => (workSession.End - workSession.Start).Value.TotalHours), 2);
+        return countOfWorkingHours;
+    }
+
     public async Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSessionBusinessRequest)
     {
         var curUser = await _userService.GetCurrentUserFromClaimsAsync();

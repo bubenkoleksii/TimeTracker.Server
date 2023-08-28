@@ -9,9 +9,11 @@ public interface IWorkSessionService
         int? limit, DateTime? startDate, DateTime? endDate, bool? showPlanned = false);
 
     public Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserIdAsync(Guid userId);
-
+  
+    public Task<double> GetWorkingHoursByUserId(Guid userId, DateOnly start, DateOnly end);
+  
     public Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate, bool hidePlanned = false);
-
+  
     public Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSession);
 
     public Task SetWorkSessionEndAsync(Guid id, DateTime endDateTime);
