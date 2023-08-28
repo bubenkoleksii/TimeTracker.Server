@@ -71,7 +71,75 @@ public class HolidayService : IHolidayService
 
         await _holidayRepository.DeleteHolidayAsync(id);
     }
-    
+
+    public async Task<CountOfWorkingDaysBusinessResponse> GetCountOfWorkingDays(DateOnly start, DateOnly end)
+    {
+        var holidaysDataResponse = await _holidayRepository.GetHolidaysByDateRangeAsync(start, end);
+
+        var countOfHolidayDays = 0;
+        var counterOfShortDays = 0;
+
+        var holidaysDataResponseArray = holidaysDataResponse.ToArray();
+        for (var i = 0; i < holidaysDataResponseArray.Length; i++)
+        {
+            var holiday = holidaysDataResponseArray[i];
+            var previousHoliday = i != 0 ? holidaysDataResponseArray[i - 1] : null;
+
+            if (holiday.Date.DayOfWeek != DayOfWeek.Sunday && holiday.Date.DayOfWeek != DayOfWeek.Monday)
+            {
+                if (previousHoliday == null)
+                {
+                    counterOfShortDays++;
+                }
+                else
+                {
+                    if ((holiday.Date - previousHoliday.Date).Days > 1)
+                    {
+                        counterOfShortDays++;
+                    }
+                }
+            }
+
+            if (holiday.EndDate != null)
+            {
+                for (var date = holiday.Date; date <= holiday.EndDate; date = date.AddDays(1))
+                {
+                    if (date.DayOfWeek != DayOfWeek.Sunday && date.DayOfWeek != DayOfWeek.Saturday)
+                    {
+                        countOfHolidayDays++;
+                    }
+                }
+            }
+            else
+            {
+                if (holiday.Date.DayOfWeek != DayOfWeek.Sunday && holiday.Date.DayOfWeek != DayOfWeek.Saturday)
+                {
+                    countOfHolidayDays++;
+                }
+            }
+        }
+
+        var countOfFullDays = end.DayNumber - start.DayNumber + 1;
+        countOfFullDays -= countOfHolidayDays;
+
+        var countOfWeekendDays = 0;
+        for (var date = start; date <= end; date = date.AddDays(1))
+        {
+            if (date.DayOfWeek is DayOfWeek.Sunday or DayOfWeek.Saturday)
+            {
+                countOfWeekendDays++;
+            }
+        }
+
+        countOfFullDays -= countOfWeekendDays;
+
+        return new CountOfWorkingDaysBusinessResponse
+        {
+            FullDays = countOfFullDays,
+            ShortDays = counterOfShortDays
+        };
+    }
+
     protected void ValidateHolidayRequestData(HolidayBusinessRequest holidayBusinessRequest)
     {
         if (!Enum.TryParse<HolidayTypesEnum>(holidayBusinessRequest.Type, false, out var _))

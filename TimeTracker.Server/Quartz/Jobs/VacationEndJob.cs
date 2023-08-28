@@ -21,6 +21,11 @@ namespace TimeTracker.Server.Quartz.Jobs
         {
             var approvedNotStartedVacations = await _vacationRepository.GetNotDeclinedNotFinishedVacationsAsync();
 
+            if (approvedNotStartedVacations is null || !approvedNotStartedVacations.Any())
+            {
+                return;
+            }
+
             var vacationsToEndList = new List<VacationDataResponse>();
             foreach (var vacation in approvedNotStartedVacations)
             {

@@ -20,6 +20,11 @@ public class SickLeaveEndJob : IJob
     {
         var sickLeaveData = await _sickLeaveRepository.GetSickLeavesAsync();
 
+        if (sickLeaveData is null || !sickLeaveData.Any())
+        {
+            return;
+        }
+
         var usersStatusesToSet = new List<UserSetStatusDataRequest>();
         foreach (var sickLeave in sickLeaveData)
         {

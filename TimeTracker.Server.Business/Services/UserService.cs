@@ -3,6 +3,8 @@ using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using Microsoft.Extensions.Logging;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
@@ -11,6 +13,7 @@ using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.User;
 using TimeTracker.Server.Shared;
 using TimeTracker.Server.Shared.Exceptions;
+using ExecutionError = GraphQL.ExecutionError;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -28,10 +31,12 @@ public class UserService : IUserService
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    private readonly ILogger<UserService> _logger;
+    private readonly IHolidayService _holidayService;
+
+    private readonly IWorkSessionRepository _workSessionRepository;
 
     public UserService(IMailService mailService, IUserRepository userRepository, IVacationInfoRepository vacationInfoRepository, IMapper mapper, 
-        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<UserService> logger)
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHolidayService holidayService, IWorkSessionRepository workSessionRepository)
     {
         _mailService = mailService;
         _userRepository = userRepository;
@@ -39,7 +44,8 @@ public class UserService : IUserService
         _vacationInfoRepository = vacationInfoRepository;
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
-        _logger = logger;
+        _holidayService = holidayService;
+        _workSessionRepository = workSessionRepository;
     }
 
     public async Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id)
@@ -73,7 +79,7 @@ public class UserService : IUserService
         return userBusinessResponse;
     }
 
-    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetAllUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
+    public async Task<PaginationBusinessResponse<UserBusinessResponse>> GetPaginatedUsersAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
 
@@ -84,6 +90,153 @@ public class UserService : IUserService
 
         var usersBusinessResponse = _mapper.Map<PaginationBusinessResponse<UserBusinessResponse>>(usersDataResponse);
         return usersBusinessResponse;
+    }
+
+    public async Task<PaginationBusinessResponse<UserWorkInfoBusinessResponse>> GetAllUsersWorkInfoAsync(int? offset, int? limit, string search, int? filteringEmploymentRate,
+        string? filteringStatus, string? sortingColumn, DateTime? start, DateTime? end, bool? withoutPagination = false)
+    {
+        var limitDefault = int.Parse(_configuration.GetSection("Pagination:UserLimit").Value);
+
+        var validatedOffset = 0;
+        var validatedLimit = int.MaxValue;
+
+        if (withoutPagination is null or false)
+        {
+            validatedOffset = offset is >= 0 ? offset.Value : default;
+            validatedLimit = limit is > 0 ? limit.Value : limitDefault;
+        }
+
+        var usersDataResponse = await _userRepository.GetAllUsersAsync(validatedOffset, validatedLimit, search, filteringEmploymentRate, filteringStatus, sortingColumn);
+        if (usersDataResponse.Items == null)
+        {
+            return new PaginationBusinessResponse<UserWorkInfoBusinessResponse>()
+            {
+                Count = 0,
+                Items = null
+            };
+        }
+
+        var launchDate = DateOnly.Parse(_configuration.GetSection("LaunchDate").Value);
+        var validatedStart = start == null ? launchDate : DateOnly.FromDateTime((DateTime)start);
+        var validatedEnd = end == null ? DateOnly.FromDateTime(DateTime.Now) : DateOnly.FromDateTime((DateTime)end);
+        
+        var countOfWorkingDays = await _holidayService.GetCountOfWorkingDays(validatedStart, validatedEnd);
+
+        var fullDayWorkingHours = int.Parse(_configuration.GetSection("WorkHours:FullDay").Value);
+        var shortDayWorkingHours = int.Parse(_configuration.GetSection("WorkHours:ShortDay").Value);
+
+        var fullTimeSummaryHours = countOfWorkingDays.FullDays * fullDayWorkingHours + countOfWorkingDays.ShortDays * shortDayWorkingHours;
+
+        var usersWorkInfoList = new List<UserWorkInfoBusinessResponse>();
+        foreach (var user in usersDataResponse.Items)
+        {
+            var userWorkInfoResponse = _mapper.Map<UserWorkInfoBusinessResponse>(user);
+
+            var workSessionsDataResponse = await _workSessionRepository.GetOneUserWorkSessionsInRangeAsync(user.Id, validatedStart.ToDateTime(new TimeOnly(0, 0)), validatedEnd.ToDateTime(new TimeOnly(0, 0)), type: WorkSessionTypeEnum.Completed);
+            if (user.EmploymentRate == 100)
+            {
+                var autoWorkSessionsDataResponse = await _workSessionRepository.GetOneUserWorkSessionsInRangeAsync(user.Id, validatedStart.ToDateTime(new TimeOnly(0, 0)), validatedEnd.ToDateTime(new TimeOnly(0, 0)), type: WorkSessionTypeEnum.Auto);
+                workSessionsDataResponse.AddRange(autoWorkSessionsDataResponse);
+            }
+
+            var countOfWorkingHours = Math.Round(workSessionsDataResponse.Sum(workSession => (workSession.End - workSession.Start).Value.TotalHours), 2);
+
+            userWorkInfoResponse.PlannedWorkingHours = Math.Round(fullTimeSummaryHours * user.EmploymentRate / 100.0, 2);
+            userWorkInfoResponse.WorkedHours = countOfWorkingHours;
+
+            userWorkInfoResponse.SickLeaveHours = 0;
+            userWorkInfoResponse.VacationHours = 0;
+
+            usersWorkInfoList.Add(userWorkInfoResponse);
+        }
+
+        var usersWorkInfoBusinessResponse = new PaginationBusinessResponse<UserWorkInfoBusinessResponse>()
+        {
+            Count = usersDataResponse.Count,
+            Items = usersWorkInfoList
+        };
+
+        return usersWorkInfoBusinessResponse;
+    }
+
+    public async Task<byte[]> ExportUsersWorkInfoToExcel(string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn, DateTime? start, DateTime? end)
+    {
+        var usersDataResponse = await GetAllUsersWorkInfoAsync(0, int.MaxValue, search, filteringEmploymentRate, filteringStatus, sortingColumn, start, end, true);
+        if (usersDataResponse.Items == null)
+        {
+            throw new ExecutionError("Users not found")
+            {
+                Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+            };
+        }
+
+        var formattedStartDate = start.HasValue ? start.Value.ToString("M/d/yyyy") : "";
+        var formattedEndDate = end.HasValue ? end.Value.ToString("M/d/yyyy") : "";
+
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+        using var package = new ExcelPackage();
+        var worksheet = package.Workbook.Worksheets.Add($"Sheet1");
+
+        worksheet.Cells["A1:F1"].Merge = true;
+        worksheet.Cells["A1:F1"].Style.Font.Bold = true;
+        worksheet.Cells["A1:F1"].Style.Font.Size = 16;
+        worksheet.Cells["A1:F1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        worksheet.Cells["A1:F1"].Value = $"Users Work Information ({formattedStartDate} - {formattedEndDate})";
+
+        worksheet.Row(2).Height = 20;
+
+        worksheet.Cells["A3"].Value = "Full Name";
+        worksheet.Cells["A3"].Style.Font.Bold = true;
+        worksheet.Cells["B3"].Value = "Email";
+        worksheet.Cells["B3"].Style.Font.Bold = true;
+        worksheet.Cells["C3"].Value = "Employment Rate";
+        worksheet.Cells["C3"].Style.Font.Bold = true;
+        worksheet.Cells["D3"].Value = "Worked Hours";
+        worksheet.Cells["D3"].Style.Font.Bold = true;
+        worksheet.Cells["E3"].Value = "Planned Hours";
+        worksheet.Cells["E3"].Style.Font.Bold = true;
+        worksheet.Cells["F3"].Value = "Work Percentage";
+        worksheet.Cells["F3"].Style.Font.Bold = true;
+        worksheet.Cells["G3"].Value = "Vacation Hours";
+        worksheet.Cells["G3"].Style.Font.Bold = true;
+        worksheet.Cells["H3"].Value = "Sick Leave Hours";
+        worksheet.Cells["H3"].Style.Font.Bold = true;
+
+        worksheet.Column(1).Width = 40;
+        worksheet.Column(2).Width = 40;
+        worksheet.Column(3).Width = 20;
+        worksheet.Column(4).Width = 20;
+        worksheet.Column(5).Width = 20;
+        worksheet.Column(6).Width = 20;
+        worksheet.Column(7).Width = 20;
+        worksheet.Column(8).Width = 20;
+
+        var startRow = 4;
+        foreach (var info in usersDataResponse.Items)
+        {
+            worksheet.Cells[startRow, 1].Value = info.FullName;
+            worksheet.Cells[startRow, 2].Value = info.Email;
+            worksheet.Cells[startRow, 3].Value = info.EmploymentRate;
+            worksheet.Cells[startRow, 4].Value = info.WorkedHours;
+            worksheet.Cells[startRow, 5].Value = info.PlannedWorkingHours;
+            worksheet.Cells[startRow, 6].FormulaR1C1 = "ROUND(RC[-2]/RC[-1]*100, 2)";
+            worksheet.Cells[startRow, 7].Value = info.VacationHours;
+            worksheet.Cells[startRow, 8].Value = info.SickLeaveHours;
+
+            startRow++;
+        }
+
+        var excelBytes = await package.GetAsByteArrayAsync();
+        return excelBytes;
+    }
+
+    public async Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(bool showFired = false)
+    {
+        var userDataResponseList = await _userRepository.GetAllUsersAsync(showFired);
+        var userBusinessResponseList = _mapper.Map<IEnumerable<UserBusinessResponse>>(userDataResponseList);
+        return userBusinessResponseList;
     }
 
     public async Task DeactivateUserAsync(Guid id)

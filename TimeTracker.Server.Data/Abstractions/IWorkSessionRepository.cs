@@ -6,10 +6,12 @@ namespace TimeTracker.Server.Data.Abstractions
 {
     public interface IWorkSessionRepository
     {
-        public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, 
-            int offset, int limit, DateTime? startDate, DateTime? endDate);
+        public Task<PaginationDataResponse<WorkSessionDataResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc,
+            int offset, int limit, DateTime? startDate, DateTime? endDate, bool? showPlanned = false);
 
-        public Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null);
+        Task<List<WorkSessionDataResponse>> GetOneUserWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionTypeEnum? type = null);
+
+        public Task<List<WorkSessionDataResponse>> GetUserWorkSessionsInRangeAsync(List<Guid> userIds, DateTime start, DateTime end, bool hidePlanned = false);
 
         public Task<WorkSessionDataResponse> GetWorkSessionByIdAsync(Guid id);
 
@@ -27,6 +29,6 @@ namespace TimeTracker.Server.Data.Abstractions
 
         public Task DeleteWorkSessionsAsync(List<WorkSessionDataResponse> workSessionDataResponses);
 
-        public Task DeleteWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionStatusEnum? type = null);
+        public Task DeleteWorkSessionsInRangeAsync(Guid userId, DateTime start, DateTime end, WorkSessionTypeEnum? type = null);
     }
 }

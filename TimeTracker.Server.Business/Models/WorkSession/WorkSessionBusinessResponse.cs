@@ -17,6 +17,4 @@ public class WorkSessionBusinessResponse
     public string Type { get; set; } = null!;
 
     public Guid LastModifierId { get; set; }
-
-    public string LastModifierName { get; set; } = null!;
 }

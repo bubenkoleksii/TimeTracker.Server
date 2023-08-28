@@ -1,11 +1,9 @@
 ﻿namespace TimeTracker.Server.Shared;
 
-public enum WorkSessionStatusEnum
+public enum WorkSessionTypeEnum
 {
     Auto,
     Planned,
     Active,
-    Completed,
-    Vacation,
-    SickLeave
+    Completed
 }

@@ -12,7 +12,7 @@ public interface IVacationRepository
 
     public Task<IEnumerable<VacationDataResponse>> GetNotStartedUpdatedVacationsAsync();
 
-    public Task<IEnumerable<VacationDataResponse>> GetNotDeclinedNotFinishedVacationsAsync();
+    public Task<List<VacationDataResponse>> GetNotDeclinedNotFinishedVacationsAsync();
 
     public Task<VacationDataResponse> CreateVacationAsync(VacationDataRequest vacationDataRequest);
 
