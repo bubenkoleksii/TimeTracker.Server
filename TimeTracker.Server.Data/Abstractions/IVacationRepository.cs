@@ -10,6 +10,8 @@ public interface IVacationRepository
 
     public Task<IEnumerable<VacationDataResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc);
 
+    public Task<List<VacationDataResponse>> GetUsersVacationsInRangeAsync(List<Guid> userIds, DateTime start, DateTime end);
+
     public Task<IEnumerable<VacationDataResponse>> GetVacationRequestsAsync();
 
     public Task<IEnumerable<VacationDataResponse>> GetNotStartedUpdatedVacationsAsync();

@@ -87,6 +87,55 @@ public class VacationService : IVacationService
         return vacationWithUserBusinessResponses;
     }
 
+    public async Task<List<VacationWithUserBusinessResponse>> GetUsersVacationsForMonth(List<Guid> userIds, DateTime monthDate)
+    {
+        var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(7);
+        startDate = startDate.AddDays(-7);
+
+        var vacationDataResponseList = await _vacationRepository.GetUsersVacationsInRangeAsync(userIds, startDate, endDate);
+        var vacationWithRelationBusinessResponse = _mapper.Map<List<VacationWithUserBusinessResponse>>(vacationDataResponseList);
+
+        var userDict = new Dictionary<Guid, UserBusinessResponse>();
+        foreach (var vd in vacationWithRelationBusinessResponse)
+        {
+            UserBusinessResponse userToFind;
+            if (userDict.ContainsKey(vd.Vacation.UserId))
+            {
+                userToFind = userDict[vd.Vacation.UserId];
+            }
+            else
+            {
+                var userDataResponse = await _userRepository.GetUserByIdAsync(vd.Vacation.UserId);
+                userToFind = _mapper.Map<UserBusinessResponse>(userDataResponse);
+
+                userDict.Add(userToFind.Id, userToFind);
+            }
+
+            UserBusinessResponse? approverToFind;
+            if (vd.Vacation.ApproverId is null)
+            {
+                approverToFind = null;
+            }
+            else if (userDict.ContainsKey((Guid)vd.Vacation.ApproverId))
+            {
+                approverToFind = userDict[(Guid)vd.Vacation.ApproverId];
+            }
+            else
+            {
+                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync((Guid)vd.Vacation.ApproverId);
+                approverToFind = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
+
+                userDict.Add(approverToFind.Id, approverToFind);
+            }
+
+            vd.User = userToFind;
+            vd.Approver = approverToFind;
+        }
+
+        return vacationWithRelationBusinessResponse;
+    }
+
     public async Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationRequestsAsync(bool getNotStarted)
     {
         var vacationsDataResponse = getNotStarted ?

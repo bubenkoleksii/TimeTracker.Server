@@ -58,6 +58,42 @@ public class VacationRepository : IVacationRepository
         return vacationsDataResponse;
     }
 
+    public async Task<List<VacationDataResponse>> GetUsersVacationsInRangeAsync(List<Guid> userIds, DateTime start, DateTime end)
+    {
+        var query = $"SELECT * FROM [Vacation] WHERE" +
+            $" (((DATEDIFF(DAY, [{nameof(VacationDataResponse.Start)}], @{nameof(start)}) <= 0" +
+            $" AND DATEDIFF(DAY, [{nameof(VacationDataResponse.Start)}], @{nameof(end)}) >= 0)" +
+            $" OR (DATEDIFF(DAY, [{nameof(VacationDataResponse.End)}], @{nameof(start)}) <= 0" +
+            $" AND DATEDIFF(DAY, [{nameof(VacationDataResponse.End)}], @{nameof(end)}) >= 0)))";
+
+        if (userIds.Any())
+        {
+            query += " AND (";
+            var idsWhereRows = new List<string>();
+            foreach (var id in userIds)
+            {
+                idsWhereRows.Add($"[{nameof(VacationDataResponse.UserId)}] = '{id}'");
+            }
+            query += String.Join(" OR ", idsWhereRows.ToArray());
+            query += ")";
+        }
+        else
+        {
+            return new List<VacationDataResponse>();
+        }
+
+        query += $" AND [{nameof(VacationDataResponse.IsApproved)}] = 1";
+
+        using var connection = _context.GetConnection();
+        var workSessionsDataResponse = await connection.QueryAsync<VacationDataResponse>(query, new
+        {
+            start,
+            end
+        });
+
+        return workSessionsDataResponse.ToList();
+    }
+
     public async Task<IEnumerable<VacationDataResponse>> GetVacationRequestsAsync()
     {
         const string query = $"SELECT * FROM [Vacation] WHERE [{nameof(VacationDataResponse.IsApproved)}] IS NULL;";

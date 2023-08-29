@@ -33,6 +33,23 @@ public class VacationQuery : ObjectGraphType
                     return vacationWithUserResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
+        Field<ListGraphType<VacationWithUserType>>("getUsersVacationsForMonth")
+                .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
+                .Argument<NonNullGraphType<DateGraphType>>("monthDate")
+                .Resolve()
+                .WithScope()
+                .WithService<IVacationService>()
+                .ResolveAsync(async (context, service) =>
+                {
+                    var userIds = context.GetArgument<List<Guid>>("userIds");
+                    var monthDate = context.GetArgument<DateTime>("monthDate");
+
+                    var vacationWithUserBusinessResponses = await service.GetUsersVacationsForMonth(userIds, monthDate);
+                    var vacationWithUserResponse = mapper.Map<List<VacationWithUserResponse>>(vacationWithUserBusinessResponses);
+
+                    return vacationWithUserResponse;
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
+
         Field<ListGraphType<VacationWithUserType>>("getVacationsRequests")
                 .Argument<NonNullGraphType<BooleanGraphType>>("getNotStarted")
                 .Resolve()
