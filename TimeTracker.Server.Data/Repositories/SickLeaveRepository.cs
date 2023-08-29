@@ -45,6 +45,40 @@ public class SickLeaveRepository : ISickLeaveRepository
         return sickLeavesDataResponse.ToList();
     }
 
+    public async Task<List<SickLeaveDataResponse>> GetUsersSickLeaveInRangeAsync(List<Guid> userIds, DateTime start, DateTime end)
+    {
+        var query = $"SELECT * FROM [SickLeave] WHERE" +
+            $" (((DATEDIFF(DAY, [{nameof(SickLeaveDataResponse.Start)}], @{nameof(start)}) <= 0" +
+            $" AND DATEDIFF(DAY, [{nameof(SickLeaveDataResponse.Start)}], @{nameof(end)}) >= 0)" +
+            $" OR (DATEDIFF(DAY, [{nameof(SickLeaveDataResponse.End)}], @{nameof(start)}) <= 0" +
+            $" AND DATEDIFF(DAY, [{nameof(SickLeaveDataResponse.End)}], @{nameof(end)}) >= 0)))";
+
+        if (userIds.Any())
+        {
+            query += " AND (";
+            var idsWhereRows = new List<string>();
+            foreach (var id in userIds)
+            {
+                idsWhereRows.Add($"[{nameof(SickLeaveDataResponse.UserId)}] = '{id}'");
+            }
+            query += String.Join(" OR ", idsWhereRows.ToArray());
+            query += ")";
+        }
+        else
+        {
+            return new List<SickLeaveDataResponse>();
+        }
+
+        using var connection = _context.GetConnection();
+        var workSessionsDataResponse = await connection.QueryAsync<SickLeaveDataResponse>(query, new
+        {
+            start,
+            end
+        });
+
+        return workSessionsDataResponse.ToList();
+    }
+
     public async Task<SickLeaveDataResponse> CreateSickLeaveAsync(SickLeaveDataRequest sickLeaveDataRequest)
     {
         var id = Guid.NewGuid();
