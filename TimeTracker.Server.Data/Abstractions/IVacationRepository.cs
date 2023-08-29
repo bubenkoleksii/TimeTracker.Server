@@ -6,6 +6,8 @@ public interface IVacationRepository
 {
     public Task<VacationDataResponse> GetVacationByIdAsync(Guid id);
 
+    public Task<VacationDataResponse> GetActiveOrNotRespondedVacationUserIdAsync(Guid userId);
+
     public Task<IEnumerable<VacationDataResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc);
 
     public Task<IEnumerable<VacationDataResponse>> GetVacationRequestsAsync();

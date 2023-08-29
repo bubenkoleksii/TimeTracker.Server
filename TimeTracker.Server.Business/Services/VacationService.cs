@@ -155,12 +155,30 @@ public class VacationService : IVacationService
 
     public async Task<VacationBusinessResponse> CreateVacationAsync(VacationBusinessRequest vacationBusinessRequest)
     {
+        var curUser = await _userService.GetCurrentUserFromClaimsAsync();
+        if (curUser.Id != vacationBusinessRequest.UserId)
+        {
+            throw new ExecutionError("User can create work session only for himself")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_USER.ToString()
+            };
+        }
+
         var user = await _userRepository.GetUserByIdAsync(vacationBusinessRequest.UserId);
         if (user.Status != UserStatusEnum.working.ToString())
         {
             throw new ExecutionError("Invalid user status")
             {
                 Code = GraphQLCustomErrorCodesEnum.INVALID_USER_STATUS.ToString()
+            };
+        }
+
+        var existingVacationRequest = await _vacationRepository.GetActiveOrNotRespondedVacationUserIdAsync(vacationBusinessRequest.UserId);
+        if (existingVacationRequest is not null)
+        {
+            throw new ExecutionError("User already has a vacation request")
+            {
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -190,6 +208,15 @@ public class VacationService : IVacationService
             };
         }
 
+        var curUser = await _userService.GetCurrentUserFromClaimsAsync();
+        if (curUser.Id == vacationDataResponse.UserId)
+        {
+            throw new ExecutionError("User can't approve vacation for himself")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_USER.ToString()
+            };
+        }
+
         if (DateTime.Compare(vacationDataResponse.Start, DateTime.UtcNow) <= 0)
         {
             throw new ExecutionError("Vacation is expired")
@@ -200,6 +227,30 @@ public class VacationService : IVacationService
 
         var vacationApproveDataRequest = _mapper.Map<VacationApproveDataRequest>(vacationApproveBusinessRequest);
         await _vacationRepository.ApproverUpdateVacationAsync(vacationApproveDataRequest);
+
+        var vacationDurationInDays = (vacationDataResponse.End - vacationDataResponse.Start).TotalDays + 1;
+        if (vacationDataResponse.IsApproved is null || !(bool)vacationDataResponse.IsApproved)
+        {
+            if (vacationApproveDataRequest.IsApproved)
+            {
+                await _vacationInfoRepository.AddDaysSpentAsync(new VacationInfoAddDaysSpendDataRequest()
+                {
+                    UserId = vacationDataResponse.UserId,
+                    DaysSpent = (int)vacationDurationInDays
+                });
+            }
+        }
+        else
+        {
+            if (!vacationApproveDataRequest.IsApproved)
+            {
+                await _vacationInfoRepository.AddDaysSpentAsync(new VacationInfoAddDaysSpendDataRequest()
+                {
+                    UserId = vacationDataResponse.UserId,
+                    DaysSpent = -(int)vacationDurationInDays
+                });
+            }
+        }
     }
 
     public async Task DeleteVacationAsync(Guid id)
@@ -207,6 +258,15 @@ public class VacationService : IVacationService
         var vacationDataResponse = await _vacationRepository.GetVacationByIdAsync(id);
         if (vacationDataResponse is not null)
         {
+            var curUser = await _userService.GetCurrentUserFromClaimsAsync();
+            if (curUser.Id != vacationDataResponse.UserId)
+            {
+                throw new ExecutionError("User can create work session only for himself")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.INVALID_USER.ToString()
+                };
+            }
+
             if (vacationDataResponse.IsApproved is not null)
             {
                 throw new ExecutionError("Can not delete vacation which was updated by Approver")

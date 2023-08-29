@@ -23,6 +23,20 @@ public class VacationRepository : IVacationRepository
         return vacationDataResponse;
     }
 
+    public async Task<VacationDataResponse> GetActiveOrNotRespondedVacationUserIdAsync(Guid userId)
+    {
+        const string query = $"SELECT * FROM [Vacation] WHERE" +
+            $" [{nameof(VacationDataResponse.UserId)}] = @{nameof(userId)}" +
+            $" AND ([{nameof(VacationDataResponse.IsApproved)}] IS NULL" +
+            $" OR ([{nameof(VacationDataResponse.IsApproved)}] = 1" +
+            $" AND DATEDIFF(DAY, [{nameof(VacationDataResponse.End)}], GETDATE()) < 0))";
+
+        using var connection = _context.GetConnection();
+        var vacationDataResponse = await connection.QuerySingleOrDefaultAsync<VacationDataResponse>(query, new { userId });
+
+        return vacationDataResponse;
+    }
+
     public async Task<IEnumerable<VacationDataResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc)
     {
         var query = $"SELECT * FROM [Vacation]";
