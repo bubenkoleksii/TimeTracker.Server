@@ -10,13 +10,11 @@ namespace TimeTracker.Server.Quartz.Jobs
     {
         private readonly IUserRepository _userRepository;
         private readonly IVacationRepository _vacationRepository;
-        private readonly IVacationInfoRepository _vacationInfoRepository;
 
-        public VacationStartJob(IUserRepository userRepository, IVacationRepository vacationRepository, IVacationInfoRepository vacationInfoRepository)
+        public VacationStartJob(IUserRepository userRepository, IVacationRepository vacationRepository)
         {
             _userRepository = userRepository;
             _vacationRepository = vacationRepository;
-            _vacationInfoRepository = vacationInfoRepository;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -58,7 +56,6 @@ namespace TimeTracker.Server.Quartz.Jobs
 
         public async Task StartVacations(List<VacationDataResponse> vacations)
         {
-            var daysSpentToAdd = new List<VacationInfoAddDaysSpendDataRequest>();
             var usersStatusesToSet = new List<UserSetStatusDataRequest>();
 
             foreach (var vacation in vacations)
@@ -70,16 +67,7 @@ namespace TimeTracker.Server.Quartz.Jobs
                     Status = UserStatusEnum.vacation.ToString(),
                 });
 
-                var vacationDurationInDays = (vacation.End - vacation.Start).TotalDays + 1;
-                daysSpentToAdd.Add(new VacationInfoAddDaysSpendDataRequest()
-                {
-                    UserId = vacation.UserId,
-                    DaysSpent = (int)vacationDurationInDays
-                });
             }
-
-            //add daysSpent into user's vacationInfo
-            await _vacationInfoRepository.AddDaysSpentAsync(daysSpentToAdd);
 
             //set user status to 'vacation'
             await _userRepository.SetUserStatusAsync(usersStatusesToSet);

@@ -87,6 +87,55 @@ public class VacationService : IVacationService
         return vacationWithUserBusinessResponses;
     }
 
+    public async Task<List<VacationWithUserBusinessResponse>> GetUsersVacationsForMonth(List<Guid> userIds, DateTime monthDate)
+    {
+        var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(7);
+        startDate = startDate.AddDays(-7);
+
+        var vacationDataResponseList = await _vacationRepository.GetUsersVacationsInRangeAsync(userIds, startDate, endDate);
+        var vacationWithRelationBusinessResponse = _mapper.Map<List<VacationWithUserBusinessResponse>>(vacationDataResponseList);
+
+        var userDict = new Dictionary<Guid, UserBusinessResponse>();
+        foreach (var vd in vacationWithRelationBusinessResponse)
+        {
+            UserBusinessResponse userToFind;
+            if (userDict.ContainsKey(vd.Vacation.UserId))
+            {
+                userToFind = userDict[vd.Vacation.UserId];
+            }
+            else
+            {
+                var userDataResponse = await _userRepository.GetUserByIdAsync(vd.Vacation.UserId);
+                userToFind = _mapper.Map<UserBusinessResponse>(userDataResponse);
+
+                userDict.Add(userToFind.Id, userToFind);
+            }
+
+            UserBusinessResponse? approverToFind;
+            if (vd.Vacation.ApproverId is null)
+            {
+                approverToFind = null;
+            }
+            else if (userDict.ContainsKey((Guid)vd.Vacation.ApproverId))
+            {
+                approverToFind = userDict[(Guid)vd.Vacation.ApproverId];
+            }
+            else
+            {
+                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync((Guid)vd.Vacation.ApproverId);
+                approverToFind = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
+
+                userDict.Add(approverToFind.Id, approverToFind);
+            }
+
+            vd.User = userToFind;
+            vd.Approver = approverToFind;
+        }
+
+        return vacationWithRelationBusinessResponse;
+    }
+
     public async Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationRequestsAsync(bool getNotStarted)
     {
         var vacationsDataResponse = getNotStarted ?
@@ -155,12 +204,30 @@ public class VacationService : IVacationService
 
     public async Task<VacationBusinessResponse> CreateVacationAsync(VacationBusinessRequest vacationBusinessRequest)
     {
+        var curUser = await _userService.GetCurrentUserFromClaimsAsync();
+        if (curUser.Id != vacationBusinessRequest.UserId)
+        {
+            throw new ExecutionError("User can create work session only for himself")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_USER.ToString()
+            };
+        }
+
         var user = await _userRepository.GetUserByIdAsync(vacationBusinessRequest.UserId);
         if (user.Status != UserStatusEnum.working.ToString())
         {
             throw new ExecutionError("Invalid user status")
             {
                 Code = GraphQLCustomErrorCodesEnum.INVALID_USER_STATUS.ToString()
+            };
+        }
+
+        var existingVacationRequest = await _vacationRepository.GetActiveOrNotRespondedVacationUserIdAsync(vacationBusinessRequest.UserId);
+        if (existingVacationRequest is not null)
+        {
+            throw new ExecutionError("User already has a vacation request")
+            {
+                Code = GraphQLCustomErrorCodesEnum.OPERATION_FAILED.ToString()
             };
         }
 
@@ -190,6 +257,15 @@ public class VacationService : IVacationService
             };
         }
 
+        var curUser = await _userService.GetCurrentUserFromClaimsAsync();
+        if (curUser.Id == vacationDataResponse.UserId)
+        {
+            throw new ExecutionError("User can't approve vacation for himself")
+            {
+                Code = GraphQLCustomErrorCodesEnum.INVALID_USER.ToString()
+            };
+        }
+
         if (DateTime.Compare(vacationDataResponse.Start, DateTime.UtcNow) <= 0)
         {
             throw new ExecutionError("Vacation is expired")
@@ -200,6 +276,30 @@ public class VacationService : IVacationService
 
         var vacationApproveDataRequest = _mapper.Map<VacationApproveDataRequest>(vacationApproveBusinessRequest);
         await _vacationRepository.ApproverUpdateVacationAsync(vacationApproveDataRequest);
+
+        var vacationDurationInDays = (vacationDataResponse.End - vacationDataResponse.Start).TotalDays + 1;
+        if (vacationDataResponse.IsApproved is null || !(bool)vacationDataResponse.IsApproved)
+        {
+            if (vacationApproveDataRequest.IsApproved)
+            {
+                await _vacationInfoRepository.AddDaysSpentAsync(new VacationInfoAddDaysSpendDataRequest()
+                {
+                    UserId = vacationDataResponse.UserId,
+                    DaysSpent = (int)vacationDurationInDays
+                });
+            }
+        }
+        else
+        {
+            if (!vacationApproveDataRequest.IsApproved)
+            {
+                await _vacationInfoRepository.AddDaysSpentAsync(new VacationInfoAddDaysSpendDataRequest()
+                {
+                    UserId = vacationDataResponse.UserId,
+                    DaysSpent = -(int)vacationDurationInDays
+                });
+            }
+        }
     }
 
     public async Task DeleteVacationAsync(Guid id)
@@ -207,6 +307,15 @@ public class VacationService : IVacationService
         var vacationDataResponse = await _vacationRepository.GetVacationByIdAsync(id);
         if (vacationDataResponse is not null)
         {
+            var curUser = await _userService.GetCurrentUserFromClaimsAsync();
+            if (curUser.Id != vacationDataResponse.UserId)
+            {
+                throw new ExecutionError("User can create work session only for himself")
+                {
+                    Code = GraphQLCustomErrorCodesEnum.INVALID_USER.ToString()
+                };
+            }
+
             if (vacationDataResponse.IsApproved is not null)
             {
                 throw new ExecutionError("Can not delete vacation which was updated by Approver")
