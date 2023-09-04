@@ -35,8 +35,13 @@ public class UserService : IUserService
 
     private readonly IWorkSessionRepository _workSessionRepository;
 
+    private readonly IVacationRepository _vacationRepository;
+
+    private readonly ISickLeaveRepository _sickLeaveRepository;
+
     public UserService(IMailService mailService, IUserRepository userRepository, IVacationInfoRepository vacationInfoRepository, IMapper mapper, 
-        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHolidayService holidayService, IWorkSessionRepository workSessionRepository)
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IHolidayService holidayService, IWorkSessionRepository workSessionRepository,
+        IVacationRepository vacationRepository, ISickLeaveRepository sickLeaveRepository)
     {
         _mailService = mailService;
         _userRepository = userRepository;
@@ -46,6 +51,8 @@ public class UserService : IUserService
         _httpContextAccessor = httpContextAccessor;
         _holidayService = holidayService;
         _workSessionRepository = workSessionRepository;
+        _vacationRepository = vacationRepository;
+        _sickLeaveRepository = sickLeaveRepository;
     }
 
     public async Task<UserBusinessResponse> UpdateUserAsync(UserBusinessRequest userRequest, Guid id)
@@ -144,8 +151,32 @@ public class UserService : IUserService
             userWorkInfoResponse.PlannedWorkingHours = Math.Round(fullTimeSummaryHours * user.EmploymentRate / 100.0, 2);
             userWorkInfoResponse.WorkedHours = countOfWorkingHours;
 
-            userWorkInfoResponse.SickLeaveHours = 0;
-            userWorkInfoResponse.VacationHours = 0;
+            var vacationsDataResponse = await _vacationRepository.GetUsersVacationsInRangeAsync(new List<Guid> {user.Id}, validatedStart.ToDateTime(new TimeOnly(0, 0)), validatedEnd.ToDateTime(new TimeOnly(0, 0)));
+
+            var summaryVacationHours = 0;
+            foreach (var vacation in vacationsDataResponse)
+            {
+                var vacationStart = validatedStart.ToDateTime(new TimeOnly(0, 0)) > vacation.Start ? validatedStart : DateOnly.FromDateTime(vacation.Start);
+                var vacationEnd = validatedEnd.ToDateTime(new TimeOnly(0, 0)) > vacation.End ? DateOnly.FromDateTime(vacation.End) : validatedEnd;
+
+                var vacationDays = await _holidayService.GetCountOfWorkingDays(vacationStart, vacationEnd);
+                summaryVacationHours += vacationDays.FullDays * fullDayWorkingHours + vacationDays.ShortDays * shortDayWorkingHours;
+            }
+
+            var sickLeaveDataResponse = await _sickLeaveRepository.GetUsersSickLeaveInRangeAsync(new List<Guid> { user.Id }, validatedStart.ToDateTime(new TimeOnly(0, 0)), validatedEnd.ToDateTime(new TimeOnly(0, 0)));
+
+            var summarySickLeaveHours = 0;
+            foreach (var sickLeave in sickLeaveDataResponse)
+            {
+                var sickLeaveStart = validatedStart.ToDateTime(new TimeOnly(0, 0)) > sickLeave.Start ? validatedStart : DateOnly.FromDateTime(sickLeave.Start);
+                var sickLeaveEnd = validatedEnd.ToDateTime(new TimeOnly(0, 0)) > sickLeave.End ? DateOnly.FromDateTime(sickLeave.End) : validatedEnd;
+
+                var sickLeaveDays = await _holidayService.GetCountOfWorkingDays(sickLeaveStart, sickLeaveEnd);
+                summarySickLeaveHours += sickLeaveDays.FullDays * fullDayWorkingHours + sickLeaveDays.ShortDays * shortDayWorkingHours;
+            }
+
+            userWorkInfoResponse.SickLeaveHours = Math.Round(summarySickLeaveHours * user.EmploymentRate / 100.0, 2);
+            userWorkInfoResponse.VacationHours = Math.Round(summaryVacationHours * user.EmploymentRate / 100.0, 2);
 
             usersWorkInfoList.Add(userWorkInfoResponse);
         }
