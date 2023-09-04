@@ -68,7 +68,7 @@ public class UserQuery : ObjectGraphType
                 
                 var usersResponse = mapper.Map<PaginationResponse<UserWorkInfoResponse>>(usersBusinessResponse);
                 return usersResponse;
-            }).AuthorizeWithPolicy(PermissionsEnum.GetUsers.ToString());
+            }).AuthorizeWithPolicy(PermissionsEnum.GetUsersWorkInfo.ToString());
         
         Field<ListGraphType<ByteGraphType>>("exportWorkInfoToExcel")
             .Argument<StringGraphType>("search")
