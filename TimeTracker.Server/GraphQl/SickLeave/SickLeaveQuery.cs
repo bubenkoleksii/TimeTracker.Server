@@ -31,5 +31,22 @@ public class SickLeaveQuery : ObjectGraphType
 
                     return sickLeaveWithRelationsResponses;
                 }).AuthorizeWithPolicy(nameof(PermissionsEnum.LoggedIn));
+
+        Field<ListGraphType<SickLeaveWithRelationsType>>("getUsersSickLeavesForMonth")
+                .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
+                .Argument<NonNullGraphType<DateGraphType>>("monthDate")
+                .Resolve()
+                .WithScope()
+                .WithService<ISickLeaveService>()
+                .ResolveAsync(async (context, service) =>
+                {
+                    var userIds = context.GetArgument<List<Guid>>("userIds");
+                    var monthDate = context.GetArgument<DateTime>("monthDate");
+
+                    var sickLeaveWithRelationsBusinessResponses = await service.GetUsersSickLeavesForMonthAsync(userIds, monthDate);
+                    var sickLeaveWithRelationsResponses = mapper.Map<List<SickLeaveWithRelationsResponse>>(sickLeaveWithRelationsBusinessResponses);
+
+                    return sickLeaveWithRelationsResponses;
+                }).AuthorizeWithPolicy(nameof(PermissionsEnum.LoggedIn));
     }
 }

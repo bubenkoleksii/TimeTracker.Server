@@ -78,6 +78,7 @@ public class Program
             options.AddPolicy(nameof(PermissionsEnum.ApproveVacations), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ApproveVacations)));
             options.AddPolicy(nameof(PermissionsEnum.GetVacations), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetVacations)));
             options.AddPolicy(nameof(PermissionsEnum.ManageSickLeaves), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.ManageSickLeaves)));
+            options.AddPolicy(nameof(PermissionsEnum.GetUsersWorkInfo), (a) => a.RequireAssertion(context => HasPermissionClaim(context, PermissionsEnum.GetUsersWorkInfo)));
         });
 
         builder.Services.AddGraphQL(builder => builder

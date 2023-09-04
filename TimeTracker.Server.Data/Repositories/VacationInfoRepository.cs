@@ -68,4 +68,16 @@ public class VacationInfoRepository : IVacationInfoRepository
 
         await connection.ExecuteAsync(query, daysSpentData);
     }
+
+    public async Task AddDaysSpentAsync(VacationInfoAddDaysSpendDataRequest daysSpentData)
+    {
+        const string query = $"UPDATE [VacationInfo] SET " +
+            $"[{nameof(VacationInfoAddDaysSpendDataRequest.DaysSpent)}] = " +
+            $"[{nameof(VacationInfoAddDaysSpendDataRequest.DaysSpent)}] + @{nameof(VacationInfoAddDaysSpendDataRequest.DaysSpent)} " +
+            $"WHERE [{nameof(VacationInfoAddDaysSpendDataRequest.UserId)}] = @{nameof(VacationInfoAddDaysSpendDataRequest.UserId)};";
+
+        using var connection = _context.GetConnection();
+
+        await connection.ExecuteAsync(query, daysSpentData);
+    }
 }
