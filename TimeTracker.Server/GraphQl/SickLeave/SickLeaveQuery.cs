@@ -13,7 +13,7 @@ public class SickLeaveQuery : ObjectGraphType
 {
     public SickLeaveQuery(IMapper mapper)
     {
-        Field<ListGraphType<SickLeaveWithRelationsType>>("getSickLeaves")
+        Field<ListGraphType<SickLeaveType>>("getSickLeaves")
                 .Argument<NonNullGraphType<DateGraphType>>("date")
                 .Argument<IdGraphType>("userId")
                 .Argument<BooleanGraphType>("searchByYear")
@@ -27,12 +27,12 @@ public class SickLeaveQuery : ObjectGraphType
                     var searchByYear = context.GetArgument<bool?>("searchByYear");
 
                     var sickLeaveWithRelationsBusinessResponses = await service.GetSickLeavesAsync(date, userId, searchByYear is not null && (bool)searchByYear);
-                    var sickLeaveWithRelationsResponses = mapper.Map<List<SickLeaveWithRelationsResponse>>(sickLeaveWithRelationsBusinessResponses);
+                    var sickLeaveWithRelationsResponses = mapper.Map<List<SickLeaveResponse>>(sickLeaveWithRelationsBusinessResponses);
 
                     return sickLeaveWithRelationsResponses;
                 }).AuthorizeWithPolicy(nameof(PermissionsEnum.LoggedIn));
 
-        Field<ListGraphType<SickLeaveWithRelationsType>>("getUsersSickLeavesForMonth")
+        Field<ListGraphType<SickLeaveType>>("getUsersSickLeavesForMonth")
                 .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
                 .Argument<NonNullGraphType<DateGraphType>>("monthDate")
                 .Resolve()
@@ -44,7 +44,7 @@ public class SickLeaveQuery : ObjectGraphType
                     var monthDate = context.GetArgument<DateTime>("monthDate");
 
                     var sickLeaveWithRelationsBusinessResponses = await service.GetUsersSickLeavesForMonthAsync(userIds, monthDate);
-                    var sickLeaveWithRelationsResponses = mapper.Map<List<SickLeaveWithRelationsResponse>>(sickLeaveWithRelationsBusinessResponses);
+                    var sickLeaveWithRelationsResponses = mapper.Map<List<SickLeaveResponse>>(sickLeaveWithRelationsBusinessResponses);
 
                     return sickLeaveWithRelationsResponses;
                 }).AuthorizeWithPolicy(nameof(PermissionsEnum.LoggedIn));

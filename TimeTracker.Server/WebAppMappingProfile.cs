@@ -49,6 +49,5 @@ public class WebAppMappingProfile : Profile
 
         CreateMap<SickLeaveRequest, SickLeaveBusinessRequest>();
         CreateMap<SickLeaveBusinessResponse, SickLeaveResponse>();
-        CreateMap<SickLeaveWithRelationsBusinessResponse, SickLeaveWithRelationsResponse>();
     }
 }
