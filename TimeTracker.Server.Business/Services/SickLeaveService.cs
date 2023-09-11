@@ -41,7 +41,7 @@ public class SickLeaveService : ISickLeaveService
         var sickLeaveWithRelationsList = new List<SickLeaveWithRelationsBusinessResponse>();
         foreach (var sickLeave in sickLeaveBusinessResponse)
         {
-            var user = new UserBusinessResponse();
+            UserBusinessResponse user;
 
             if (userDict.ContainsKey(sickLeave.UserId))
             {
@@ -55,7 +55,7 @@ public class SickLeaveService : ISickLeaveService
                 userDict.Add(user.Id, user);
             }
 
-            var lastModifier = new UserBusinessResponse();
+            UserBusinessResponse lastModifier;
             if (userDict.ContainsKey(sickLeave.LastModifierId))
             {
                 lastModifier = userDict[sickLeave.LastModifierId];

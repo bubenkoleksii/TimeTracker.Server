@@ -13,6 +13,8 @@ public interface IUserService
 
     public Task<IEnumerable<UserBusinessResponse>> GetAllUsersAsync(bool showFired = false);
 
+    public Task<List<UserBusinessResponse>> GetUsersByIds(List<Guid> ids);
+
     public Task<PaginationBusinessResponse<UserWorkInfoBusinessResponse>> GetAllUsersWorkInfoAsync(int? offset, int? limit, string search, int? filteringEmploymentRate, string? filteringStatus, 
         string? sortingColumn, DateTime? start, DateTime? end, bool? withoutPagination = false);
 
