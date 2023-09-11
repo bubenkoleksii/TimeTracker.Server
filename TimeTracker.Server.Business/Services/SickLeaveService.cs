@@ -31,55 +31,14 @@ public class SickLeaveService : ISickLeaveService
         _userService = userService;
     }
 
-    public async Task<List<SickLeaveWithRelationsBusinessResponse>> GetSickLeavesAsync(DateTime date, Guid? userId, bool searchByYear = false)
+    public async Task<List<SickLeaveBusinessResponse>> GetSickLeavesAsync(DateTime date, Guid? userId, bool searchByYear = false)
     {
         var sickLeaveDataResponse = await _sickLeaveRepository.GetSickLeavesAsync(date, userId, searchByYear);
         var sickLeaveBusinessResponse = _mapper.Map<List<SickLeaveBusinessResponse>>(sickLeaveDataResponse);
-
-        var userDict = new Dictionary<Guid, UserBusinessResponse>();
-
-        var sickLeaveWithRelationsList = new List<SickLeaveWithRelationsBusinessResponse>();
-        foreach (var sickLeave in sickLeaveBusinessResponse)
-        {
-            var user = new UserBusinessResponse();
-
-            if (userDict.ContainsKey(sickLeave.UserId))
-            {
-                user = userDict[sickLeave.UserId];
-            }
-            else
-            {
-                var userDataResponse = await _userRepository.GetUserByIdAsync(sickLeave.UserId);
-                user = _mapper.Map<UserBusinessResponse>(userDataResponse);
-
-                userDict.Add(user.Id, user);
-            }
-
-            var lastModifier = new UserBusinessResponse();
-            if (userDict.ContainsKey(sickLeave.LastModifierId))
-            {
-                lastModifier = userDict[sickLeave.LastModifierId];
-            }
-            else
-            {
-                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync(sickLeave.LastModifierId);
-                lastModifier = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
-
-                userDict.Add(lastModifier.Id, lastModifier);
-            }
-
-            sickLeaveWithRelationsList.Add(new SickLeaveWithRelationsBusinessResponse()
-            {
-                SickLeave = sickLeave,
-                User = user,
-                LastModifier = lastModifier
-            });
-        }
-
-        return sickLeaveWithRelationsList;
+        return sickLeaveBusinessResponse;
     }
 
-    public async Task<List<SickLeaveWithRelationsBusinessResponse>> GetUsersSickLeavesForMonthAsync(List<Guid> userIds, DateTime monthDate)
+    public async Task<List<SickLeaveBusinessResponse>> GetUsersSickLeavesForMonthAsync(List<Guid> userIds, DateTime monthDate)
     {
         var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
         var endDate = startDate.AddMonths(1).AddDays(7);
@@ -88,47 +47,7 @@ public class SickLeaveService : ISickLeaveService
         var sickLeaveDataResponse = await _sickLeaveRepository.GetUsersSickLeaveInRangeAsync(userIds, startDate, endDate);
         var sickLeaveBusinessResponse = _mapper.Map<List<SickLeaveBusinessResponse>>(sickLeaveDataResponse);
 
-        var userDict = new Dictionary<Guid, UserBusinessResponse>();
-
-        var sickLeaveWithRelationsList = new List<SickLeaveWithRelationsBusinessResponse>();
-        foreach (var sickLeave in sickLeaveBusinessResponse)
-        {
-            UserBusinessResponse user;
-
-            if (userDict.ContainsKey(sickLeave.UserId))
-            {
-                user = userDict[sickLeave.UserId];
-            }
-            else
-            {
-                var userDataResponse = await _userRepository.GetUserByIdAsync(sickLeave.UserId);
-                user = _mapper.Map<UserBusinessResponse>(userDataResponse);
-
-                userDict.Add(user.Id, user);
-            }
-
-            UserBusinessResponse lastModifier;
-            if (userDict.ContainsKey(sickLeave.LastModifierId))
-            {
-                lastModifier = userDict[sickLeave.LastModifierId];
-            }
-            else
-            {
-                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync(sickLeave.LastModifierId);
-                lastModifier = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
-
-                userDict.Add(lastModifier.Id, lastModifier);
-            }
-
-            sickLeaveWithRelationsList.Add(new SickLeaveWithRelationsBusinessResponse()
-            {
-                SickLeave = sickLeave,
-                User = user,
-                LastModifier = lastModifier
-            });
-        }
-
-        return sickLeaveWithRelationsList;
+        return sickLeaveBusinessResponse;
     }
 
     public async Task CreateSickLeaveAsync(SickLeaveBusinessRequest sickLeaveBusinessRequest)

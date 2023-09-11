@@ -4,9 +4,9 @@ namespace TimeTracker.Server.Business.Abstractions;
 
 public interface ISickLeaveService
 {
-    public Task<List<SickLeaveWithRelationsBusinessResponse>> GetSickLeavesAsync(DateTime date, Guid? userId, bool searchByYear = false);
+    public Task<List<SickLeaveBusinessResponse>> GetSickLeavesAsync(DateTime date, Guid? userId, bool searchByYear = false);
 
-    public Task<List<SickLeaveWithRelationsBusinessResponse>> GetUsersSickLeavesForMonthAsync(List<Guid> userIds, DateTime monthDate);
+    public Task<List<SickLeaveBusinessResponse>> GetUsersSickLeavesForMonthAsync(List<Guid> userIds, DateTime monthDate);
 
     public Task CreateSickLeaveAsync(SickLeaveBusinessRequest sickLeaveBusinessRequest);
 

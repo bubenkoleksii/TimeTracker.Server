@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
@@ -214,6 +214,13 @@ public class UserService : IUserService
         }
 
         return summarySickLeaveHours;
+    }
+
+    public async Task<List<UserBusinessResponse>> GetUsersByIds(List<Guid> ids)
+    {
+        var userDataResponseList = await _userRepository.GetUserByIdAsync(ids);
+        var userBusinessResponseList = _mapper.Map<List<UserBusinessResponse>>(userDataResponseList);
+        return userBusinessResponseList;
     }
 
     public async Task<byte[]> ExportUsersWorkInfoToExcel(string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn, DateTime? start, DateTime? end)

@@ -26,6 +26,16 @@ public class UserRepository : IUserRepository
         return user;
     }
 
+    public async Task<List<UserDataResponse>> GetUserByIdAsync(List<Guid> ids)
+    {
+        var query = $"SELECT * FROM [User] WHERE {nameof(UserDataResponse.Id)} in @{nameof(ids)}";
+
+        using var connection = _context.GetConnection();
+        var users = await connection.QueryAsync<UserDataResponse>(query, new { ids });
+
+        return users.ToList();
+    }
+
     public async Task<UserDataResponse> GetUserByEmailAsync(string email)
     {
         var query = $"SELECT * FROM [User] WHERE {nameof(UserDataResponse.Email)} = @{nameof(email)}";
