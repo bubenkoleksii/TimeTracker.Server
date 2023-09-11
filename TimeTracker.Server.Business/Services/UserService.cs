@@ -1,11 +1,10 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
-using Microsoft.Extensions.Logging;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;
@@ -214,6 +213,13 @@ public class UserService : IUserService
         }
 
         return summarySickLeaveHours;
+    }
+
+    public async Task<List<UserBusinessResponse>> GetUsersByIds(List<Guid> ids)
+    {
+        var userDataResponseList = await _userRepository.GetUserByIdAsync(ids);
+        var userBusinessResponseList = _mapper.Map<List<UserBusinessResponse>>(userDataResponseList);
+        return userBusinessResponseList;
     }
 
     public async Task<byte[]> ExportUsersWorkInfoToExcel(string search, int? filteringEmploymentRate, string? filteringStatus, string? sortingColumn, DateTime? start, DateTime? end)

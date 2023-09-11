@@ -7,6 +7,8 @@ public interface IUserRepository
 {
     public Task<UserDataResponse> GetUserByIdAsync(Guid id);
 
+    public Task<List<UserDataResponse>> GetUserByIdAsync(List<Guid> ids);
+
     public Task<UserDataResponse> GetUserByEmailAsync(string email);
 
     public Task<List<UserDataResponse>> GetFullTimeWorkingUsersAsync();

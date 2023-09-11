@@ -128,6 +128,21 @@ public class UserQuery : ObjectGraphType
 
                 var usersResponse = mapper.Map<PaginationResponse<ProfileResponse>>(usersBusinessResponse);
                 return usersResponse;
-            });
+            }).AuthorizeWithPolicy(nameof(PermissionsEnum.LoggedIn));
+
+        Field<ListGraphType<UserType>>("getUsersByIds")
+            .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIdsToGet")
+            .Resolve()
+            .WithScope()
+            .WithService<IUserService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var userIdsToGet = context.GetArgument<List<Guid>>("userIdsToGet");
+
+                var usersBusinessResponseList = await service.GetUsersByIds(userIdsToGet);
+
+                var usersResponseList = mapper.Map<List<UserResponse>>(usersBusinessResponseList);
+                return usersResponseList;
+            }).AuthorizeWithPolicy(nameof(PermissionsEnum.LoggedIn));
     }
 }
