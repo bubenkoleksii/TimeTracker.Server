@@ -1,7 +1,9 @@
-﻿using System.Security.Claims;
+﻿using System.Configuration;
+using System.Security.Claims;
 using AutoMapper;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
 using TimeTracker.Server.Data.Abstractions;
@@ -19,12 +21,15 @@ public class AuthService : IAuthService
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AuthService(IJwtService jwtService, IUserRepository userRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+    private readonly IConfiguration _configuration;
+
+    public AuthService(IJwtService jwtService, IUserRepository userRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
     {
         _jwtService = jwtService;
         _userRepository = userRepository;
         _mapper = mapper;
         _httpContextAccessor = httpContextAccessor;
+        _configuration = configuration;
     }
 
     public async Task<string> LoginAsync(AuthBusinessRequest userRequest)
@@ -48,11 +53,13 @@ public class AuthService : IAuthService
 
         await _userRepository.SetRefreshTokenAsync(refreshToken, user.Id);
 
+        var cookieExpInSeconds = _configuration.GetSection("Auth:RefreshTokenLifeTimeSeconds").Value;
         _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
         {
             HttpOnly = true,
             SameSite = SameSiteMode.None,
-            Secure = true
+            Secure = true,
+            Expires = DateTime.UtcNow.AddSeconds(cookieExpInSeconds is not null ? Convert.ToDouble(cookieExpInSeconds) : 60 * 60 * 24 * 30),
         });
 
         return accessToken;
