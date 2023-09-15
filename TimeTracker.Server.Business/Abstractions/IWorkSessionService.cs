@@ -5,14 +5,14 @@ namespace TimeTracker.Server.Business.Abstractions;
 
 public interface IWorkSessionService
 {
-    public Task<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset, 
+    public Task<PaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset, 
         int? limit, DateTime? startDate, DateTime? endDate, bool? showPlanned = false);
 
     public Task<WorkSessionBusinessResponse> GetActiveWorkSessionByUserIdAsync(Guid userId);
   
     public Task<double> GetWorkingHoursByUserId(Guid userId, DateOnly start, DateOnly end);
   
-    public Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate, bool hidePlanned = false);
+    public Task<List<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate, bool hidePlanned = false);
   
     public Task<WorkSessionBusinessResponse> CreateWorkSessionAsync(WorkSessionBusinessRequest workSession);
 
