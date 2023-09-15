@@ -6,7 +6,6 @@ using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Shared;
 using TimeTracker.Server.GraphQl.Vacation.Types;
 using TimeTracker.Server.Models.Vacation;
-using TimeTracker.Server.Business.Models.Vacation;
 
 namespace TimeTracker.Server.GraphQl.Vacation;
 
@@ -14,7 +13,7 @@ public class VacationQuery : ObjectGraphType
 {
     public VacationQuery(IMapper mapper)
     {
-        Field<ListGraphType<VacationWithUserType>>("getVacationsByUserId")
+        Field<ListGraphType<VacationType>>("getVacationsByUserId")
                 .Argument<NonNullGraphType<IdGraphType>>("userId")
                 .Argument<BooleanGraphType>("onlyApproved")
                 .Argument<NonNullGraphType<BooleanGraphType>>("orderByDesc")
@@ -28,12 +27,12 @@ public class VacationQuery : ObjectGraphType
                     var orderByDesc = context.GetArgument<bool>("orderByDesc");
 
                     var vacationWithUserBusinessResponses = await service.GetVacationsByUserIdAsync(userId, onlyApproved, orderByDesc);
-                    var vacationWithUserResponse = mapper.Map<IEnumerable<VacationWithUserResponse>>(vacationWithUserBusinessResponses);
+                    var vacationWithUserResponse = mapper.Map<IEnumerable<VacationResponse>>(vacationWithUserBusinessResponses);
 
                     return vacationWithUserResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
-        Field<ListGraphType<VacationWithUserType>>("getUsersVacationsForMonth")
+        Field<ListGraphType<VacationType>>("getUsersVacationsForMonth")
                 .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
                 .Argument<NonNullGraphType<DateGraphType>>("monthDate")
                 .Resolve()
@@ -45,12 +44,12 @@ public class VacationQuery : ObjectGraphType
                     var monthDate = context.GetArgument<DateTime>("monthDate");
 
                     var vacationWithUserBusinessResponses = await service.GetUsersVacationsForMonth(userIds, monthDate);
-                    var vacationWithUserResponse = mapper.Map<List<VacationWithUserResponse>>(vacationWithUserBusinessResponses);
+                    var vacationWithUserResponse = mapper.Map<List<VacationResponse>>(vacationWithUserBusinessResponses);
 
                     return vacationWithUserResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
-        Field<ListGraphType<VacationWithUserType>>("getVacationsRequests")
+        Field<ListGraphType<VacationType>>("getVacationsRequests")
                 .Argument<NonNullGraphType<BooleanGraphType>>("getNotStarted")
                 .Resolve()
                 .WithScope()
@@ -60,7 +59,7 @@ public class VacationQuery : ObjectGraphType
                     var getNotStarted = context.GetArgument<bool>("getNotStarted");
 
                     var vacationWithUserBusinessResponses = await service.GetVacationRequestsAsync(getNotStarted);
-                    var vacationWithUserResponse = mapper.Map<IEnumerable<VacationWithUserResponse>>(vacationWithUserBusinessResponses);
+                    var vacationWithUserResponse = mapper.Map<IEnumerable<VacationResponse>>(vacationWithUserBusinessResponses);
 
                     return vacationWithUserResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString())

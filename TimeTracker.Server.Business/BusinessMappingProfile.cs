@@ -44,8 +44,6 @@ public class BusinessMappingProfile : Profile
         CreateMap<VacationBusinessRequest, VacationDataRequest>();
         CreateMap<VacationApproveBusinessRequest, VacationApproveDataRequest>();
         CreateMap<VacationDataResponse, VacationBusinessResponse>();
-        CreateMap<VacationDataResponse, VacationWithUserBusinessResponse>()
-            .ForMember(dest => dest.Vacation, opt => opt.MapFrom(src => src));
 
         CreateMap<VacationInfoDataResponse, VacationInfoBusinessResponse>();
 

@@ -7,7 +7,6 @@ using TimeTracker.Server.Shared.Exceptions;
 using TimeTracker.Server.Shared.Helpers;
 using TimeTracker.Server.Shared;
 using TimeTracker.Server.Data.Models.Vacation;
-using TimeTracker.Server.Business.Models.User;
 
 namespace TimeTracker.Server.Business.Services;
 
@@ -31,7 +30,7 @@ public class VacationService : IVacationService
         _userService = userService;
     }
 
-    public async Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc)
+    public async Task<IEnumerable<VacationBusinessResponse>> GetVacationsByUserIdAsync(Guid userId, bool? onlyApproved, bool orderByDesc)
     {
         var curUser = await _userService.GetCurrentUserFromClaimsAsync();
         if (!PermissionHelper.HasPermit(curUser.Permissions, PermissionsEnum.GetVacations))
@@ -48,95 +47,22 @@ public class VacationService : IVacationService
         var vacationsDataResponse = await _vacationRepository.GetVacationsByUserIdAsync(userId, onlyApproved, orderByDesc);
         var vacationsBusinessResponse = _mapper.Map<IEnumerable<VacationBusinessResponse>>(vacationsDataResponse);
 
-        var userDataResponse = await _userRepository.GetUserByIdAsync(userId);
-        var userBusinessResponse = _mapper.Map<UserBusinessResponse>(userDataResponse);
-
-        var approverDict = new Dictionary<Guid, UserBusinessResponse?>();
-
-        var vacationWithUserBusinessResponses = new List<VacationWithUserBusinessResponse>();
-        foreach (var vacation in vacationsBusinessResponse)
-        {
-            UserBusinessResponse? approver;
-            if (vacation.ApproverId is null)
-            {
-                approver = null;
-            }
-            else
-            {
-                if (approverDict.ContainsKey((Guid)vacation.ApproverId))
-                {
-                    approver = approverDict[(Guid)vacation.ApproverId];
-                }
-                else
-                {
-                    var approverDataResponse = await _userRepository.GetUserByIdAsync((Guid)vacation.ApproverId);
-                    approver = _mapper.Map<UserBusinessResponse>(approverDataResponse);
-
-                    approverDict.Add(approver.Id, approver);
-                }
-            }
-
-            vacationWithUserBusinessResponses.Add(new VacationWithUserBusinessResponse()
-            {
-                Vacation = vacation,
-                User = userBusinessResponse,
-                Approver = approver
-            });
-        }
-
-        return vacationWithUserBusinessResponses;
+        return vacationsBusinessResponse;
     }
 
-    public async Task<List<VacationWithUserBusinessResponse>> GetUsersVacationsForMonth(List<Guid> userIds, DateTime monthDate)
+    public async Task<List<VacationBusinessResponse>> GetUsersVacationsForMonth(List<Guid> userIds, DateTime monthDate)
     {
         var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
         var endDate = startDate.AddMonths(1).AddDays(7);
         startDate = startDate.AddDays(-7);
 
         var vacationDataResponseList = await _vacationRepository.GetUsersVacationsInRangeAsync(userIds, startDate, endDate);
-        var vacationWithRelationBusinessResponse = _mapper.Map<List<VacationWithUserBusinessResponse>>(vacationDataResponseList);
-
-        var userDict = new Dictionary<Guid, UserBusinessResponse>();
-        foreach (var vd in vacationWithRelationBusinessResponse)
-        {
-            UserBusinessResponse userToFind;
-            if (userDict.ContainsKey(vd.Vacation.UserId))
-            {
-                userToFind = userDict[vd.Vacation.UserId];
-            }
-            else
-            {
-                var userDataResponse = await _userRepository.GetUserByIdAsync(vd.Vacation.UserId);
-                userToFind = _mapper.Map<UserBusinessResponse>(userDataResponse);
-
-                userDict.Add(userToFind.Id, userToFind);
-            }
-
-            UserBusinessResponse? approverToFind;
-            if (vd.Vacation.ApproverId is null)
-            {
-                approverToFind = null;
-            }
-            else if (userDict.ContainsKey((Guid)vd.Vacation.ApproverId))
-            {
-                approverToFind = userDict[(Guid)vd.Vacation.ApproverId];
-            }
-            else
-            {
-                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync((Guid)vd.Vacation.ApproverId);
-                approverToFind = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
-
-                userDict.Add(approverToFind.Id, approverToFind);
-            }
-
-            vd.User = userToFind;
-            vd.Approver = approverToFind;
-        }
+        var vacationWithRelationBusinessResponse = _mapper.Map<List<VacationBusinessResponse>>(vacationDataResponseList);
 
         return vacationWithRelationBusinessResponse;
     }
 
-    public async Task<IEnumerable<VacationWithUserBusinessResponse>> GetVacationRequestsAsync(bool getNotStarted)
+    public async Task<IEnumerable<VacationBusinessResponse>> GetVacationRequestsAsync(bool getNotStarted)
     {
         var vacationsDataResponse = getNotStarted ?
             await _vacationRepository.GetNotStartedUpdatedVacationsAsync() :
@@ -144,43 +70,7 @@ public class VacationService : IVacationService
 
         var vacationsBusinessResponse = _mapper.Map<IEnumerable<VacationBusinessResponse>>(vacationsDataResponse);
 
-        var approverDict = new Dictionary<Guid, UserBusinessResponse?>();
-
-        var vacationWithUserBusinessResponses = new List<VacationWithUserBusinessResponse>();
-        foreach (var vacation in vacationsBusinessResponse)
-        {
-            var userDataResponse = await _userRepository.GetUserByIdAsync(vacation.UserId);
-            var user = _mapper.Map<UserBusinessResponse>(userDataResponse);
-
-            UserBusinessResponse? approver;
-            if (vacation.ApproverId is null)
-            {
-                approver = null;
-            }
-            else
-            {
-                if (approverDict.ContainsKey((Guid)vacation.ApproverId))
-                {
-                    approver = approverDict[(Guid)vacation.ApproverId];
-                }
-                else
-                {
-                    var approverDataResponse = await _userRepository.GetUserByIdAsync((Guid)vacation.ApproverId);
-                    approver = _mapper.Map<UserBusinessResponse>(approverDataResponse);
-
-                    approverDict.Add(approver.Id, approver);
-                }
-            }
-
-            vacationWithUserBusinessResponses.Add(new VacationWithUserBusinessResponse()
-            {
-                Vacation = vacation,
-                User = user,
-                Approver = approver
-            });
-        }
-
-        return vacationWithUserBusinessResponses;
+        return vacationsBusinessResponse;
     }
 
     public async Task<VacationInfoBusinessResponse> GetVacationInfoByUserIdAsync(Guid userId)

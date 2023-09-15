@@ -43,7 +43,6 @@ public class WebAppMappingProfile : Profile
         CreateMap<VacationRequest, VacationBusinessRequest>();
         CreateMap<VacationApproveRequest, VacationApproveBusinessRequest>();
         CreateMap<VacationBusinessResponse, VacationResponse>();
-        CreateMap<VacationWithUserBusinessResponse, VacationWithUserResponse>();
 
         CreateMap<VacationInfoBusinessResponse, VacationInfoResponse>();
 
