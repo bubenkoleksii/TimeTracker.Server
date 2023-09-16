@@ -36,12 +36,12 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var showPlanned = context.GetArgument<bool?>("showPlanned");
 
                     var workSessionPaginationBusinessResponse = await service.GetWorkSessionsByUserIdAsync(userId, orderByDesc, offset, limit, startDate, endDate, showPlanned);
-                    var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionWithRelationsResponse>>(workSessionPaginationBusinessResponse);
+                    var workSessionPaginationResponse = mapper.Map<PaginationResponse<WorkSessionResponse>>(workSessionPaginationBusinessResponse);
 
                     return workSessionPaginationResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
 
-            Field<ListGraphType<WorkSessionWithRelationsType>>("getWorkSessionsByUserIdsByMonth")
+            Field<ListGraphType<WorkSessionType>>("getWorkSessionsByUserIdsByMonth")
                 .Argument<NonNullGraphType<ListGraphType<IdGraphType>>>("userIds")
                 .Argument<NonNullGraphType<DateGraphType>>("monthDate")
                 .Argument<NonNullGraphType<BooleanGraphType>>("hidePlanned")
@@ -55,7 +55,7 @@ namespace TimeTracker.Server.GraphQl.WorkSession
                     var hidePlanned = context.GetArgument<bool>("hidePlanned");
 
                     var workSessionWithRelationsBusinessResponseList = await service.GetWorkSessionsByUserIdsByMonthAsync(userIds, monthDate, hidePlanned);
-                    var workSessionWithRelationsResponseList = mapper.Map<List<WorkSessionWithRelationsResponse>>(workSessionWithRelationsBusinessResponseList);
+                    var workSessionWithRelationsResponseList = mapper.Map<List<WorkSessionResponse>>(workSessionWithRelationsBusinessResponseList);
 
                     return workSessionWithRelationsResponseList;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
