@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Microsoft.Extensions.Logging;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
 using TimeTracker.Server.Business.Models.User;

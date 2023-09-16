@@ -33,10 +33,7 @@ public class BusinessMappingProfile : Profile
         CreateMap<WorkSessionBusinessRequest, WorkSessionDataRequest>();
         CreateMap<WorkSessionBusinessUpdateRequest, WorkSessionDataUpdateRequest>();
         CreateMap<WorkSessionDataResponse, WorkSessionBusinessResponse>();
-        CreateMap<WorkSessionDataResponse, WorkSessionWithRelationsBusinessResponse>()
-            .ForMember(dest => dest.WorkSession, opt => opt.MapFrom(src => src));
-        CreateMap<PaginationDataResponse<WorkSessionDataResponse>, PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>>();
-        
+        CreateMap<PaginationDataResponse<WorkSessionDataResponse>, PaginationBusinessResponse<WorkSessionBusinessResponse>>();
 
         CreateMap<HolidayBusinessRequest, HolidayDataRequest>();
         CreateMap<HolidayDataResponse, HolidayBusinessResponse>();
@@ -44,8 +41,6 @@ public class BusinessMappingProfile : Profile
         CreateMap<VacationBusinessRequest, VacationDataRequest>();
         CreateMap<VacationApproveBusinessRequest, VacationApproveDataRequest>();
         CreateMap<VacationDataResponse, VacationBusinessResponse>();
-        CreateMap<VacationDataResponse, VacationWithUserBusinessResponse>()
-            .ForMember(dest => dest.Vacation, opt => opt.MapFrom(src => src));
 
         CreateMap<VacationInfoDataResponse, VacationInfoBusinessResponse>();
 

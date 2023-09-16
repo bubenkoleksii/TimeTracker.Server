@@ -31,11 +31,11 @@ public class WebAppMappingProfile : Profile
         CreateMap<PaginationBusinessResponse<UserBusinessResponse>, PaginationResponse<ProfileResponse>>();
         CreateMap<PaginationBusinessResponse<UserWorkInfoBusinessResponse>, PaginationResponse<UserWorkInfoResponse>>();
         CreateMap<SetPasswordUserRequest, SetPasswordUserBusinessRequest>();
+
         CreateMap<WorkSessionRequest, WorkSessionBusinessRequest>();
         CreateMap<WorkSessionUpdateRequest, WorkSessionBusinessUpdateRequest>();
         CreateMap<WorkSessionBusinessResponse, WorkSessionResponse>();
-        CreateMap<WorkSessionWithRelationsBusinessResponse, WorkSessionWithRelationsResponse>();
-        CreateMap<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>, PaginationResponse<WorkSessionWithRelationsResponse>>();
+        CreateMap<PaginationBusinessResponse<WorkSessionBusinessResponse>, PaginationResponse<WorkSessionResponse>>();
 
         CreateMap<HolidayRequest, HolidayBusinessRequest>();
         CreateMap<HolidayBusinessResponse, HolidayResponse>();
@@ -43,7 +43,6 @@ public class WebAppMappingProfile : Profile
         CreateMap<VacationRequest, VacationBusinessRequest>();
         CreateMap<VacationApproveRequest, VacationApproveBusinessRequest>();
         CreateMap<VacationBusinessResponse, VacationResponse>();
-        CreateMap<VacationWithUserBusinessResponse, VacationWithUserResponse>();
 
         CreateMap<VacationInfoBusinessResponse, VacationInfoResponse>();
 
