@@ -4,6 +4,7 @@ using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Holiday;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.Holidays;
+using TimeTracker.Server.Data.Repositories;
 using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
@@ -31,6 +32,18 @@ public class HolidayService : IHolidayService
         var holidaysDataResponse = await _holidayRepository.GetHolidaysAsync();
         var holidaysBusinessResponse = _mapper.Map<IEnumerable<HolidayBusinessResponse>>(holidaysDataResponse);
         return holidaysBusinessResponse;
+    }
+
+    public async Task<List<HolidayBusinessResponse>> GetHolidaysForMonthAsync(DateTime monthDate)
+    {
+        var startDate = new DateOnly(monthDate.Year, monthDate.Month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(7);
+        startDate = startDate.AddDays(-7);
+
+        var holidayDataResponseList = await _holidayRepository.GetHolidaysByDateRangeAsync(startDate, endDate);
+        var holidayBusinessResponseList = _mapper.Map<List<HolidayBusinessResponse>>(holidayDataResponseList);
+
+        return holidayBusinessResponseList;
     }
 
     public async Task<HolidayBusinessResponse> CreateHolidayAsync(HolidayBusinessRequest holidayBusinessRequest)

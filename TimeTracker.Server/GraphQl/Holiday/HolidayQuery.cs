@@ -39,5 +39,20 @@ public class HolidayQuery : ObjectGraphType
 
                     return holidaysResponse;
                 }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
+
+        Field<ListGraphType<HolidayType>>("getHolidaysForMonth")
+                .Argument<NonNullGraphType<DateGraphType>>("monthDate")
+                .Resolve()
+                .WithScope()
+                .WithService<IHolidayService>()
+                .ResolveAsync(async (context, service) =>
+                {
+                    var monthDate = context.GetArgument<DateTime>("monthDate");
+
+                    var holidaysBusinessResponse = await service.GetHolidaysForMonthAsync(monthDate);
+                    var holidaysResponse = mapper.Map<List<HolidayResponse>>(holidaysBusinessResponse);
+
+                    return holidaysResponse;
+                }).AuthorizeWithPolicy(PermissionsEnum.LoggedIn.ToString());
     }
 }
