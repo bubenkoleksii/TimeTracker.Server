@@ -33,6 +33,28 @@ public class HolidayRepository : IHolidayRepository
         return holidays;
     }
 
+    public async Task<List<HolidayDataResponse>> GetHolidaysByDateAsync(DateOnly date, HolidayTypesEnum? holidayType = null)
+    {
+        var query = $"SELECT * FROM [Holidays] WHERE" +
+            $" ([{nameof(HolidayDataResponse.EndDate)}] IS NULL AND DATEDIFF(DAY, {nameof(HolidayDataResponse.Date)}, @{nameof(date)}) = 0)" +
+            $" OR (DATEDIFF(DAY, [{nameof(HolidayDataResponse.Date)}], @{nameof(date)}) >= 0" +
+            $" AND DATEDIFF(DAY, [{nameof(HolidayDataResponse.EndDate)}], @{nameof(date)}) <= 0)";
+
+        if (holidayType is not null)
+        {
+            query += $" AND [{nameof(HolidayDataResponse.Type)}] = @{nameof(holidayType)}";
+        }
+
+        using var connection = _context.GetConnection();
+        var holidayDataResponse = await connection.QueryAsync<HolidayDataResponse>(query, new
+        {
+            date = date.ToDateTime(new TimeOnly()),
+            holidayType = holidayType.ToString()
+        });
+
+        return holidayDataResponse.ToList();
+    }
+
     public async Task<List<HolidayDataResponse>> GetHolidaysByDateRangeAsync(DateOnly start, DateOnly end)
     {
         const string query = $"SELECT * FROM [Holidays] WHERE" +
