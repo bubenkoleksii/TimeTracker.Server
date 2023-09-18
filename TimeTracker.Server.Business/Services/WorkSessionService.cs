@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Pagination;
-using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Business.Models.WorkSession;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
@@ -35,7 +34,7 @@ public class WorkSessionService : IWorkSessionService
         _userService = userService;
     }
 
-    public async Task<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset,
+    public async Task<PaginationBusinessResponse<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdAsync(Guid userId, bool? orderByDesc, int? offset,
         int? limit, DateTime? startDate, DateTime? endDate, bool? showPlanned = false)
     {
         var limitDefault = int.Parse(_configuration.GetSection("Pagination:WorkSessionLimit").Value);
@@ -54,74 +53,18 @@ public class WorkSessionService : IWorkSessionService
 
         var workSessionPaginationDataResponse = await _workSessionRepository.GetWorkSessionsByUserIdAsync(userId, orderByDesc, validatedOffset, validatedLimit,
             startDate, endDate, showPlanned);
-        var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionWithRelationsBusinessResponse>>(workSessionPaginationDataResponse);
-
-        var userDict = new Dictionary<Guid, UserBusinessResponse>
-        {
-            { user.Id, _mapper.Map<UserBusinessResponse>(user) }
-        };
-        foreach (var workSessionData in workSessionPaginationBusinessResponse.Items)
-        {
-            var lastModifierToFind = new UserBusinessResponse();
-            if (userDict.ContainsKey(workSessionData.WorkSession.LastModifierId))
-            {
-                lastModifierToFind = userDict[workSessionData.WorkSession.LastModifierId];
-            }
-            else
-            {
-                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync(workSessionData.WorkSession.LastModifierId);
-                lastModifierToFind = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
-
-                userDict.Add(lastModifierToFind.Id, lastModifierToFind);
-            }
-
-            workSessionData.User = userDict[user.Id];
-            workSessionData.LastModifier = lastModifierToFind;
-        }
+        var workSessionPaginationBusinessResponse = _mapper.Map<PaginationBusinessResponse<WorkSessionBusinessResponse>>(workSessionPaginationDataResponse);
         return workSessionPaginationBusinessResponse;
     }
 
-    public async Task<List<WorkSessionWithRelationsBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate, bool hidePlanned = false)
+    public async Task<List<WorkSessionBusinessResponse>> GetWorkSessionsByUserIdsByMonthAsync(List<Guid> userIds, DateTime monthDate, bool hidePlanned = false)
     {
         var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
         var endDate = startDate.AddMonths(1).AddDays(7);
         startDate = startDate.AddDays(-7);
 
         var workSessionDataResponseList = await _workSessionRepository.GetUserWorkSessionsInRangeAsync(userIds, startDate, endDate, hidePlanned);
-        var workSessionWithRelationBusinessResponse = _mapper.Map<List<WorkSessionWithRelationsBusinessResponse>>(workSessionDataResponseList);
-
-        var userDict = new Dictionary<Guid, UserBusinessResponse>();
-        foreach (var workSessionData in workSessionWithRelationBusinessResponse)
-        {
-            UserBusinessResponse userToFind;
-            if (userDict.ContainsKey(workSessionData.WorkSession.UserId))
-            {
-                userToFind = userDict[workSessionData.WorkSession.UserId];
-            }
-            else
-            {
-                var userDataResponse = await _userRepository.GetUserByIdAsync(workSessionData.WorkSession.UserId);
-                userToFind = _mapper.Map<UserBusinessResponse>(userDataResponse);
-
-                userDict.Add(userToFind.Id, userToFind);
-            }
-
-            UserBusinessResponse lastModifierToFind;
-            if (userDict.ContainsKey(workSessionData.WorkSession.LastModifierId))
-            {
-                lastModifierToFind = userDict[workSessionData.WorkSession.LastModifierId];
-            }
-            else
-            {
-                var lastModifierDataResponse = await _userRepository.GetUserByIdAsync(workSessionData.WorkSession.LastModifierId);
-                lastModifierToFind = _mapper.Map<UserBusinessResponse>(lastModifierDataResponse);
-
-                userDict.Add(lastModifierToFind.Id, lastModifierToFind);
-            }
-
-            workSessionData.User = userToFind;
-            workSessionData.LastModifier = lastModifierToFind;
-        }
+        var workSessionWithRelationBusinessResponse = _mapper.Map<List<WorkSessionBusinessResponse>>(workSessionDataResponseList);
 
         return workSessionWithRelationBusinessResponse;
     }

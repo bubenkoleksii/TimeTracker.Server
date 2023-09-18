@@ -1,6 +1,7 @@
 ﻿using Quartz;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.WorkSession;
+using TimeTracker.Server.Data.Models.Holidays;
 using TimeTracker.Server.Shared;
 using TimeTracker.Server.Shared.Helpers;
 
@@ -10,11 +11,21 @@ public class AutoWorkSessionsJob : IJob
 {
     private readonly IWorkSessionRepository _workSessionRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IHolidayRepository _holidayRepository;
 
-    public AutoWorkSessionsJob(IWorkSessionRepository workSessionRepository, IUserRepository userRepository)
+    private readonly int startHour;
+    private readonly int fullDayHours;
+    private readonly int shortDayHours;
+
+    public AutoWorkSessionsJob(IWorkSessionRepository workSessionRepository, IUserRepository userRepository, IHolidayRepository holidayRepository, IConfiguration configuration)
     {
         _workSessionRepository = workSessionRepository;
         _userRepository = userRepository;
+        _holidayRepository = holidayRepository;
+
+        startHour = configuration.GetValue<int>("WorkHours:UtcStartHour");
+        fullDayHours = configuration.GetValue<int>("WorkHours:FullDay");
+        shortDayHours = configuration.GetValue<int>("WorkHours:ShortDay");
     }
 
     public async Task Execute(IJobExecutionContext context)
@@ -27,8 +38,15 @@ public class AutoWorkSessionsJob : IJob
             {
                 return;
             }
-            DateTime workSessionStart = WorkSessionHelper.GetDefaultWorkSessionStart();
-            DateTime workSessionEnd = WorkSessionHelper.GetDefaultWorkSessionEnd(users.First().EmploymentRate);
+
+            DateTime workSessionStart = DateTime.Today.AddHours(startHour);
+            DateTime workSessionEnd = workSessionStart.AddHours(fullDayHours);
+
+            var todayShortenedDays = await _holidayRepository.GetHolidaysByDateAsync(DateOnly.FromDateTime(DateTime.Now), HolidayTypesEnum.ShortDay);
+            if (todayShortenedDays is not null && todayShortenedDays.Count > 0)
+            {
+                workSessionEnd = workSessionStart.AddHours(shortDayHours);
+            }
 
             var workSessionsToAutoAdd = new List<WorkSessionDataRequest>();
 

@@ -36,4 +36,6 @@
     <ProjectReference Include="..\TimeTracker.Server.Shared\TimeTracker.Server.Shared.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="https://json.schemastore.org/azure-deviceupdate-update-manifest-5.json" /></VisualStudio></ProjectExtensions>
+
 </Project>

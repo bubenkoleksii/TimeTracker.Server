@@ -2,7 +2,6 @@
 using GraphQL;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.SickLeave;
-using TimeTracker.Server.Business.Models.User;
 using TimeTracker.Server.Data.Abstractions;
 using TimeTracker.Server.Data.Models.SickLeave;
 using TimeTracker.Server.Shared;
