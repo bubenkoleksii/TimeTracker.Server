@@ -1,12 +1,14 @@
 ﻿using System.Configuration;
 using System.Security.Claims;
 using AutoMapper;
+using Google.Apis.Auth;
 using GraphQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TimeTracker.Server.Business.Abstractions;
 using TimeTracker.Server.Business.Models.Auth;
 using TimeTracker.Server.Data.Abstractions;
+using TimeTracker.Server.Data.Models.User;
 using TimeTracker.Server.Shared.Exceptions;
 
 namespace TimeTracker.Server.Business.Services;
@@ -45,22 +47,29 @@ public class AuthService : IAuthService
                 Code = GraphQLCustomErrorCodesEnum.INVALID_PASSWORD.ToString()
             };
 
+            var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
+            userClaims.Id = user.Id;
+
+            await SetRefreshTokenAsync(userClaims);
+            var accessToken = GetAccessToken(userClaims);
+
+            return accessToken;
+    }
+
+    public async Task<string> GoogleLoginAsync(OAuthBusinessRequest oAuthBusinessRequest)
+    {
+        var payload = await GoogleJsonWebSignature.ValidateAsync(oAuthBusinessRequest.Credential, new GoogleJsonWebSignature.ValidationSettings());
+
+        var user = await _userRepository.GetUserByEmailAsync(payload.Email) ?? throw new ExecutionError("There is no user with this email")
+        {
+            Code = GraphQLCustomErrorCodesEnum.USER_NOT_FOUND.ToString()
+        };
+
         var userClaims = _mapper.Map<AuthTokenClaimsModel>(user);
         userClaims.Id = user.Id;
 
-        var refreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
-        var accessToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
-
-        await _userRepository.SetRefreshTokenAsync(refreshToken, user.Id);
-
-        var cookieExpInSeconds = _configuration.GetSection("Auth:RefreshTokenLifeTimeSeconds").Value;
-        _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            SameSite = SameSiteMode.None,
-            Secure = true,
-            Expires = DateTime.UtcNow.AddSeconds(cookieExpInSeconds is not null ? Convert.ToDouble(cookieExpInSeconds) : 60 * 60 * 24 * 30),
-        });
+        await SetRefreshTokenAsync(userClaims);
+        var accessToken = GetAccessToken(userClaims);
 
         return accessToken;
     }
@@ -126,5 +135,26 @@ public class AuthService : IAuthService
     {
         var isPasswordValid = BCrypt.Net.BCrypt.Verify(password, passwordHash);
         return isPasswordValid;
+    }
+
+    private async Task SetRefreshTokenAsync(AuthTokenClaimsModel userClaims)
+    {
+        var refreshToken = _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Refresh);
+
+        await _userRepository.SetRefreshTokenAsync(refreshToken, userClaims.Id);
+
+        var cookieExpInSeconds = _configuration.GetSection("Auth:RefreshTokenLifeTimeSeconds").Value;
+        _httpContextAccessor.HttpContext!.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.None,
+            Secure = true,
+            Expires = DateTime.UtcNow.AddSeconds(cookieExpInSeconds is not null ? Convert.ToDouble(cookieExpInSeconds) : 60 * 60 * 24 * 30),
+        });
+    }
+    
+    private string GetAccessToken(AuthTokenClaimsModel userClaims)
+    {
+        return _jwtService.GenerateJwtToken(userClaims, JwtTokenType.Access);
     }
 }

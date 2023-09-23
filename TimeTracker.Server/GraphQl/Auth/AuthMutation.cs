@@ -28,6 +28,21 @@ public sealed class AuthMutation : ObjectGraphType
                 return accessToken;
             });
 
+        Field<string>("googleLogin")
+            .Argument<NonNullGraphType<OAuthInputType>>("oauthData")
+            .Resolve()
+            .WithScope()
+            .WithService<IAuthService>()
+            .ResolveAsync(async (context, service) =>
+            {
+                var oauthData = context.GetArgument<OAuthRequest>("oauthData");
+
+                var oauthBusinessRequest = mapper.Map<OAuthBusinessRequest>(oauthData);
+
+                var accessToken = await service.GoogleLoginAsync(oauthBusinessRequest);
+                return accessToken;
+            });
+
         Field<BooleanGraphType>("logout")
             .Resolve()
             .WithScope()
