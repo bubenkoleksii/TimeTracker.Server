@@ -34,6 +34,65 @@ public class HolidayService : IHolidayService
         return holidaysBusinessResponse;
     }
 
+    public async Task<IEnumerable<DateTime>> GetLastDaysOfMonth(int limitYear, int limitMonth = 12)
+    {
+        var lastDays = new List<DateTime>();
+
+        var currentDate = DateTime.Now;
+        var currentYear = currentDate.Year;
+        var currentMonth = currentDate.Month;
+
+        while (currentYear <= limitYear && currentMonth <= limitMonth)
+        {
+            var lastDayOfMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth), 9, 0, 0);
+
+            var isWorkingDay = await IsWorkingDay(lastDayOfMonth);
+            while (!isWorkingDay)
+            {
+                lastDayOfMonth = lastDayOfMonth.AddDays(-1);
+                
+                isWorkingDay = await IsWorkingDay(lastDayOfMonth);
+            }
+
+            lastDays.Add(lastDayOfMonth);
+
+            currentMonth++;
+            if (currentMonth > 12)
+            {
+                currentMonth = 1;
+                currentYear++;
+            }
+        }
+
+        return lastDays;
+    }
+
+    private async Task<bool> IsWorkingDay(DateTime date)
+    {
+        if (date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            return false;
+
+        var holidays = await GetHolidaysAsync();
+        foreach (var holiday in holidays)
+        {
+            if (holiday.EndDate == null)
+            {
+                if (holiday.Date == date)
+                    return false;
+            }
+            else
+            {
+                for (var holidayDate = holiday.Date; holidayDate <= holiday.EndDate; holidayDate = holidayDate.AddDays(1))
+                {
+                    if (holidayDate == date)
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     public async Task<List<HolidayBusinessResponse>> GetHolidaysForMonthAsync(DateTime monthDate)
     {
         var startDate = new DateOnly(monthDate.Year, monthDate.Month, 1);

@@ -17,6 +17,7 @@ using TimeTracker.Server.Middleware;
 using TimeTracker.Server.Shared.Helpers;
 using Quartz;
 using TimeTracker.Server.Quartz.Jobs;
+using TimeTracker.Server.Quartz.Triggers;
 using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server;
@@ -173,6 +174,26 @@ public class Program
                     .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(23, 50))
                 )
             );
+
+            var EmailNotificationAboutWorkHoursJobKey = new JobKey("EmailNotificationAboutWorkHoursJobKey");
+            q.AddJob<EmailNotificationAboutWorkHoursJob>(opts => opts.WithIdentity(EmailNotificationAboutWorkHoursJobKey));
+
+            var holidayService = builder.Services.BuildServiceProvider().GetRequiredService<IHolidayService>();
+
+            var emailNotificationAboutWorkHoursTriggers = EmailNotificationAboutWorHoursTrigger
+                .GetLastDaysOfMonthTriggers(holidayService, EmailNotificationAboutWorkHoursJobKey, 2030).Result;
+            foreach (var trigger in emailNotificationAboutWorkHoursTriggers)
+            {
+                q.AddTrigger(opts => opts
+                    .ForJob(EmailNotificationAboutWorkHoursJobKey)
+                    .WithIdentity(trigger.Key)
+                    .StartAt(trigger.StartTimeUtc.LocalDateTime)
+                    .WithSimpleSchedule(x => x
+                        .WithIntervalInSeconds(1)
+                        .WithRepeatCount(0)
+                    )
+                );
+            }
         });
 
         builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete =  true);
