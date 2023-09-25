@@ -21,6 +21,7 @@ public class WebAppMappingProfile : Profile
     public WebAppMappingProfile()
     {
         CreateMap<AuthRequest, AuthBusinessRequest>();
+        CreateMap<OAuthRequest, OAuthBusinessRequest>();
         CreateMap<AuthBusinessResponse, AuthResponse>();
 
         CreateMap<UserRequest, UserBusinessRequest>();
