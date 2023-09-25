@@ -17,6 +17,7 @@ using TimeTracker.Server.Middleware;
 using TimeTracker.Server.Shared.Helpers;
 using Quartz;
 using TimeTracker.Server.Quartz.Jobs;
+using TimeTracker.Server.Quartz.Triggers;
 using TimeTracker.Server.Shared;
 
 namespace TimeTracker.Server;
@@ -178,25 +179,21 @@ public class Program
             q.AddJob<EmailNotificationAboutWorkHoursJob>(opts => opts.WithIdentity(EmailNotificationAboutWorkHoursJobKey));
 
             var holidayService = builder.Services.BuildServiceProvider().GetRequiredService<IHolidayService>();
-            var lastDaysOFMonths = holidayService.GetLastDaysOfMonth(2030).Result;
 
-            foreach (var day in lastDaysOFMonths)
+            var emailNotificationAboutWorkHoursTriggers = EmailNotificationAboutWorHoursTrigger
+                .GetLastDaysOfMonthTriggers(holidayService, EmailNotificationAboutWorkHoursJobKey, 2030).Result;
+            foreach (var trigger in emailNotificationAboutWorkHoursTriggers)
             {
                 q.AddTrigger(opts => opts
                     .ForJob(EmailNotificationAboutWorkHoursJobKey)
-                    .WithIdentity($"EmailNotificationAboutWorkHoursJobTrigger_{day}")
-                    .StartAt(day) 
+                    .WithIdentity(trigger.Key)
+                    .StartAt(trigger.StartTimeUtc.LocalDateTime)
                     .WithSimpleSchedule(x => x
-                            .WithIntervalInSeconds(1) 
-                            .WithRepeatCount(0)     
+                        .WithIntervalInSeconds(1)
+                        .WithRepeatCount(0)
                     )
                 );
             }
-            q.AddTrigger(opts => opts
-                .ForJob(EmailNotificationAboutWorkHoursJobKey)
-                .WithIdentity("EmailNotificationAboutWorkHoursJobTrigger")
-                .WithCronSchedule("0 0 9 L * ? *")
-            );
         });
 
         builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete =  true);

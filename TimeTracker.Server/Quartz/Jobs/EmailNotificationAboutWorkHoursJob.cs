@@ -43,7 +43,7 @@ public class EmailNotificationAboutWorkHoursJob : IJob
                     <p>
                         Dear {user.FullName}, this month you have worked {user.WorkedHours} out of {user.PlannedWorkingHours} ({Math.Round(user.WorkedHours / user.PlannedWorkingHours * 100, 2)}%). 
                         You did not work {user.PlannedWorkingHours - user.WorkedHours} hours of the total.
-                        Do better next month.
+                        Hurry up.
                     </p>
                 </div>";
 
