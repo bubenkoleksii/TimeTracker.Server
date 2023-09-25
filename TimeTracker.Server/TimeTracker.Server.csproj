@@ -14,6 +14,7 @@
     <PackageReference Include="FluentMigrator.Runner" Version="3.3.2" />
     <PackageReference Include="FluentMigrator.Runner.Core" Version="3.3.2" />
     <PackageReference Include="FluentMigrator.Runner.SqlServer" Version="3.3.2" />
+    <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.62.0.1869" />
     <PackageReference Include="GraphQL" Version="7.5.0" />
     <PackageReference Include="GraphQL.MicrosoftDI" Version="7.5.0" />
     <PackageReference Include="GraphQL.NewtonsoftJson" Version="7.5.0" />

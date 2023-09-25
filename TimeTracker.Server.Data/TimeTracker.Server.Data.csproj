@@ -11,6 +11,7 @@
     <PackageReference Include="FluentMigrator" Version="3.3.2" />
     <PackageReference Include="FluentMigrator.Extensions.SqlServer" Version="3.3.2" />
     <PackageReference Include="FluentMigrator.Runner.SqlServer" Version="3.3.2" />
+    <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.62.0.1869" />
     <PackageReference Include="GraphQL.Server.Authorization.AspNetCore" Version="7.4.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
