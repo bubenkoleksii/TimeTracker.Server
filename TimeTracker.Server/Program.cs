@@ -173,6 +173,14 @@ public class Program
                     .StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(23, 50))
                 )
             );
+
+            var EmailNotificationAboutWorkHoursJobKey = new JobKey("EmailNotificationAboutWorkHoursJobKey");
+            q.AddJob<EmailNotificationAboutWorkHoursJob>(opts => opts.WithIdentity(EmailNotificationAboutWorkHoursJobKey));
+            q.AddTrigger(opts => opts
+                .ForJob(EmailNotificationAboutWorkHoursJobKey)
+                .WithIdentity("EmailNotificationAboutWorkHoursJobTrigger")
+                .WithCronSchedule("0 0 9 L * ? *")
+            );
         });
 
         builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete =  true);
