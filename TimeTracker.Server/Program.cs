@@ -176,6 +176,22 @@ public class Program
 
             var EmailNotificationAboutWorkHoursJobKey = new JobKey("EmailNotificationAboutWorkHoursJobKey");
             q.AddJob<EmailNotificationAboutWorkHoursJob>(opts => opts.WithIdentity(EmailNotificationAboutWorkHoursJobKey));
+
+            var holidayService = builder.Services.BuildServiceProvider().GetRequiredService<IHolidayService>();
+            var lastDaysOFMonths = holidayService.GetLastDaysOfMonth(2030).Result;
+
+            foreach (var day in lastDaysOFMonths)
+            {
+                q.AddTrigger(opts => opts
+                    .ForJob(EmailNotificationAboutWorkHoursJobKey)
+                    .WithIdentity($"EmailNotificationAboutWorkHoursJobTrigger_{day}")
+                    .StartAt(day) 
+                    .WithSimpleSchedule(x => x
+                            .WithIntervalInSeconds(1) 
+                            .WithRepeatCount(0)     
+                    )
+                );
+            }
             q.AddTrigger(opts => opts
                 .ForJob(EmailNotificationAboutWorkHoursJobKey)
                 .WithIdentity("EmailNotificationAboutWorkHoursJobTrigger")
